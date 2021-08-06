@@ -13,9 +13,10 @@ type alias Model =
     FrontendModel
 
 
+
 app =
     Lamdera.frontend
-        { init = init
+        { init = init        
         , onUrlRequest = UrlClicked
         , onUrlChange = UrlChanged
         , update = update
