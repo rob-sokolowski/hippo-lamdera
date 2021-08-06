@@ -4,15 +4,16 @@ import Evergreen.V1.Api.Profile
 import Time
 
 
-type alias Slug = String
+type alias Slug =
+    String
 
 
-type alias Article = 
+type alias Article =
     { slug : Slug
     , title : String
     , description : String
     , body : String
-    , tags : (List String)
+    , tags : List String
     , createdAt : Time.Posix
     , updatedAt : Time.Posix
     , favorited : Bool
@@ -21,19 +22,19 @@ type alias Article =
     }
 
 
-type alias Listing = 
-    { articles : (List Article)
+type alias Listing =
+    { articles : List Article
     , page : Int
     , totalPages : Int
     }
 
 
-type alias ArticleStore = 
+type alias ArticleStore =
     { slug : Slug
     , title : String
     , description : String
     , body : String
-    , tags : (List String)
+    , tags : List String
     , createdAt : Time.Posix
     , updatedAt : Time.Posix
     , userId : Int

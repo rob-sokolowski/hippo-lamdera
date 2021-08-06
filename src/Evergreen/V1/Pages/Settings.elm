@@ -4,14 +4,14 @@ import Evergreen.V1.Api.Data
 import Evergreen.V1.Api.User
 
 
-type alias Model = 
+type alias Model =
     { image : String
     , username : String
     , bio : String
     , email : String
-    , password : (Maybe String)
-    , message : (Maybe String)
-    , errors : (List String)
+    , password : Maybe String
+    , message : Maybe String
+    , errors : List String
     }
 
 

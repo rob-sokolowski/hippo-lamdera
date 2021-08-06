@@ -11,10 +11,10 @@ type Tab
     | FavoritedArticles
 
 
-type alias Model = 
+type alias Model =
     { username : String
-    , profile : (Evergreen.V1.Api.Data.Data Evergreen.V1.Api.Profile.Profile)
-    , listing : (Evergreen.V1.Api.Data.Data Evergreen.V1.Api.Article.Listing)
+    , profile : Evergreen.V1.Api.Data.Data Evergreen.V1.Api.Profile.Profile
+    , listing : Evergreen.V1.Api.Data.Data Evergreen.V1.Api.Article.Listing
     , selectedTab : Tab
     , page : Int
     }

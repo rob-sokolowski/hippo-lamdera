@@ -4,7 +4,7 @@ import Evergreen.V1.Api.Profile
 import Time
 
 
-type alias Comment = 
+type alias Comment =
     { id : Int
     , createdAt : Time.Posix
     , updatedAt : Time.Posix
