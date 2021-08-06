@@ -1,0 +1,31 @@
+version: "3.3"
+
+services:
+  bash:
+    image: hippo-lamdera:dev
+    networks:
+      - hippo-lamdera-network
+    working_dir: /root/code
+    volumes:
+      - .:/root/code
+    command: bash
+
+  dev:
+    ports:
+      - 8000:8000
+    container_name: hippo-lamdera
+    image: hippo-lamdera:dev
+    networks:
+      - hippo-lamdera-network
+    stdin_open: true
+    tty: true
+    working_dir: /root/code
+    volumes:
+      - .:/root/code
+    command: lamdera live
+
+networks:
+  hippo-lamdera-network:
+    driver: bridge
+    ipam:
+      driver: default
