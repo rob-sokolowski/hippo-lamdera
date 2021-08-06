@@ -16,7 +16,7 @@ view :
 view options =
     nav [ class "navbar navbar-light" ]
         [ div [ class "container" ]
-            [ a [ class "navbar-brand", href (Route.toHref Route.Home_) ] [ text "conduit" ]
+            [ a [ class "navbar-brand", href (Route.toHref Route.Home_) ] [ text "hippo" ]
             , ul [ class "nav navbar-nav pull-xs-right" ] <|
                 case options.user of
                     Just _ ->

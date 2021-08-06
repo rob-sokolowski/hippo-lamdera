@@ -8,11 +8,11 @@ view : Html msg
 view =
     footer []
         [ div [ class "container" ]
-            [ a [ class "logo-font", href "/" ] [ text "conduit" ]
+            [ a [ class "logo-font", href "/" ] [ text "hippo" ]
             , span [ class "attribution" ]
-                [ text "An interactive learning project from "
-                , a [ href "https://thinkster.io" ] [ text "Thinkster" ]
-                , text ". Code & design licensed under MIT."
+                [ 
+                
+                 text ". Code & design licensed under MIT."
                 ]
             ]
         ]
