@@ -18,8 +18,6 @@ type alias Article =
     , tags : List String
     , createdAt : Time.Posix
     , updatedAt : Time.Posix
-    , favorited : Bool
-    , favoritesCount : Int
     , author : Profile
     }
 

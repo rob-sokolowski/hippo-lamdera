@@ -29,6 +29,7 @@ type alias Model =
     BackendModel
 
 
+app : { init : (Model, Cmd BackendMsg), update : BackendMsg -> Model -> (Model, Cmd BackendMsg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd BackendMsg), subscriptions : Model -> Sub BackendMsg }
 app =
     Lamdera.backend
         { init = init
@@ -90,38 +91,7 @@ update msg model =
                     , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle (Failure [ "invalid session" ]))))
                     )
 
-        ArticleCommentCreated t userM clientId slug commentBody ->
-            case userM of
-                Just user ->
-                    let
-                        comment =
-                            { id = Time.posixToMillis t
-                            , createdAt = t
-                            , updatedAt = t
-                            , body = commentBody.body
-                            , author = Api.User.toProfile user
-                            }
-
-                        newComments =
-                            model.comments
-                                |> Dict.update slug
-                                    (\commentsM ->
-                                        case commentsM of
-                                            Just comments ->
-                                                Just (comments |> Dict.insert comment.id comment)
-
-                                            Nothing ->
-                                                Just <| Dict.singleton comment.id comment
-                                    )
-                    in
-                    ( { model | comments = newComments }
-                    , sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.CreatedComment (Success comment))))
-                    )
-
-                Nothing ->
-                    ( model
-                    , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle (Failure [ "invalid session" ]))))
-                    )
+        
 
         NoOpBackendMsg ->
             ( model, Cmd.none )
@@ -186,12 +156,9 @@ updateFromFrontend sessionId clientId msg model =
                     case userM of
                         Just user ->
                             let
-                                filtered =
-                                    model.articles
-                                        |> Dict.filter (\slug article -> List.member article.userId user.following)
-
+                          
                                 enriched =
-                                    filtered |> Dict.map (\slug article -> loadArticleFromStore model userM article)
+                                    model.articles |> Dict.map (\slug article -> loadArticleFromStore model userM article)
 
                                 grouped =
                                     enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
@@ -260,72 +227,6 @@ updateFromFrontend sessionId clientId msg model =
                     )
                 )
 
-        ArticleFavorite_Profile__Username_ { slug } ->
-            favoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.UpdatedArticle r))))
-
-        ArticleUnfavorite_Profile__Username_ { slug } ->
-            unfavoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.UpdatedArticle r))))
-
-        ArticleFavorite_Home_ { slug } ->
-            favoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Home_ (Pages.Home_.UpdatedArticle r))))
-
-        ArticleUnfavorite_Home_ { slug } ->
-            unfavoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Home_ (Pages.Home_.UpdatedArticle r))))
-
-        ArticleFavorite_Article__Slug_ { slug } ->
-            favoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotArticle r))))
-
-        ArticleUnfavorite_Article__Slug_ { slug } ->
-            unfavoriteArticle sessionId
-                slug
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotArticle r))))
-
-        ArticleCommentGet_Article__Slug_ { articleSlug } ->
-            let
-                res =
-                    model.comments
-                        |> Dict.get articleSlug
-                        |> Maybe.map Dict.values
-                        |> Maybe.map (List.sortBy .id)
-                        |> Maybe.map List.reverse
-                        |> Maybe.map Success
-                        |> Maybe.withDefault (Success [])
-            in
-            send (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotComments res)))
-
-        ArticleCommentCreate_Article__Slug_ { articleSlug, comment } ->
-            let
-                userM =
-                    model |> getSessionUser sessionId
-            in
-            ( model, Time.now |> Task.perform (\t -> ArticleCommentCreated t userM clientId articleSlug comment) )
-
-        ArticleCommentDelete_Article__Slug_ { articleSlug, commentId } ->
-            let
-                newComments =
-                    model.comments
-                        |> Dict.update articleSlug (Maybe.map (\comments -> Dict.remove commentId comments))
-            in
-            ( { model | comments = newComments }
-            , send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.DeletedComment (Success commentId))))
-            )
-
         ProfileGet_Profile__Username_ { username } ->
             let
                 res =
@@ -335,29 +236,6 @@ updateFromFrontend sessionId clientId msg model =
             in
             send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res)))
 
-        ProfileFollow_Profile__Username_ { username } ->
-            followUser sessionId
-                username
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile r))))
-
-        ProfileUnfollow_Profile__Username_ { username } ->
-            unfollowUser sessionId
-                username
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile r))))
-
-        ProfileFollow_Article__Slug_ { username } ->
-            followUser sessionId
-                username
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
-
-        ProfileUnfollow_Article__Slug_ { username } ->
-            unfollowUser sessionId
-                username
-                model
-                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
 
         UserAuthentication_Login { params } ->
             let
@@ -391,8 +269,6 @@ updateFromFrontend sessionId clientId msg model =
                                 , bio = Nothing
                                 , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
                                 , password = params.password
-                                , favorites = []
-                                , following = []
                                 }
                         in
                         ( { model | users = model.users |> Dict.insert user_.id user_ }
@@ -441,11 +317,10 @@ renewSession email sid cid =
 
 
 getListing : Model -> SessionId -> Filters -> Int -> Api.Article.Listing
-getListing model sessionId (Filters { tag, author, favorited }) page =
+getListing model sessionId (Filters { tag, author}) page =
     let
         filtered =
             model.articles
-                |> Filters.byFavorite favorited model.users
                 |> Filters.byTag tag
                 |> Filters.byAuthor author model.users
 
@@ -489,90 +364,7 @@ uniqueSlug model title i =
         uniqueSlug model title (i + 1)
 
 
-favoriteArticle : SessionId -> Slug -> Model -> (Data Article -> Cmd msg) -> ( Model, Cmd msg )
-favoriteArticle sessionId slug model toResponseCmd =
-    let
-        res =
-            model
-                |> loadArticleBySlug slug sessionId
-                |> Api.Data.map (\a -> { a | favorited = True })
-    in
-    case model |> getSessionUser sessionId of
-        Just user ->
-            ( if model.articles |> Dict.member slug then
-                model |> updateUser { user | favorites = (slug :: user.favorites) |> List.unique }
 
-              else
-                model
-            , toResponseCmd res
-            )
-
-        Nothing ->
-            ( model, toResponseCmd <| Failure [ "invalid session" ] )
-
-
-unfavoriteArticle : SessionId -> Slug -> Model -> (Data Article -> Cmd msg) -> ( Model, Cmd msg )
-unfavoriteArticle sessionId slug model toResponseCmd =
-    let
-        res =
-            model
-                |> loadArticleBySlug slug sessionId
-                |> Api.Data.map (\a -> { a | favorited = False })
-    in
-    case model |> getSessionUser sessionId of
-        Just user ->
-            ( model |> updateUser { user | favorites = user.favorites |> List.remove slug }
-            , toResponseCmd res
-            )
-
-        Nothing ->
-            ( model, toResponseCmd <| Failure [ "invalid session" ] )
-
-
-followUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model, Cmd msg )
-followUser sessionId email model toResponseCmd =
-    let
-        res =
-            profileByEmail email model
-                |> Maybe.map (\a -> Success { a | following = True })
-                |> Maybe.withDefault (Failure [ "invalid user" ])
-    in
-    case model |> getSessionUser sessionId of
-        Just user ->
-            ( case model.users |> Dict.find (\l u -> u.email == email) of
-                Just ( _, follow ) ->
-                    model |> updateUser { user | following = (follow.id :: user.following) |> List.unique }
-
-                Nothing ->
-                    model
-            , toResponseCmd res
-            )
-
-        Nothing ->
-            ( model, toResponseCmd <| Failure [ "invalid session" ] )
-
-
-unfollowUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model, Cmd msg )
-unfollowUser sessionId email model toResponseCmd =
-    case model.users |> Dict.find (\k u -> u.email == email) of
-        Just ( _, followed ) ->
-            let
-                res =
-                    followed
-                        |> Api.User.toProfile
-                        |> (\a -> Success { a | following = False })
-            in
-            case model |> getSessionUser sessionId of
-                Just user ->
-                    ( model |> updateUser { user | following = user.following |> List.remove followed.id }
-                    , toResponseCmd res
-                    )
-
-                Nothing ->
-                    ( model, toResponseCmd <| Failure [ "invalid session" ] )
-
-        Nothing ->
-            ( model, toResponseCmd <| Failure [ "invalid user" ] )
 
 
 updateUser : UserFull -> Model -> Model
@@ -591,8 +383,6 @@ profileByEmail email model =
 loadArticleFromStore : Model -> Maybe UserFull -> ArticleStore -> Article
 loadArticleFromStore model userM store =
     let
-        favorited =
-            userM |> Maybe.map (\user -> user.favorites |> List.member store.slug) |> Maybe.withDefault False
 
         author =
             model.users
@@ -607,7 +397,5 @@ loadArticleFromStore model userM store =
     , tags = store.tags
     , createdAt = store.createdAt
     , updatedAt = store.updatedAt
-    , favorited = favorited
-    , favoritesCount = model.users |> Dict.filter (\_ user -> user.favorites |> List.member store.slug) |> Dict.size
     , author = author
     }

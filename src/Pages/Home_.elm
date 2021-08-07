@@ -108,8 +108,6 @@ type Msg
     = GotArticles (Data Api.Article.Listing)
     | GotTags (Data (List Tag))
     | SelectedTab Tab
-    | ClickedFavorite User Article
-    | ClickedUnfavorite User Article
     | ClickedPage Int
     | UpdatedArticle (Data Article)
 
@@ -143,22 +141,6 @@ update shared msg model =
             in
             ( newModel
             , fetchArticlesForTab shared newModel
-            )
-
-        ClickedFavorite user article ->
-            ( model
-            , ArticleFavorite_Home_
-                { slug = article.slug
-                }
-                |> sendToBackend
-            )
-
-        ClickedUnfavorite user article ->
-            ( model
-            , ArticleUnfavorite_Home_
-                { slug = article.slug
-                }
-                |> sendToBackend
             )
 
         ClickedPage page_ ->
@@ -214,8 +196,6 @@ view shared model =
                             :: Components.ArticleList.view
                                 { user = shared.user
                                 , articleListing = model.listing
-                                , onFavorite = ClickedFavorite
-                                , onUnfavorite = ClickedUnfavorite
                                 , onPageClick = ClickedPage
                                 }
                         )
