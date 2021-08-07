@@ -93,11 +93,7 @@ type Msg
     = GotProfile (Data Profile)
     | GotArticles (Data Api.Article.Listing)
     | Clicked Tab
-    | ClickedFavorite User Article
-    | ClickedUnfavorite User Article
     | UpdatedArticle (Data Article)
-    | ClickedFollow User Profile
-    | ClickedUnfollow User Profile
     | ClickedPage Int
 
 
@@ -109,21 +105,6 @@ update shared msg model =
             , Cmd.none
             )
 
-        ClickedFollow user profile ->
-            ( model
-            , ProfileFollow_Profile__Username_
-                { username = profile.username
-                }
-                |> sendToBackend
-            )
-
-        ClickedUnfollow user profile ->
-            ( model
-            , ProfileUnfollow_Profile__Username_
-                { username = profile.username
-                }
-                |> sendToBackend
-            )
 
         GotArticles listing ->
             ( { model | listing = listing }
@@ -146,22 +127,6 @@ update shared msg model =
                 , page = 1
               }
             , fetchArticlesFavoritedBy model.username 1
-            )
-
-        ClickedFavorite user article ->
-            ( model
-            , ArticleFavorite_Profile__Username_
-                { slug = article.slug
-                }
-                |> sendToBackend
-            )
-
-        ClickedUnfavorite user article ->
-            ( model
-            , ArticleUnfavorite_Profile__Username_
-                { slug = article.slug
-                }
-                |> sendToBackend
             )
 
         ClickedPage page_ ->
@@ -239,27 +204,7 @@ viewProfile shared profile model =
                             , h4 [] [ text profile.username ]
                             , Utils.Maybe.view profile.bio
                                 (\bio -> p [] [ text bio ])
-                            , if isViewingOwnProfile then
-                                text ""
 
-                              else
-                                Utils.Maybe.view shared.user <|
-                                    \user ->
-                                        if profile.following then
-                                            IconButton.view
-                                                { color = IconButton.FilledGray
-                                                , icon = IconButton.Plus
-                                                , label = "Unfollow " ++ profile.username
-                                                , onClick = ClickedUnfollow user profile
-                                                }
-
-                                        else
-                                            IconButton.view
-                                                { color = IconButton.OutlinedGray
-                                                , icon = IconButton.Plus
-                                                , label = "Follow " ++ profile.username
-                                                , onClick = ClickedFollow user profile
-                                                }
                             ]
                         ]
                     ]
@@ -300,8 +245,6 @@ viewProfile shared profile model =
                         :: Components.ArticleList.view
                             { user = shared.user
                             , articleListing = model.listing
-                            , onFavorite = ClickedFavorite
-                            , onUnfavorite = ClickedUnfavorite
                             , onPageClick = ClickedPage
                             }
                     )

@@ -26,8 +26,6 @@ type alias UserFull =
     , bio : Maybe String
     , image : String
     , password : String
-    , favorites : List Slug
-    , following : List UserId
     }
 
 

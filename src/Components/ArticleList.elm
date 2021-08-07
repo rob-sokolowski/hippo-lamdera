@@ -14,8 +14,6 @@ import Utils.Time
 view :
     { user : Maybe User
     , articleListing : Data Api.Article.Listing
-    , onFavorite : User -> Article -> msg
-    , onUnfavorite : User -> Article -> msg
     , onPageClick : Int -> msg
     }
     -> List (Html msg)
@@ -54,8 +52,6 @@ view options =
 viewArticlePreview :
     { options
         | user : Maybe User
-        , onFavorite : User -> Article -> msg
-        , onUnfavorite : User -> Article -> msg
     }
     -> Article
     -> Html msg
@@ -74,22 +70,8 @@ viewArticlePreview options article =
                     \user ->
                         if user.username == article.author.username then
                             text ""
-
-                        else if article.favorited then
-                            IconButton.view
-                                { color = IconButton.FilledGreen
-                                , icon = IconButton.Heart
-                                , label = " " ++ String.fromInt article.favoritesCount
-                                , onClick = options.onUnfavorite user article
-                                }
-
                         else
-                            IconButton.view
-                                { color = IconButton.OutlinedGreen
-                                , icon = IconButton.Heart
-                                , label = " " ++ String.fromInt article.favoritesCount
-                                , onClick = options.onFavorite user article
-                                }
+                            text user.username
                 ]
             ]
         , a [ class "preview-link", href ("/article/" ++ article.slug) ]

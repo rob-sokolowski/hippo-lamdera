@@ -22,12 +22,6 @@ type alias FrontendModel =
     }
 
 
-type alias BackendModel =
-    { sessions : Dict SessionId Session
-    , users : Dict Int UserFull
-    , articles : Dict Slug ArticleStore
-    , comments : Dict Slug (Dict Int Comment)
-    }
 
 
 type alias Session =
@@ -41,6 +35,13 @@ type FrontendMsg
     | Page Pages.Msg
     | Noop
 
+type alias BackendModel =
+    { sessions : Dict SessionId Session
+    , users : Dict Int UserFull
+    , articles : Dict Slug ArticleStore
+    , comments : Dict Slug (Dict Int Comment)
+    }
+
 
 type alias ToBackend =
     Bridge.ToBackend
@@ -50,7 +51,6 @@ type BackendMsg
     = CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | ArticleCreated Time.Posix (Maybe UserFull) ClientId { title : String, description : String, body : String, tags : List String }
-    | ArticleCommentCreated Time.Posix (Maybe UserFull) ClientId Slug { body : String }
     | NoOpBackendMsg
 
 

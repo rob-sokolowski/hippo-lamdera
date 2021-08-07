@@ -12,7 +12,7 @@ view =
             , span [ class "attribution" ]
                 [ 
                 
-                 text ". Code & design licensed under MIT."
+                 text "Code & design licensed under MIT."
                 ]
             ]
         ]
