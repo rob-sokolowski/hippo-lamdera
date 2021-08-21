@@ -11,7 +11,6 @@ frontendModel old =
     ModelUnchanged
 
 
-
 backendModel : Old.BackendModel -> ModelMigration New.BackendModel New.BackendMsg
 backendModel old =
     ModelMigrated Backend.init

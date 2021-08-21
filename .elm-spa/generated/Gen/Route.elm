@@ -4,6 +4,7 @@ module Gen.Route exposing
     , toHref
     )
 
+import Gen.Params.Cards
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -15,7 +16,8 @@ import Url.Parser as Parser exposing ((</>), Parser)
 
 
 type Route
-    = Home_
+    = Cards
+    | Home_
     | Login
     | NotFound
     | Register
@@ -31,6 +33,7 @@ fromUrl =
 routes : List (Parser (Route -> a) a)
 routes =
     [ Parser.map Home_ Gen.Params.Home_.parser
+    , Parser.map Cards Gen.Params.Cards.parser
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Register Gen.Params.Register.parser
@@ -47,6 +50,9 @@ toHref route =
             "/" ++ String.join "/" segments
     in
     case route of
+        Cards ->
+            joinAsHref [ "cards" ]
+    
         Home_ ->
             joinAsHref []
     
