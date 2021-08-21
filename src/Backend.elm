@@ -163,12 +163,6 @@ getSessionUser sid model =
 renewSession email sid cid =
     Time.now |> Task.perform (RenewSession email sid cid)
 
-
-
-
-
-
-
 updateUser : UserFull -> Model -> Model
 updateUser user model =
     { model | users = model.users |> Dict.update user.id (Maybe.map (always user)) }
