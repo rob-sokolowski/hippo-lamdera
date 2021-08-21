@@ -17,7 +17,8 @@ import Pages.Profile.Username_
 
 
 type Msg
-    = Home_ Pages.Home_.Msg
+    = Cards Pages.Cards.Msg
+    | Home_ Pages.Home_.Msg
     | Login Pages.Login.Msg
     | Register Pages.Register.Msg
     | Settings Pages.Settings.Msg
