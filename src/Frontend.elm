@@ -35,6 +35,10 @@ app =
 
 -- INIT
 
+initEvergreen : FrontendModel
+initEvergreen =
+    FrontendModel url key shared page
+
 
 init : Url -> Key -> ( Model, Cmd Msg )
 init url key =
