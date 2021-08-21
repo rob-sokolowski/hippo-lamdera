@@ -23,7 +23,7 @@ view options =
                         List.concat
                             [ List.map (viewLink options.currentRoute) <|
                                 [ ( "Home", Route.Home_ )
-                                , ( "New Article", Route.Editor )
+
                                 , ( "Settings", Route.Settings )
                                 ]
                             , [ li [ class "nav-item" ]
