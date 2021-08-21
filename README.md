@@ -1,3 +1,3 @@
 ## hippo-lamdera
 
-Link to demo https://hippo.lamdera.app/register
+Link to demo https://hippo.lamdera.app
