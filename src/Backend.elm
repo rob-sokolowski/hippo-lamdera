@@ -1,7 +1,5 @@
 module Backend exposing (..)
 
-import Api.Article exposing (Article, ArticleStore, Slug)
-import Api.Article.Filters as Filters exposing (Filters(..))
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
 import Api.User exposing (Email, UserFull)
@@ -43,8 +41,7 @@ init : ( Model, Cmd BackendMsg )
 init =
     ( { sessions = Dict.empty
       , users = Dict.empty
-      , articles = Dict.empty
-      , comments = Dict.empty
+      , cards = Dict.empty
       }
     , Cmd.none
     )
@@ -64,35 +61,6 @@ update msg model =
             , Time.now |> Task.perform (always (CheckSession sid cid))
             )
 
-        ArticleCreated t userM clientId article ->
-            case userM of
-                Just user ->
-                    let
-                        article_ =
-                            { slug = uniqueSlug model article.title 1
-                            , title = article.title
-                            , description = article.description
-                            , body = article.body
-                            , tags = article.tags
-                            , createdAt = t
-                            , updatedAt = t
-                            , userId = user.id
-                            }
-
-                        res =
-                            Success <| loadArticleFromStore model userM article_
-                    in
-                    ( { model | articles = model.articles |> Dict.insert article_.slug article_ }
-                    , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle res)))
-                    )
-
-                Nothing ->
-                    ( model
-                    , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle (Failure [ "invalid session" ]))))
-                    )
-
-        
-
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
@@ -105,128 +73,11 @@ updateFromFrontend sessionId clientId msg model =
 
         send_ v =
             sendToFrontend clientId v
-
-        onlyWhenArticleOwner slug fn =
-            onlyWhenArticleOwner_ slug (\r -> ( model, sendToFrontend clientId (fn r) ))
-
-        onlyWhenArticleOwner_ slug fn =
-            let
-                res =
-                    model |> loadArticleBySlug slug sessionId
-
-                userM =
-                    model |> getSessionUser sessionId
-            in
-            fn <|
-                case ( res, userM ) of
-                    ( Success article, Just user ) ->
-                        if article.author.username == user.email then
-                            res
-
-                        else
-                            Failure [ "you do not have permission for this article" ]
-
-                    _ ->
-                        Failure [ "you do not have permission for this article" ]
     in
     case msg of
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
-
-        GetTags_Home_ ->
-            let
-                allTags =
-                    model.articles |> Dict.foldl (\slug article tags -> tags ++ article.tags) [] |> List.unique
-            in
-            send (PageMsg (Gen.Msg.Home_ (Pages.Home_.GotTags (Success allTags))))
-
-        ArticleList_Home_ { filters, page } ->
-            let
-                articleList =
-                    getListing model sessionId filters page
-            in
-            send (PageMsg (Gen.Msg.Home_ (Pages.Home_.GotArticles (Success articleList))))
-
-        ArticleFeed_Home_ { page } ->
-            let
-                userM =
-                    model |> getSessionUser sessionId
-
-                articleList =
-                    case userM of
-                        Just user ->
-                            let
-                          
-                                enriched =
-                                    model.articles |> Dict.map (\slug article -> loadArticleFromStore model userM article)
-
-                                grouped =
-                                    enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
-
-                                articles =
-                                    grouped |> List.getAt (page - 1) |> Maybe.withDefault []
-                            in
-                            { articles = articles
-                            , page = page
-                            , totalPages = grouped |> List.length
-                            }
-
-                        Nothing ->
-                            { articles = [], page = 0, totalPages = 0 }
-            in
-            send (PageMsg (Gen.Msg.Home_ (Pages.Home_.GotArticles (Success articleList))))
-
-        ArticleList_Username_ { filters, page } ->
-            let
-                articleList =
-                    getListing model sessionId filters page
-            in
-            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotArticles (Success articleList))))
-
-        ArticleGet_Editor__ArticleSlug_ { slug } ->
-            onlyWhenArticleOwner slug
-                (\r -> PageMsg (Gen.Msg.Editor__ArticleSlug_ (Pages.Editor.ArticleSlug_.LoadedInitialArticle r)))
-
-        ArticleUpdate_Editor__ArticleSlug_ { slug, updates } ->
-            let
-                articles =
-                    model.articles
-                        |> Dict.update slug
-                            (Maybe.map
-                                (\a -> { a | title = updates.title, body = updates.body, tags = updates.tags })
-                            )
-
-                res =
-                    articles
-                        |> Dict.get slug
-                        |> Maybe.map Success
-                        |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
-                        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sessionId))
-            in
-            ( { model | articles = articles }, send_ (PageMsg (Gen.Msg.Editor__ArticleSlug_ (Pages.Editor.ArticleSlug_.UpdatedArticle res))) )
-
-        ArticleGet_Article__Slug_ { slug } ->
-            let
-                res =
-                    model |> loadArticleBySlug slug sessionId
-            in
-            send (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotArticle res)))
-
-        ArticleCreate_Editor { article } ->
-            let
-                userM =
-                    model |> getSessionUser sessionId
-            in
-            ( model, Time.now |> Task.perform (\t -> ArticleCreated t userM clientId article) )
-
-        ArticleDelete_Article__Slug_ { slug } ->
-            onlyWhenArticleOwner_ slug
-                (\r ->
-                    ( { model | articles = model.articles |> Dict.remove slug }
-                    , send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.DeletedArticle r)))
-                    )
-                )
-
+       
         ProfileGet_Profile__Username_ { username } ->
             let
                 res =
@@ -316,52 +167,6 @@ renewSession email sid cid =
     Time.now |> Task.perform (RenewSession email sid cid)
 
 
-getListing : Model -> SessionId -> Filters -> Int -> Api.Article.Listing
-getListing model sessionId (Filters { tag, author}) page =
-    let
-        filtered =
-            model.articles
-                |> Filters.byTag tag
-                |> Filters.byAuthor author model.users
-
-        enriched =
-            filtered |> Dict.map (\slug article -> loadArticleFromStore model (model |> getSessionUser sessionId) article)
-
-        grouped =
-            enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
-
-        articles =
-            grouped |> List.getAt (page - 1) |> Maybe.withDefault []
-    in
-    { articles = articles
-    , page = page
-    , totalPages = grouped |> List.length
-    }
-
-
-loadArticleBySlug : String -> SessionId -> Model -> Data Article
-loadArticleBySlug slug sid model =
-    model.articles
-        |> Dict.get slug
-        |> Maybe.map Success
-        |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
-        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sid))
-
-
-uniqueSlug : Model -> String -> Int -> String
-uniqueSlug model title i =
-    let
-        slug =
-            title |> String.replace " " "-"
-    in
-    if not (model.articles |> Dict.member slug) then
-        slug
-
-    else if not (model.articles |> Dict.member (slug ++ "-" ++ String.fromInt i)) then
-        slug ++ "-" ++ String.fromInt i
-
-    else
-        uniqueSlug model title (i + 1)
 
 
 
@@ -379,23 +184,3 @@ profileByUsername username model =
 profileByEmail email model =
     model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
 
-
-loadArticleFromStore : Model -> Maybe UserFull -> ArticleStore -> Article
-loadArticleFromStore model userM store =
-    let
-
-        author =
-            model.users
-                |> Dict.get store.userId
-                |> Maybe.map Api.User.toProfile
-                |> Maybe.withDefault { username = "error: unknown user", bio = Nothing, image = "", following = False }
-    in
-    { slug = store.slug
-    , title = store.title
-    , description = store.description
-    , body = store.body
-    , tags = store.tags
-    , createdAt = store.createdAt
-    , updatedAt = store.updatedAt
-    , author = author
-    }

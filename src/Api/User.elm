@@ -6,7 +6,6 @@ module Api.User exposing (..)
 
 -}
 
-import Api.Article exposing (Slug)
 import Api.Profile exposing (Profile)
 
 
