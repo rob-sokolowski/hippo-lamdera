@@ -13,7 +13,7 @@ frontendModel old =
 
 backendModel : Old.BackendModel -> ModelMigration New.BackendModel New.BackendMsg
 backendModel old =
-    ModelMigrated Backend.init
+    ModelMigrated (Backend.init, Cmd.none)
 
 
 frontendMsg : Old.FrontendMsg -> MsgMigration New.FrontendMsg New.FrontendMsg
