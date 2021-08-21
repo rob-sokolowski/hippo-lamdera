@@ -1,6 +1,5 @@
 module Types exposing (..)
 
-import Api.Article.Comment exposing (Comment)
 import Api.User exposing (User, UserFull, UserId)
 import Bridge
 import Api.Card exposing (FlashCard, CardId)

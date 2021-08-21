@@ -64,26 +64,9 @@ type alias Tag =
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
 update shared msg model =
     case msg of
-        SelectedTab tab ->
-            let
-                newModel : Model
-                newModel =
-                    { model
-                        | activeTab = tab
-                        , page = 1
-                    }
-            in
-            ( newModel
-            , Cmd.none
-            )
-
-        ClickedPage page_ ->
-        -- TODO: weird
-            ( model
-            , Cmd.none
-            )
-
-
+       Noop ->
+            (model, Cmd.none)
+            
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
