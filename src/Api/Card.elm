@@ -1,5 +1,7 @@
-module Api.Card exposing (..)
+module Api.Card exposing (FlashCard, CardId)
 
+
+type alias CardId = Int
 type FlashCard =
     PlainText PlainTextCard
 

@@ -1,12 +1,9 @@
 module Pages.Profile.Username_ exposing (Model, Msg(..), page)
 
-import Api.Article exposing (Article)
-import Api.Article.Filters as Filters
 import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
 import Api.User exposing (User)
 import Bridge exposing (..)
-import Components.ArticleList
 import Components.IconButton as IconButton
 import Components.NotFound
 import Gen.Params.Profile.Username_ exposing (Params)
@@ -37,7 +34,6 @@ page shared req =
 type alias Model =
     { username : String
     , profile : Data Profile
-    , listing : Data Api.Article.Listing
     , selectedTab : Tab
     , page : Int
     }
@@ -52,7 +48,6 @@ init : Shared.Model -> Request.With Params -> ( Model, Cmd Msg )
 init shared { params } =
     ( { username = params.username
       , profile = Api.Data.Loading
-      , listing = Api.Data.Loading
       , selectedTab = MyArticles
       , page = 1
       }
@@ -61,28 +56,14 @@ init shared { params } =
             { username = params.username
             }
             |> sendToBackend
-        , fetchArticlesBy params.username 1
         ]
     )
 
 
-fetchArticlesBy : String -> Int -> Cmd Msg
-fetchArticlesBy username page_ =
-    ArticleList_Username_
-        { page = page_
-        , filters = Filters.create |> Filters.withAuthor username
-        }
-        |> sendToBackend
 
 
-fetchArticlesFavoritedBy : String -> Int -> Cmd Msg
-fetchArticlesFavoritedBy username page_ =
-    ArticleList_Username_
-        { page = page_
-        , filters =
-            Filters.create |> Filters.favoritedBy username
-        }
-        |> sendToBackend
+
+
 
 
 
@@ -91,10 +72,7 @@ fetchArticlesFavoritedBy username page_ =
 
 type Msg
     = GotProfile (Data Profile)
-    | GotArticles (Data Api.Article.Listing)
-    | Clicked Tab
-    | UpdatedArticle (Data Article)
-    | ClickedPage Int
+
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
@@ -104,62 +82,6 @@ update shared msg model =
             ( { model | profile = profile }
             , Cmd.none
             )
-
-
-        GotArticles listing ->
-            ( { model | listing = listing }
-            , Cmd.none
-            )
-
-        Clicked MyArticles ->
-            ( { model
-                | selectedTab = MyArticles
-                , listing = Api.Data.Loading
-                , page = 1
-              }
-            , fetchArticlesBy model.username 1
-            )
-
-        Clicked FavoritedArticles ->
-            ( { model
-                | selectedTab = FavoritedArticles
-                , listing = Api.Data.Loading
-                , page = 1
-              }
-            , fetchArticlesFavoritedBy model.username 1
-            )
-
-        ClickedPage page_ ->
-            let
-                fetch : String -> Int -> Cmd Msg
-                fetch =
-                    case model.selectedTab of
-                        MyArticles ->
-                            fetchArticlesBy
-
-                        FavoritedArticles ->
-                            fetchArticlesFavoritedBy
-            in
-            ( { model
-                | listing = Api.Data.Loading
-                , page = page_
-              }
-            , fetch
-                model.username
-                page_
-            )
-
-        UpdatedArticle (Api.Data.Success article) ->
-            ( { model
-                | listing =
-                    Api.Data.map (Api.Article.updateArticle article)
-                        model.listing
-              }
-            , Cmd.none
-            )
-
-        UpdatedArticle _ ->
-            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -189,65 +111,7 @@ view shared model =
 
 viewProfile : Shared.Model -> Profile -> Model -> Html Msg
 viewProfile shared profile model =
-    let
-        isViewingOwnProfile : Bool
-        isViewingOwnProfile =
-            Maybe.map .username shared.user == Just profile.username
-
-        viewUserInfo : Html Msg
-        viewUserInfo =
-            div [ class "user-info" ]
-                [ div [ class "container" ]
-                    [ div [ class "row" ]
-                        [ div [ class "col-xs-12 col-md-10 offset-md-1" ]
-                            [ img [ class "user-img", src profile.image ] []
-                            , h4 [] [ text profile.username ]
-                            , Utils.Maybe.view profile.bio
-                                (\bio -> p [] [ text bio ])
-
-                            ]
-                        ]
-                    ]
-                ]
-
-        viewTabRow : Html Msg
-        viewTabRow =
-            div [ class "articles-toggle" ]
-                [ ul [ class "nav nav-pills outline-active" ]
-                    (List.map viewTab [ MyArticles, FavoritedArticles ])
-                ]
-
-        viewTab : Tab -> Html Msg
-        viewTab tab =
-            li [ class "nav-item" ]
-                [ button
-                    [ class "nav-link"
-                    , Events.onClick (Clicked tab)
-                    , classList [ ( "active", tab == model.selectedTab ) ]
-                    ]
-                    [ text
-                        (case tab of
-                            MyArticles ->
-                                "My Articles"
-
-                            FavoritedArticles ->
-                                "Favorited Articles"
-                        )
-                    ]
-                ]
-    in
     div [ class "profile-page" ]
-        [ viewUserInfo
-        , div [ class "container" ]
-            [ div [ class "row" ]
-                [ div [ class "col-xs-12 col-md-10 offset-md-1" ]
-                    (viewTabRow
-                        :: Components.ArticleList.view
-                            { user = shared.user
-                            , articleListing = model.listing
-                            , onPageClick = ClickedPage
-                            }
-                    )
-                ]
-            ]
+        [ 
+        -- cool
         ]
