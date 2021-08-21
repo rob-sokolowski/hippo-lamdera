@@ -1,4 +1,4 @@
-module Api.Card exposing (FlashCard, CardId)
+module Api.Card exposing (FlashCard, CardId, PromptFrequency(..), Grade, PlainTextCard)
 
 
 type alias CardId = Int

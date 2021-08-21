@@ -7,11 +7,14 @@ import Element.Input as Input exposing (..)
 import Element.Background as Background exposing (..)
 import Element.Border as Border exposing (..)
 import Element.Font as Font exposing (..)
+import Request exposing (Request)
 import View exposing (View)
 import Html exposing (Html)
-import Api.Card exposing (FlashCard(..))
-import Evergreen.V3.Api.Card exposing (PlainTextCard)
-
+import Api.Card exposing (FlashCard(..), PromptFrequency(..), PlainTextCard)
+import Api.User exposing (User)
+import Api.Data exposing (Data)
+import Page
+import Shared
 
 type Form = 
     PlainTextCardForm PlainTextCard 
@@ -26,11 +29,38 @@ type Msg
     = Update Form
 
 
-view : Model ->  { title : String, body : List (Html Msg) }
-view model =
+page : Shared.Model -> Request -> Page.With Model Msg
+page shared req =
+    Page.protected.element <|
+        \user ->
+            { init = init shared
+            , update = update req
+            , subscriptions = subscriptions
+            , view = view user
+            }
+
+init : Shared.Model -> ( Model, Cmd Msg )
+init shared =
+    ( { form = PlainTextCardForm (PlainTextCard "" "" Immediately)
+        
+      }
+    , Cmd.none
+    )
+
+view : User -> Model -> View Msg
+view user model =
     { title = "Title string for cards"
     , body = [layout [] <| viewElements model]    }
 
+
+update : Request -> Msg -> Model -> ( Model, Cmd Msg)
+update req msg model =
+    case msg of
+        Update form ->
+            (model, Cmd.none)
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
 
 viewElements : Model -> Element Msg
 viewElements model =
@@ -41,8 +71,6 @@ viewElements model =
     case model.form of
         PlainTextCardForm plainTextcard ->
              el [] (viewPlainTextCardForm plainTextcard)
-
-
 
 
 viewPlainTextCardForm : PlainTextCard -> Element Msg
