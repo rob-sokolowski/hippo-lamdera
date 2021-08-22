@@ -11,6 +11,7 @@ import Lamdera exposing (..)
 import List.Extra as List
 import Pages.Home_
 import Pages.Login
+import Pages.Cards
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
@@ -18,6 +19,7 @@ import Task
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
+import Api.Card exposing (CardId)
 
 
 type alias Model =
@@ -149,6 +151,14 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( model_, send_ (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser res))) )
 
+        CreateCard_Cards flashCard ->
+            let
+                cardId : CardId
+                cardId = (Dict.size model.cards) + 1
+                cards_ = Dict.insert cardId flashCard model.cards
+            in
+            ({model | cards = cards_}, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))))
+
         NoOpToBackend ->
             ( model, Cmd.none )
 
@@ -162,6 +172,7 @@ getSessionUser sid model =
 
 renewSession email sid cid =
     Time.now |> Task.perform (RenewSession email sid cid)
+
 
 updateUser : UserFull -> Model -> Model
 updateUser user model =

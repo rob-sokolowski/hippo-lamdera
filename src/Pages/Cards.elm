@@ -1,4 +1,4 @@
-module Pages.Cards exposing (Model, Msg, page)
+module Pages.Cards exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Gen.Params.Cards exposing (Params)
@@ -16,9 +16,9 @@ import Element.Font as Font exposing (..)
 import Request exposing (Request)
 import View exposing (View)
 import Html exposing (Html)
-import Api.Card exposing (FlashCard(..), PromptFrequency(..), PlainTextCard)
+import Api.Card exposing (FlashCard(..), PromptFrequency(..), PlainTextCard, CardId)
 import Api.User exposing (User)
-import Api.Data exposing (Data)
+import Api.Data exposing (Data(..))
 import Page
 import Debug exposing (..)
 import Shared
@@ -48,6 +48,7 @@ type alias Model =
     {
         selectedType : FormType
         , card : FlashCard
+        , cardSubmitStatus : Data CardId
     }
 
 
@@ -55,6 +56,7 @@ type Msg
     = Updated PlainTextCard PlainTextCardFormField String
     | SelectedFormType FormType
     | Submitted FlashCard
+    | GotCard (Data CardId)
 
 
 type PlainTextCardFormField
@@ -67,6 +69,7 @@ init : ( Model, Effect Msg )
 init =
     ( { selectedType = PlainTextCardType
         , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
+        , cardSubmitStatus = NotAsked
       }
     , Effect.none
     )
@@ -92,11 +95,23 @@ update msg model =
                             newCard = {card | answer = val}
                         in
                         ({ model | card = FlashCardPlainText newCard}, Effect.none)
+
         SelectedFormType newSelection ->
             ({model | selectedType = newSelection}, Effect.none)
-        Submitted newCard ->
-            (model, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
 
+        Submitted newCard ->
+            ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
+        
+        GotCard data ->
+            case data of
+                NotAsked ->
+                    ({model | cardSubmitStatus = NotAsked}, Effect.none)
+                Loading ->
+                    ({model | cardSubmitStatus = NotAsked}, Effect.none)
+                Failure errors ->
+                    ({model | cardSubmitStatus = Failure errors}, Effect.none)
+                Success cardId ->
+                    ({model | cardSubmitStatus = Success cardId}, Effect.none)
 
 
 -- SUBSCRIPTIONS
@@ -107,25 +122,42 @@ subscriptions model =
     Sub.none
 
 
-
 -- VIEW
 
 -- TODO: see above tree for this: view : User -> Model -> View Msg for auth?
 view : Model -> View Msg
 view model =
     { title = "Title string for cards"
-    , body = [layout [] <| viewElements model]    }
+    , body = [layout [] <| viewElements model]
+    }
 
 
 viewElements : Model -> Element Msg
 viewElements model =
-    let
-        formWrapper =  Element.column [centerX, padding 10, spacing 10] [Element.text "Hello!!!!"]
-    in
+    Element.column [centerX] [
+        viewCardForm model
+        , viewCardSubmitStatus model
+    ]
 
+
+viewCardForm : Model -> Element Msg
+viewCardForm model =
     case model.card of
         FlashCardPlainText card ->
-             el [centerX] (viewPlainTextCardForm (card, model.selectedType) )
+             el [] (viewPlainTextCardForm (card, model.selectedType) )
+
+viewCardSubmitStatus : Model -> Element Msg
+viewCardSubmitStatus model =
+    case model.cardSubmitStatus of
+        NotAsked ->
+            Element.none
+        Loading ->
+            Element.text "Loading.."
+        Failure errors ->
+            Element.text "Error"
+
+        Success cardId ->
+            Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
 
 
 viewPlainTextCardForm : (PlainTextCard, FormType) -> Element Msg
@@ -192,7 +224,7 @@ viewPlainTextCardForm (card, selectedFormType) =
                 , Border.rounded 3
                 , Element.width fill
                 ]
-                { onPress = Nothing
+                { onPress = Just <| Submitted (FlashCardPlainText card)
                 , label = Element.text "Save card!"
                 }
 
