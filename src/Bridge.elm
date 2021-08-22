@@ -25,4 +25,5 @@ type ToBackend
             }
         }
     | CreateCard_Cards FlashCard
+    | FetchAllCards
     | NoOpToBackend

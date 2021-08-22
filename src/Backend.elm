@@ -2,10 +2,11 @@ module Backend exposing (..)
 
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
-import Api.User exposing (Email, UserFull)
+import Api.User exposing (Email, UserFull, UserId)
 import Bridge exposing (..)
 import Dict
 import Dict.Extra as Dict
+import Duration exposing (Duration)
 import Gen.Msg
 import Lamdera exposing (..)
 import List.Extra as List
@@ -15,11 +16,13 @@ import Pages.Cards
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
-import Task
+import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
 import Api.Card exposing (CardId)
+import Api.Card exposing (FlashCard)
+import Api.Card exposing (CardEnvelope)
 
 
 type alias Model =
@@ -32,15 +35,23 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \m -> onConnect CheckSession
+        , subscriptions = subscriptions
         }
 
+
+subscriptions : Model -> Sub BackendMsg
+subscriptions model =
+    Sub.batch [
+        onConnect CheckSession
+        , Time.every 1000 Tick
+    ]
 
 init : ( Model, Cmd BackendMsg )
 init =
     ( { sessions = Dict.empty
       , users = Dict.empty
       , cards = Dict.empty
+      , now = Time.millisToPosix 0 -- Setting this to 0 here is a bit of a hack, but the server's init basically never runs after launch, so this'll do
       }
     , Cmd.none
     )
@@ -59,6 +70,10 @@ update msg model =
             ( { model | sessions = model.sessions |> Dict.update sid (always (Just { userId = uid, expires = now |> Time.add Time.Day 30 Time.utc })) }
             , Time.now |> Task.perform (always (CheckSession sid cid))
             )
+        
+       
+        Tick time ->
+            ({model | now = time}, Cmd.none)
 
         NoOpBackendMsg ->
             ( model, Cmd.none )
@@ -84,7 +99,7 @@ updateFromFrontend sessionId clientId msg model =
                         |> Maybe.map Success
                         |> Maybe.withDefault (Failure [ "user not found" ])
             in
-            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res)))
+            send <| PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res))
 
 
         UserAuthentication_Login { params } ->
@@ -153,15 +168,31 @@ updateFromFrontend sessionId clientId msg model =
 
         CreateCard_Cards flashCard ->
             let
-                cardId : CardId
                 cardId = (Dict.size model.cards) + 1
-                cards_ = Dict.insert cardId flashCard model.cards
+                userId = 123 -- TODO: place holder until I do auth stuff
+
+                envelope =
+                    {
+                        id = cardId
+                        , card = flashCard
+                        , userId = userId
+                        , createdAt = model.now
+                        , lastModifiedOn = model.now
+                    } 
+                cards_ = Dict.insert cardId envelope model.cards
             in
+
             ({model | cards = cards_}, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))))
+
+        FetchAllCards ->
+            let
+                cards = Dict.values model.cards
+            in
+            (model, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCards <| Success cards))))
+
 
         NoOpToBackend ->
             ( model, Cmd.none )
-
 
 getSessionUser : SessionId -> Model -> Maybe UserFull
 getSessionUser sid model =

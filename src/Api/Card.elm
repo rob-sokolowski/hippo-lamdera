@@ -1,4 +1,6 @@
-module Api.Card exposing (FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard)
+module Api.Card exposing (CardEnvelope, FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard)
+import Api.User exposing (UserId)
+import Time
 
 
 type alias CardId = Int
@@ -6,6 +8,17 @@ type alias CardId = Int
 
 type FlashCard =
     FlashCardPlainText PlainTextCard
+
+
+
+type alias CardEnvelope = 
+    {
+        id : CardId
+        , card : FlashCard
+        , userId : UserId
+        , createdAt : Time.Posix
+        , lastModifiedOn : Time.Posix
+    }
 
 
 type alias PlainTextCard =

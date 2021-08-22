@@ -25,6 +25,8 @@ import Shared
 import Bridge exposing (ToBackend(..))
 import Pages.Settings exposing (Msg(..))
 import Lamdera
+import Api.Card exposing (CardEnvelope)
+import Browser.Dom exposing (Element)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -49,6 +51,7 @@ type alias Model =
         selectedType : FormType
         , card : FlashCard
         , cardSubmitStatus : Data CardId
+        , cardsFetchStatus : Data (List CardEnvelope)
     }
 
 
@@ -56,7 +59,9 @@ type Msg
     = Updated PlainTextCard PlainTextCardFormField String
     | SelectedFormType FormType
     | Submitted FlashCard
+    | ClickedFetchCards
     | GotCard (Data CardId)
+    | GotCards (Data (List CardEnvelope))
 
 
 type PlainTextCardFormField
@@ -70,6 +75,7 @@ init =
     ( { selectedType = PlainTextCardType
         , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
         , cardSubmitStatus = NotAsked
+        , cardsFetchStatus = NotAsked
       }
     , Effect.none
     )
@@ -102,6 +108,9 @@ update msg model =
         Submitted newCard ->
             ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
         
+        ClickedFetchCards ->
+            ({model | cardsFetchStatus = Loading}, Effect.fromCmd <| (FetchAllCards |> Lamdera.sendToBackend))
+        
         GotCard data ->
             case data of
                 NotAsked ->
@@ -112,6 +121,17 @@ update msg model =
                     ({model | cardSubmitStatus = Failure errors}, Effect.none)
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
+        
+        GotCards data ->
+            case data of
+                NotAsked ->
+                    ({model | cardsFetchStatus = NotAsked}, Effect.none)
+                Loading ->
+                    ({model | cardsFetchStatus = Loading}, Effect.none)
+                Failure errors ->
+                    ({model | cardsFetchStatus = Failure errors}, Effect.none)
+                Success cards ->
+                    ({model | cardsFetchStatus = Success cards}, Effect.none)
 
 
 -- SUBSCRIPTIONS
@@ -228,8 +248,25 @@ viewPlainTextCardForm (card, selectedFormType) =
                 , label = Element.text "Save card!"
                 }
 
+            , Input.button
+                [ Background.color blue
+                , Font.color white
+                , Border.color darkBlue
+                , paddingXY 32 16
+                , Border.rounded 3
+                , Element.width fill
+                ]
+                { onPress = Just ClickedFetchCards
+                , label = Element.text "Fetch all cards"
+                }
             ]
 
+
+-- viewCard : CardEnvelope -> Element Msg
+-- viewCard card =
+--     Element.column [] [
+        
+--     ]
 
 
 -- color defs
