@@ -3,6 +3,7 @@ module Gen.Pages exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation exposing (Key)
 import Effect exposing (Effect)
 import ElmSpa.Page
+import Gen.Params.Cards
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -13,6 +14,7 @@ import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
 import Page exposing (Page)
+import Pages.Cards
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
@@ -37,6 +39,9 @@ type alias Msg =
 init : Route -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
 init route =
     case route of
+        Route.Cards ->
+            pages.cards.init ()
+    
         Route.Home_ ->
             pages.home_.init ()
     
@@ -59,6 +64,9 @@ init route =
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
 update msg_ model_ =
     case ( msg_, model_ ) of
+        ( Msg.Cards msg, Model.Cards params model ) ->
+            pages.cards.update params msg model
+    
         ( Msg.Home_ msg, Model.Home_ params model ) ->
             pages.home_.update params msg model
     
@@ -83,6 +91,9 @@ view model_ =
     case model_ of
         Model.Redirecting_ ->
             \_ _ _ -> View.none
+    
+        Model.Cards params model ->
+            pages.cards.view params model
     
         Model.Home_ params model ->
             pages.home_.view params model
@@ -109,6 +120,9 @@ subscriptions model_ =
         Model.Redirecting_ ->
             \_ _ _ -> Sub.none
     
+        Model.Cards params model ->
+            pages.cards.subscriptions params model
+    
         Model.Home_ params model ->
             pages.home_.subscriptions params model
     
@@ -133,7 +147,8 @@ subscriptions model_ =
 
 
 pages :
-    { home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
+    { cards : Bundle Gen.Params.Cards.Params Pages.Cards.Model Pages.Cards.Msg
+    , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Static Gen.Params.NotFound.Params
     , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
@@ -141,7 +156,8 @@ pages :
     , profile__username_ : Bundle Gen.Params.Profile.Username_.Params Pages.Profile.Username_.Model Pages.Profile.Username_.Msg
     }
 pages =
-    { home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
+    { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
+    , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = static Pages.NotFound.view Model.NotFound
     , register = bundle Pages.Register.page Model.Register Msg.Register
