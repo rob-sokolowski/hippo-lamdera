@@ -156,6 +156,7 @@ viewElements model =
     Element.column [centerX] [
         viewCardForm model
         , viewCardSubmitStatus model
+        , viewCards model.cardsFetchStatus
     ]
 
 
@@ -177,6 +178,35 @@ viewCardSubmitStatus model =
 
         Success cardId ->
             Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
+
+viewCards : Data (List CardEnvelope) -> Element Msg
+viewCards data =
+    case data of
+        NotAsked ->
+            Element.none
+
+        Loading ->
+            Element.text "Loading.."
+
+        Failure errors ->
+            Element.text "Error"
+
+        Success cards ->
+            -- Element.text "success"
+            let
+                len = List.length cards
+            in
+            Element.column [] <| ( List.map viewCard cards ++ [Element.text <| "There are " ++ String.fromInt len ++ " cards"])
+
+
+viewCard : CardEnvelope -> Element Msg
+viewCard cardEnv =
+    case cardEnv.card of
+        FlashCardPlainText plainTextCard ->
+            Element.column [padding 10, spacing 10] [
+                Element.text plainTextCard.question
+                , Element.text plainTextCard.answer
+            ]
 
 
 viewPlainTextCardForm : (PlainTextCard, FormType) -> Element Msg
