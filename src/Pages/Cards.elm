@@ -26,7 +26,6 @@ import Bridge exposing (ToBackend(..))
 import Pages.Settings exposing (Msg(..))
 import Lamdera
 import Api.Card exposing (CardEnvelope)
-import Browser.Dom exposing (Element)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -116,7 +115,7 @@ update msg model =
                 NotAsked ->
                     ({model | cardSubmitStatus = NotAsked}, Effect.none)
                 Loading ->
-                    ({model | cardSubmitStatus = NotAsked}, Effect.none)
+                    ({model | cardSubmitStatus = Loading}, Effect.none)
                 Failure errors ->
                     ({model | cardSubmitStatus = Failure errors}, Effect.none)
                 Success cardId ->
