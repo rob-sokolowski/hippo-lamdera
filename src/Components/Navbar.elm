@@ -25,6 +25,7 @@ view options =
                                 [ ( "Home", Route.Home_ )
 
                                 , ( "Settings", Route.Settings )
+                                , ( "Study", Route.Study )
                                 ]
                             , [ li [ class "nav-item" ]
                                     [ a

@@ -2,6 +2,7 @@ module Pages.Study exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Gen.Params.Study exposing (Params)
+import Api.User exposing (User)
 import Page
 import Request
 import Shared
@@ -10,15 +11,15 @@ import Page
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
-page shared req =
-    Page.advanced
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }
-
-
+page shared _ =
+    Page.protected.advanced
+        (\user ->
+            { init = init shared
+            , update = update
+            , subscriptions = subscriptions
+            , view = view user
+            }
+        )
 
 -- INIT
 
@@ -27,8 +28,8 @@ type alias Model =
     {}
 
 
-init : ( Model, Effect Msg )
-init =
+init : Shared.Model -> ( Model, Effect Msg )
+init _ =
     ( {}, Effect.none )
 
 
@@ -60,6 +61,6 @@ subscriptions model =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : User -> Model -> View Msg
+view _ model =
     View.placeholder "Study"
