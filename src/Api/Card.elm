@@ -1,17 +1,20 @@
-module Api.Card exposing (FlashCard, CardId, PromptFrequency(..), Grade, PlainTextCard)
+module Api.Card exposing (FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard)
 
 
 type alias CardId = Int
+
+
 type FlashCard =
-    PlainText PlainTextCard
+    FlashCardPlainText PlainTextCard
 
 
 type alias PlainTextCard =
     {
-        question: String
-        , answer: String
+        question : String
+        , answer : String
         , frequency : PromptFrequency
     }
+
 
 type Grade =
     Correct

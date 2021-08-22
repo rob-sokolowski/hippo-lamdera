@@ -22,6 +22,9 @@ import Api.Data exposing (Data)
 import Page
 import Debug exposing (..)
 import Shared
+import Bridge exposing (ToBackend(..))
+import Pages.Settings exposing (Msg(..))
+import Lamdera
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -38,35 +41,32 @@ page shared req =
 
 -- INIT
 
-type Form = 
-    PlainTextCardForm PlainTextCard 
-
-
 type FormType = 
     PlainTextCardType 
 
 type alias Model =
     {
         selectedType : FormType
-        , form : Form
+        , card : FlashCard
     }
 
 
 type Msg
-    = Updated PlainTextCardFormField String
+    = Updated PlainTextCard PlainTextCardFormField String
     | SelectedFormType FormType
+    | Submitted FlashCard
 
 
 type PlainTextCardFormField
     = QuestionField
-    -- | AnswerField
+    | AnswerField
 
 
 
 init : ( Model, Effect Msg )
 init =
-    ( { form = PlainTextCardForm (PlainTextCard "" "" Immediately)
-        , selectedType = PlainTextCardType
+    ( { selectedType = PlainTextCardType
+        , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
       }
     , Effect.none
     )
@@ -80,18 +80,22 @@ init =
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Updated field val ->
-            case field of
-                QuestionField ->
-                    let
-                        newForm: Form
-                        newForm = case model.form of
-                            PlainTextCardForm card ->
-                                PlainTextCardForm (PlainTextCard val card.answer card.frequency)
-                    in
-                    ({ model | form = newForm}, Effect.none)
+        Updated card field val ->
+                case field of
+                    QuestionField ->
+                        let
+                            newCard = {card | question = val}
+                        in
+                        ({ model | card = FlashCardPlainText newCard}, Effect.none)
+                    AnswerField ->
+                        let                        
+                            newCard = {card | answer = val}
+                        in
+                        ({ model | card = FlashCardPlainText newCard}, Effect.none)
         SelectedFormType newSelection ->
             ({model | selectedType = newSelection}, Effect.none)
+        Submitted newCard ->
+            (model, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
 
 
 
@@ -119,9 +123,9 @@ viewElements model =
         formWrapper =  Element.column [centerX, padding 10, spacing 10] [Element.text "Hello!!!!"]
     in
 
-    case model.form of
-        PlainTextCardForm plainTextcard ->
-             el [] (viewPlainTextCardForm (plainTextcard, model.selectedType) )
+    case model.card of
+        FlashCardPlainText card ->
+             el [centerX] (viewPlainTextCardForm (card, model.selectedType) )
 
 
 viewPlainTextCardForm : (PlainTextCard, FormType) -> Element Msg
@@ -130,23 +134,20 @@ viewPlainTextCardForm (card, selectedFormType) =
         update_ : String -> PlainTextCard
         update_ updatedInput =
             { card | question = updatedInput}
-        
     in
     Element.column
             [ Element.width (px 800)
             , height shrink
-            , centerY
-            , centerX
             , spacing 36
             , padding 10
             ]
             [ el
                 [ 
-                    -- Region.heading 1
-                -- , Element.alignLeft
-                -- , Font.size 36
+                    Region.heading 1
+                , Element.alignLeft
+                , Font.size 36
                 ]
-                (Element.text "Welcome to the Stylish Elephants Lunch Emporium")
+                (Element.text "Welcome to the new card editor!")
             , Input.radio
                 [ spacing 12
                 , Background.color grey
@@ -158,9 +159,30 @@ viewPlainTextCardForm (card, selectedFormType) =
                     [ Input.option PlainTextCardType (Element.text "Plain text card")
                     ]
                 }
+            , Input.multiline
+                [ height shrink
+                , spacing 12
 
+                , padding 6
+                ]
+                { text = card.question
+                , placeholder = Nothing
+                , onChange = Updated card QuestionField
+                , label = Input.labelAbove [ Font.size 14 ] (Element.text "Flash card prompt")
+                , spellcheck = True
+                }
 
-            
+            , Input.multiline
+                [ height shrink
+                , spacing 12
+                , padding 6
+                ]
+                { text = card.answer
+                , placeholder = Nothing
+                , onChange = Updated card AnswerField
+                , label = Input.labelAbove [ Font.size 14 ] (Element.text "Answer prompt:")
+                , spellcheck = True
+                }
             
             , Input.button
                 [ Background.color blue
@@ -171,20 +193,9 @@ viewPlainTextCardForm (card, selectedFormType) =
                 , Element.width fill
                 ]
                 { onPress = Nothing
-                , label = Element.text "Place your lunch order!"
+                , label = Element.text "Save card!"
                 }
-            , Input.multiline
-                [ height shrink
-                , spacing 12
 
-                -- , padding 6
-                ]
-                { text = card.question
-                , placeholder = Nothing
-                , onChange = Updated QuestionField
-                , label = Input.labelAbove [ Font.size 14 ] (Element.text "Leave a comment!")
-                , spellcheck = False
-                }
             ]
 
 
@@ -199,7 +210,7 @@ grey =
 
 
 blue =
-    Element.rgb 0 0 0.8
+    Element.rgb 0 0.4 0.7
 
 
 red =
@@ -207,4 +218,4 @@ red =
 
 
 darkBlue =
-    Element.rgb 0 0 0.9
+    Element.rgb 0 0 0.8
