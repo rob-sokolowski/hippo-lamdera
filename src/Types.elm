@@ -2,7 +2,7 @@ module Types exposing (..)
 
 import Api.User exposing (User, UserFull, UserId)
 import Bridge
-import Api.Card exposing (FlashCard, CardId)
+import Api.Card exposing (FlashCard, CardId, CardEnvelope)
 import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
@@ -35,7 +35,8 @@ type FrontendMsg
 type alias BackendModel =
     { sessions : Dict SessionId Session
     , users : Dict Int UserFull
-    , cards : Dict CardId FlashCard
+    , cards : Dict CardId CardEnvelope
+    , now : Time.Posix
     }
 
 
@@ -47,6 +48,7 @@ type BackendMsg
     = CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | NoOpBackendMsg
+    | Tick Time.Posix
 
 
 type ToFrontend

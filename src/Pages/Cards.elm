@@ -17,7 +17,7 @@ import Request exposing (Request)
 import View exposing (View)
 import Html exposing (Html)
 import Api.Card exposing (FlashCard(..), PromptFrequency(..), PlainTextCard, CardId)
-import Api.User exposing (User)
+import Api.User exposing (User, UserId)
 import Api.Data exposing (Data(..))
 import Page
 import Debug exposing (..)
@@ -25,17 +25,19 @@ import Shared
 import Bridge exposing (ToBackend(..))
 import Pages.Settings exposing (Msg(..))
 import Lamdera
+import Api.Card exposing (CardEnvelope)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
--- protected user eventually goes here?? https://raw.githubusercontent.com/rob-sokolowski-git-org/hippo-lamdera/5a2af06c72117101d121806ec1ecdb0700450e58/src/Pages/Cards.elm
-    Page.advanced
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }
+    Page.protected.advanced
+        (\user ->
+            { init = init user
+            , update = update
+            , subscriptions = subscriptions
+            , view = view user
+            }
+        )
 
 
 
@@ -49,13 +51,14 @@ type alias Model =
         selectedType : FormType
         , card : FlashCard
         , cardSubmitStatus : Data CardId
+        , user : User
     }
 
 
 type Msg
     = Updated PlainTextCard PlainTextCardFormField String
     | SelectedFormType FormType
-    | Submitted FlashCard
+    | Submitted FlashCard UserId
     | GotCard (Data CardId)
 
 
@@ -65,11 +68,12 @@ type PlainTextCardFormField
 
 
 
-init : ( Model, Effect Msg )
-init =
+init : User -> ( Model, Effect Msg )
+init user =
     ( { selectedType = PlainTextCardType
         , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
         , cardSubmitStatus = NotAsked
+        , user = user
       }
     , Effect.none
     )
@@ -99,19 +103,20 @@ update msg model =
         SelectedFormType newSelection ->
             ({model | selectedType = newSelection}, Effect.none)
 
-        Submitted newCard ->
-            ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
-        
+        Submitted newCard userId ->
+            ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard userId |> Lamdera.sendToBackend))
+
         GotCard data ->
             case data of
                 NotAsked ->
                     ({model | cardSubmitStatus = NotAsked}, Effect.none)
                 Loading ->
-                    ({model | cardSubmitStatus = NotAsked}, Effect.none)
+                    ({model | cardSubmitStatus = Loading}, Effect.none)
                 Failure errors ->
                     ({model | cardSubmitStatus = Failure errors}, Effect.none)
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
+
 
 
 -- SUBSCRIPTIONS
@@ -123,10 +128,8 @@ subscriptions model =
 
 
 -- VIEW
-
--- TODO: see above tree for this: view : User -> Model -> View Msg for auth?
-view : Model -> View Msg
-view model =
+view : User -> Model -> View Msg
+view _ model =
     { title = "Title string for cards"
     , body = [layout [] <| viewElements model]
     }
@@ -144,7 +147,7 @@ viewCardForm : Model -> Element Msg
 viewCardForm model =
     case model.card of
         FlashCardPlainText card ->
-             el [] (viewPlainTextCardForm (card, model.selectedType) )
+             el [] (viewPlainTextCardForm (card, model.selectedType) model.user.id )
 
 viewCardSubmitStatus : Model -> Element Msg
 viewCardSubmitStatus model =
@@ -160,8 +163,9 @@ viewCardSubmitStatus model =
             Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
 
 
-viewPlainTextCardForm : (PlainTextCard, FormType) -> Element Msg
-viewPlainTextCardForm (card, selectedFormType) =
+
+viewPlainTextCardForm : (PlainTextCard, FormType) -> UserId -> Element Msg
+viewPlainTextCardForm (card, selectedFormType) userId =
     let
         update_ : String -> PlainTextCard
         update_ updatedInput =
@@ -224,12 +228,17 @@ viewPlainTextCardForm (card, selectedFormType) =
                 , Border.rounded 3
                 , Element.width fill
                 ]
-                { onPress = Just <| Submitted (FlashCardPlainText card)
+                { onPress = Just <| Submitted (FlashCardPlainText card) userId
                 , label = Element.text "Save card!"
                 }
-
             ]
 
+
+-- viewCard : CardEnvelope -> Element Msg
+-- viewCard card =
+--     Element.column [] [
+        
+--     ]
 
 
 -- color defs
