@@ -17,7 +17,7 @@ import Request exposing (Request)
 import View exposing (View)
 import Html exposing (Html)
 import Api.Card exposing (FlashCard(..), PromptFrequency(..), PlainTextCard, CardId)
-import Api.User exposing (User)
+import Api.User exposing (User, UserId)
 import Api.Data exposing (Data(..))
 import Page
 import Debug exposing (..)
@@ -30,13 +30,14 @@ import Api.Card exposing (CardEnvelope)
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
--- protected user eventually goes here?? https://raw.githubusercontent.com/rob-sokolowski-git-org/hippo-lamdera/5a2af06c72117101d121806ec1ecdb0700450e58/src/Pages/Cards.elm
-    Page.advanced
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }
+    Page.protected.advanced
+        (\user ->
+            { init = init user
+            , update = update
+            , subscriptions = subscriptions
+            , view = view user
+            }
+        )
 
 
 
@@ -50,17 +51,15 @@ type alias Model =
         selectedType : FormType
         , card : FlashCard
         , cardSubmitStatus : Data CardId
-        , cardsFetchStatus : Data (List CardEnvelope)
+        , user : User
     }
 
 
 type Msg
     = Updated PlainTextCard PlainTextCardFormField String
     | SelectedFormType FormType
-    | Submitted FlashCard
-    | ClickedFetchCards
+    | Submitted FlashCard UserId
     | GotCard (Data CardId)
-    | GotCards (Data (List CardEnvelope))
 
 
 type PlainTextCardFormField
@@ -69,12 +68,12 @@ type PlainTextCardFormField
 
 
 
-init : ( Model, Effect Msg )
-init =
+init : User -> ( Model, Effect Msg )
+init user =
     ( { selectedType = PlainTextCardType
         , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
         , cardSubmitStatus = NotAsked
-        , cardsFetchStatus = NotAsked
+        , user = user
       }
     , Effect.none
     )
@@ -104,12 +103,9 @@ update msg model =
         SelectedFormType newSelection ->
             ({model | selectedType = newSelection}, Effect.none)
 
-        Submitted newCard ->
-            ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard |> Lamdera.sendToBackend))
-        
-        ClickedFetchCards ->
-            ({model | cardsFetchStatus = Loading}, Effect.fromCmd <| (FetchAllCards |> Lamdera.sendToBackend))
-        
+        Submitted newCard userId ->
+            ({model | cardSubmitStatus = Loading}, Effect.fromCmd <| (CreateCard_Cards newCard userId |> Lamdera.sendToBackend))
+
         GotCard data ->
             case data of
                 NotAsked ->
@@ -120,17 +116,7 @@ update msg model =
                     ({model | cardSubmitStatus = Failure errors}, Effect.none)
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
-        
-        GotCards data ->
-            case data of
-                NotAsked ->
-                    ({model | cardsFetchStatus = NotAsked}, Effect.none)
-                Loading ->
-                    ({model | cardsFetchStatus = Loading}, Effect.none)
-                Failure errors ->
-                    ({model | cardsFetchStatus = Failure errors}, Effect.none)
-                Success cards ->
-                    ({model | cardsFetchStatus = Success cards}, Effect.none)
+
 
 
 -- SUBSCRIPTIONS
@@ -142,10 +128,8 @@ subscriptions model =
 
 
 -- VIEW
-
--- TODO: see above tree for this: view : User -> Model -> View Msg for auth?
-view : Model -> View Msg
-view model =
+view : User -> Model -> View Msg
+view _ model =
     { title = "Title string for cards"
     , body = [layout [] <| viewElements model]
     }
@@ -156,7 +140,6 @@ viewElements model =
     Element.column [centerX] [
         viewCardForm model
         , viewCardSubmitStatus model
-        , viewCards model.cardsFetchStatus
     ]
 
 
@@ -164,7 +147,7 @@ viewCardForm : Model -> Element Msg
 viewCardForm model =
     case model.card of
         FlashCardPlainText card ->
-             el [] (viewPlainTextCardForm (card, model.selectedType) )
+             el [] (viewPlainTextCardForm (card, model.selectedType) model.user.id )
 
 viewCardSubmitStatus : Model -> Element Msg
 viewCardSubmitStatus model =
@@ -179,38 +162,10 @@ viewCardSubmitStatus model =
         Success cardId ->
             Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
 
-viewCards : Data (List CardEnvelope) -> Element Msg
-viewCards data =
-    case data of
-        NotAsked ->
-            Element.none
-
-        Loading ->
-            Element.text "Loading.."
-
-        Failure errors ->
-            Element.text "Error"
-
-        Success cards ->
-            -- Element.text "success"
-            let
-                len = List.length cards
-            in
-            Element.column [] <| ( List.map viewCard cards ++ [Element.text <| "There are " ++ String.fromInt len ++ " cards"])
 
 
-viewCard : CardEnvelope -> Element Msg
-viewCard cardEnv =
-    case cardEnv.card of
-        FlashCardPlainText plainTextCard ->
-            Element.column [padding 10, spacing 10] [
-                Element.text plainTextCard.question
-                , Element.text plainTextCard.answer
-            ]
-
-
-viewPlainTextCardForm : (PlainTextCard, FormType) -> Element Msg
-viewPlainTextCardForm (card, selectedFormType) =
+viewPlainTextCardForm : (PlainTextCard, FormType) -> UserId -> Element Msg
+viewPlainTextCardForm (card, selectedFormType) userId =
     let
         update_ : String -> PlainTextCard
         update_ updatedInput =
@@ -273,20 +228,8 @@ viewPlainTextCardForm (card, selectedFormType) =
                 , Border.rounded 3
                 , Element.width fill
                 ]
-                { onPress = Just <| Submitted (FlashCardPlainText card)
+                { onPress = Just <| Submitted (FlashCardPlainText card) userId
                 , label = Element.text "Save card!"
-                }
-
-            , Input.button
-                [ Background.color blue
-                , Font.color white
-                , Border.color darkBlue
-                , paddingXY 32 16
-                , Border.rounded 3
-                , Element.width fill
-                ]
-                { onPress = Just ClickedFetchCards
-                , label = Element.text "Fetch all cards"
                 }
             ]
 

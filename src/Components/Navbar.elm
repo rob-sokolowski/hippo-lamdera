@@ -26,6 +26,7 @@ view options =
 
                                 , ( "Settings", Route.Settings )
                                 , ( "Study", Route.Study )
+                                , ( "Cards", Route.Cards )
                                 ]
                             , [ li [ class "nav-item" ]
                                     [ a
@@ -40,7 +41,6 @@ view options =
                     Nothing ->
                         List.map (viewLink options.currentRoute) <|
                             [ ( "Home", Route.Home_ )
-                            , ( "Cards", Route.Cards )
                             , ( "Sign in", Route.Login )
                             , ( "Sign up", Route.Register )
                             ]

@@ -13,6 +13,7 @@ import List.Extra as List
 import Pages.Home_
 import Pages.Login
 import Pages.Cards
+import Pages.Study
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
@@ -43,7 +44,7 @@ subscriptions : Model -> Sub BackendMsg
 subscriptions model =
     Sub.batch [
         onConnect CheckSession
-        , Time.every 1000 Tick
+        , Time.every 10000 Tick
     ]
 
 init : ( Model, Cmd BackendMsg )
@@ -166,11 +167,9 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( model_, send_ (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser res))) )
 
-        CreateCard_Cards flashCard ->
+        CreateCard_Cards flashCard userId ->
             let
                 cardId = (Dict.size model.cards) + 1
-                userId = 123 -- TODO: place holder until I do auth stuff
-
                 envelope =
                     {
                         id = cardId
@@ -184,15 +183,12 @@ updateFromFrontend sessionId clientId msg model =
 
             ({model | cards = cards_}, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))))
 
-        FetchAllCards ->
+        FetchUsersStudyCards_Study user ->
             let
-                cards = Dict.values model.cards
+                userCards = Dict.filter (\_ env -> env.userId == user.id) model.cards
+                asList = Dict.values userCards
             in
-            (model, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCards <| Success cards))))
-
-
-        NoOpToBackend ->
-            ( model, Cmd.none )
+            (model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))))
 
 getSessionUser : SessionId -> Model -> Maybe UserFull
 getSessionUser sid model =
@@ -216,4 +212,3 @@ profileByUsername username model =
 
 profileByEmail email model =
     model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
-

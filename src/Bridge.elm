@@ -1,6 +1,6 @@
 module Bridge exposing (..)
 
-import Api.User exposing (User)
+import Api.User exposing (User, UserId)
 import Lamdera
 import Api.Card exposing (FlashCard)
 
@@ -24,6 +24,5 @@ type ToBackend
             , bio : String
             }
         }
-    | CreateCard_Cards FlashCard
-    | FetchAllCards
-    | NoOpToBackend
+    | CreateCard_Cards FlashCard UserId
+    | FetchUsersStudyCards_Study User
