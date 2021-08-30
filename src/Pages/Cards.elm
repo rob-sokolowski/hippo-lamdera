@@ -71,7 +71,7 @@ type PlainTextCardFormField
 init : User -> ( Model, Effect Msg )
 init user =
     ( { selectedType = PlainTextCardType
-        , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
+        , card = FlashCardPlainText (PlainTextCard "" "")
         , cardSubmitStatus = NotAsked
         , user = user
       }
@@ -156,8 +156,8 @@ viewCardSubmitStatus model =
             Element.none
         Loading ->
             Element.text "Loading.."
-        Failure errors ->
-            Element.text "Error"
+        Failure errs ->
+                Element.column [] <| List.map (\e -> Element.text e) errs
 
         Success cardId ->
             Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
