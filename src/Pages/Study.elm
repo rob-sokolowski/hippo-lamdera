@@ -2,7 +2,7 @@ module Pages.Study exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Gen.Params.Study exposing (Params)
-import Api.Card exposing (CardEnvelope, FlashCard(..))
+import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..))
 import Api.User exposing (User)
 import Api.Data exposing (..)
 import Page
@@ -80,7 +80,7 @@ type Msg
     = FetchCards User
     | GotUserCards (Data (List CardEnvelope))
     | UserClickedReveal
-
+    | UserSelfGrade CardEnvelope Grade
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
@@ -93,7 +93,9 @@ update msg model =
         
         UserClickedReveal ->
             ({model | promptStatus = AnswerRevealed}, Effect.none)
-
+        
+        UserSelfGrade cardEnv grade ->
+            (model, Effect.none)
 
 
 -- SUBSCRIPTIONS
@@ -189,6 +191,7 @@ viewPlainTextFlashcardPrompt card ps =
                     , spacing 20
                 ] [
                     Element.text card.question
+                    , Element.text card.answer
                     , Element.row [spacing 10] [
                         Input.button
                             [ Background.color colors.darkCharcoal
@@ -245,10 +248,8 @@ viewPrompt model =
                 
                 Element.column [] [
                     els
-                ]
-            
+                ]      
     in
-    
     Element.column [padding 10, spacing 10 ] [elements]
 
 
@@ -263,4 +264,4 @@ colors =
     , lightBlue = rgb255 0xC5 0xE8 0xF7
     , lightGrey = rgb255 0xE0 0xE0 0xE0
     , white = rgb255 0xFF 0xFF 0xFF
-    }    
+    }

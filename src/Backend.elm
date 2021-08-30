@@ -24,6 +24,7 @@ import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend
 import Api.Card exposing (CardId)
 import Api.Card exposing (FlashCard)
 import Api.Card exposing (CardEnvelope)
+import Api.Card exposing (PromptFrequency(..))
 
 
 type alias Model =
@@ -172,11 +173,13 @@ updateFromFrontend sessionId clientId msg model =
                 cardId = (Dict.size model.cards) + 1
                 envelope =
                     {
-                        id = cardId
-                        , card = flashCard
-                        , userId = userId
-                        , createdAt = model.now
-                        , lastModifiedOn = model.now
+                        id =cardId
+                        , card=flashCard
+                        , userId=userId
+                        , createdAt=model.now
+                        , lastModifiedOn=model.now
+                        , nextPromptSchedFor=model.now
+                        , frequency=Immediately
                     } 
                 cards_ = Dict.insert cardId envelope model.cards
             in

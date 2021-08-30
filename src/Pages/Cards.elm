@@ -71,7 +71,7 @@ type PlainTextCardFormField
 init : User -> ( Model, Effect Msg )
 init user =
     ( { selectedType = PlainTextCardType
-        , card = FlashCardPlainText (PlainTextCard "" "" Immediately)
+        , card = FlashCardPlainText (PlainTextCard "" "")
         , cardSubmitStatus = NotAsked
         , user = user
       }
