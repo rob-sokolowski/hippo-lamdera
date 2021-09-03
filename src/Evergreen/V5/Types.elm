@@ -21,16 +21,16 @@ type alias FrontendModel =
     }
 
 
-type alias Session =
+type alias Session = 
     { userId : Int
     , expires : Time.Posix
     }
 
 
 type alias BackendModel =
-    { sessions : Dict.Dict Lamdera.SessionId Session
-    , users : Dict.Dict Int Evergreen.V5.Api.User.UserFull
-    , cards : Dict.Dict Evergreen.V5.Api.Card.CardId Evergreen.V5.Api.Card.CardEnvelope
+    { sessions : (Dict.Dict Lamdera.SessionId Session)
+    , users : (Dict.Dict Int Evergreen.V5.Api.User.UserFull)
+    , cards : (Dict.Dict Evergreen.V5.Api.Card.CardId Evergreen.V5.Api.Card.CardEnvelope)
     , now : Time.Posix
     }
 
@@ -43,8 +43,7 @@ type FrontendMsg
     | Noop
 
 
-type alias ToBackend =
-    Evergreen.V5.Bridge.ToBackend
+type alias ToBackend =Evergreen.V5.Bridge.ToBackend
 
 
 type BackendMsg
