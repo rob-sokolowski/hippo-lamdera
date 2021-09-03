@@ -2,7 +2,7 @@ module Pages.Study exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Gen.Params.Study exposing (Params)
-import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..), CardId)
+import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..), CardId, StudySessionSummary)
 import Api.User exposing (User)
 import Api.Data exposing (..)
 import Api.Data as Data
@@ -23,6 +23,7 @@ import Page
 import Bridge exposing (sendToBackend)
 import Dict
 import Api.Card exposing (PlainTextCard)
+-- import Gen.Model exposing (Model(..))
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -46,13 +47,24 @@ type alias Model =
         --       I'm not sure where that should live, so punting on that decision atm.
         , promptStatus : PromptStatus
         , gradeSubmit : Data (CardId)
+        , sessionSummary : Data (StudySessionSummary)
     }
+
+
+type Msg
+    = FetchCards User
+    | GotUserCards (Data (List CardEnvelope))
+    | UserClickedReveal
+    | UserSelfGrade CardId Grade
+    | GotGradedResponse (Data CardId)
+    | GotStudySessionSummary (Data StudySessionSummary)
 
 
 init : Shared.Model -> ( Model, Effect Msg )
 init shared =
     let
-        fetch = case shared.user of
+        -- if a user is present, we fetch their study session summary immediately
+        shouldFetchSummary = case shared.user of
             Just _ ->
                 Loading
 
@@ -60,12 +72,19 @@ init shared =
                 NotAsked
 
         model_ = {
-                cardDataFetch = fetch -- fetch immediately if we have a user
+                cardDataFetch = NotAsked
+                , sessionSummary = shouldFetchSummary
                 , promptStatus = Idle
                 , gradeSubmit = NotAsked
             }
+        
+        effect_ = case model_.sessionSummary of
+            Loading ->
+                Effect.fromCmd <| fetchUsersStudySessionSumary shared
+            _ ->
+                Effect.none
     in
-    (model_, Effect.fromCmd <| fetchUsersStudyCards shared model_)
+    (model_, effect_)
 
 
 fetchUsersStudyCards : Shared.Model -> Model -> Cmd Msg
@@ -77,15 +96,18 @@ fetchUsersStudyCards shared _ =
             Cmd.none
 
 
+fetchUsersStudySessionSumary : Shared.Model -> Cmd Msg
+fetchUsersStudySessionSumary shared =
+    case shared.user of
+        Just user ->
+            sendToBackend <| FetchUsersStudySummary_Study user
+        Nothing ->
+            Cmd.none
+
+
 -- UPDATE
 
 
-type Msg
-    = FetchCards User
-    | GotUserCards (Data (List CardEnvelope))
-    | UserClickedReveal
-    | UserSelfGrade CardId Grade
-    | GotGradedResponse (Data CardId)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -140,7 +162,14 @@ update msg model =
             ({model 
             | gradeSubmit = cardId
             , cardDataFetch = updatedCards
+            , promptStatus = Idle
             }, Effect.none)
+        
+        GotStudySessionSummary summary ->
+            ({model 
+            | sessionSummary = summary
+            }, Effect.none)
+            
 
 -- SUBSCRIPTIONS
 
@@ -164,7 +193,8 @@ view _ model =
 viewElements : Model -> Element Msg
 viewElements model =
     Element.column [centerX] [
-        viewPrompt model
+        viewStudySessionSummary model.sessionSummary
+        , viewPrompt model
         , viewGradeSumbissionPanel model
     ]
 
@@ -256,6 +286,26 @@ viewPlainTextFlashcardPrompt card cId ps =
                 ]
     in
     elements
+
+viewStudySessionSummary : Data StudySessionSummary -> Element Msg
+viewStudySessionSummary summary =
+    let
+        elements = case summary of
+            NotAsked ->
+                Element.text "not asked"
+            Loading ->
+                Element.text "loading"
+            Success s ->
+                Element.column [] [
+                    Element.text <| "Summary:"
+                    , Element.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
+                    , Element.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
+                ]
+            Failure errs ->
+                Element.column [] <| List.map (\e -> Element.text e) errs
+    in
+    elements
+    
 
 viewPrompt : Model -> Element Msg
 viewPrompt model =

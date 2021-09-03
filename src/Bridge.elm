@@ -26,4 +26,5 @@ type ToBackend
         }
     | CreateCard_Cards FlashCard UserId
     | FetchUsersStudyCards_Study User
+    | FetchUsersStudySummary_Study User
     | UserSubmitGrade_Study CardId Grade

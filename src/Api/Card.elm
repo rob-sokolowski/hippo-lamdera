@@ -1,4 +1,4 @@
-module Api.Card exposing (CardEnvelope, FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard, grade)
+module Api.Card exposing (CardEnvelope, FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard, processGrade, StudySessionSummary)
 import Api.User exposing (UserId)
 import Time
 import Time.Extra as TE exposing (..)
@@ -44,8 +44,8 @@ type PromptFrequency
     | ThirtyDays
 
 
-grade : Time.Posix -> CardEnvelope -> Grade -> CardEnvelope
-grade now c g =
+processGrade : Time.Posix -> CardEnvelope -> Grade -> CardEnvelope
+processGrade now c g =
     let
         addDays n = TE.add TE.Day n Time.utc now
         (freq, next) = case g of
@@ -79,3 +79,13 @@ grade now c g =
                         (Immediately, now)
     in
     {c | frequency = freq, nextPromptSchedFor = next}
+
+
+
+
+-- TODO: This type def feels a bit out of place here.
+type alias StudySessionSummary =
+    {
+        usersTotalCardCount : Int
+        , cardsToStudy : Int
+    }
