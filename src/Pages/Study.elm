@@ -198,7 +198,7 @@ subscriptions model =
 
 view : User -> Model -> View Msg
 view _ model =
-    { title = "Title string for cards"
+    { title = "Study Your Cards"
     , body = [layout [] <| viewElements model]
     }
 

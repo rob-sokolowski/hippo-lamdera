@@ -130,7 +130,7 @@ subscriptions model =
 -- VIEW
 view : User -> Model -> View Msg
 view _ model =
-    { title = "Title string for cards"
+    { title = "New Card Editor"
     , body = [layout [] <| viewElements model]
     }
 
