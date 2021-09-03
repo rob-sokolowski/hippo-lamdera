@@ -1,6 +1,7 @@
 module Api.Card exposing (CardEnvelope, FlashCard(..), CardId, PromptFrequency(..), Grade(..), PlainTextCard, grade)
 import Api.User exposing (UserId)
 import Time
+import Time.Extra as TE exposing (..)
 
 
 type alias CardId = Int
@@ -43,40 +44,38 @@ type PromptFrequency
     | ThirtyDays
 
 
-grade : CardEnvelope -> Grade -> CardEnvelope
-grade c g =
+grade : Time.Posix -> CardEnvelope -> Grade -> CardEnvelope
+grade now c g =
     let
+        addDays n = TE.add TE.Day n Time.utc now
         (freq, next) = case g of
             Correct ->
                 case c.frequency of
                     Immediately ->
-                        (OneDay, c.nextPromptSchedFor)
+                        (OneDay, now)
                     OneDay ->
-                        (TwoDays, c.nextPromptSchedFor)
+                        (TwoDays, addDays 1)
                     TwoDays ->
-                        (SevenDays, c.nextPromptSchedFor)
+                        (SevenDays, addDays 2)
                     SevenDays ->
-                        (FourteenDays, c.nextPromptSchedFor)
+                        (FourteenDays, addDays 7)
                     FourteenDays ->
-                        (ThirtyDays, c.nextPromptSchedFor)
+                        (ThirtyDays, addDays 14)
                     ThirtyDays ->
-                        (ThirtyDays, c.nextPromptSchedFor)
+                        (ThirtyDays, addDays 30)
             Incorrect ->
                 case c.frequency of
                     Immediately ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
                     OneDay ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
                     TwoDays ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
                     SevenDays ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
                     FourteenDays ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
                     ThirtyDays ->
-                        (Immediately, c.nextPromptSchedFor)
+                        (Immediately, now)
     in
     {c | frequency = freq, nextPromptSchedFor = next}
-   
-                    
-                

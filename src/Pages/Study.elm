@@ -2,9 +2,10 @@ module Pages.Study exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Gen.Params.Study exposing (Params)
-import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..))
+import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..), CardId)
 import Api.User exposing (User)
 import Api.Data exposing (..)
+import Api.Data as Data
 import Page
 import Element exposing (..)
 import Element.Background as Background
@@ -13,6 +14,7 @@ import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Bridge exposing (ToBackend(..))
+import Lamdera
 import Request
 import Shared
 import List exposing (..)
@@ -43,6 +45,7 @@ type alias Model =
         -- TODO: Prompt state needs to be a variant type once other flashcard variants are implemented!
         --       I'm not sure where that should live, so punting on that decision atm.
         , promptStatus : PromptStatus
+        , gradeSubmit : Data (CardId)
     }
 
 
@@ -59,6 +62,7 @@ init shared =
         model_ = {
                 cardDataFetch = fetch -- fetch immediately if we have a user
                 , promptStatus = Idle
+                , gradeSubmit = NotAsked
             }
     in
     (model_, Effect.fromCmd <| fetchUsersStudyCards shared model_)
@@ -80,7 +84,9 @@ type Msg
     = FetchCards User
     | GotUserCards (Data (List CardEnvelope))
     | UserClickedReveal
-    | UserSelfGrade CardEnvelope Grade
+    | UserSelfGrade CardId Grade
+    | GotGradedResponse (Data CardId)
+
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
@@ -94,9 +100,47 @@ update msg model =
         UserClickedReveal ->
             ({model | promptStatus = AnswerRevealed}, Effect.none)
         
-        UserSelfGrade cardEnv grade ->
-            (model, Effect.none)
-
+        UserSelfGrade cardId grade ->
+            -- TODO: It feels a bit weird to be passing this to the backend, but otherwise I'm not sure how
+            --       To have a polymorphic grading model without this.. need to think on it.
+            (
+                {model | gradeSubmit = Loading}
+                , Effect.fromCmd <| (UserSubmitGrade_Study cardId grade |> Lamdera.sendToBackend)
+            )
+        
+        GotGradedResponse cardId ->
+        -- We've received a graded response from the backend:
+        --    1) update gradeSubmit status
+        --    2) pop the graded card off our card list
+        --    3) reset prompt status, which will prompt for the next card
+            let
+                maybeCardId = Data.toMaybe cardId
+                maybeCards = Data.toMaybe model.cardDataFetch
+                updatedCards = case maybeCards of
+                    Just cards ->
+                        let
+                            isCard : Maybe CardId -> CardEnvelope-> Bool
+                            isCard  id env  =
+                                case id of
+                                    Just v ->
+                                        env.id /= v
+                                    Nothing ->
+                                        False -- TODO: barf??
+                            -- This feels a bit odd, but rather than fetch all cards from the backend again, we can
+                            -- sneakily reset the state here to the
+                            newCards = List.filter (isCard maybeCardId) cards
+                        in
+                        Success newCards
+                    Nothing ->
+                    -- This shouldn't happen. it would mean we've received a graded card response while our current
+                    -- user has no cards. Let's reset state /shrug
+                        NotAsked
+            in
+            
+            ({model 
+            | gradeSubmit = cardId
+            , cardDataFetch = updatedCards
+            }, Effect.none)
 
 -- SUBSCRIPTIONS
 
@@ -121,41 +165,32 @@ viewElements : Model -> Element Msg
 viewElements model =
     Element.column [centerX] [
         viewPrompt model
+        , viewGradeSumbissionPanel model
     ]
 
 
-viewCards : Data (List CardEnvelope) -> Element Msg
-viewCards data =
-    case data of
-        NotAsked ->
-            Element.none
+viewGradeSumbissionPanel : Model -> Element Msg
+viewGradeSumbissionPanel model =
+    let
+        elements = case model.gradeSubmit of
+            NotAsked ->
+                Element.none
 
-        Loading ->
-            Element.text "Loading.."
+            Loading ->
+                Element.text "Awaiting grade from server.."
 
-        Failure errors ->
-            Element.text "Error"
+            Failure errs ->
+                    Element.column [] <| List.map (\e -> Element.text e) errs
 
-        Success cards ->
-            -- Element.text "success"
-            let
-                len = List.length cards
-            in
-            Element.column [] <| ( List.map viewCard cards ++ [Element.text <| "There are " ++ String.fromInt len ++ " cards"])
-
-
-viewCard : CardEnvelope -> Element Msg
-viewCard cardEnv =
-    case cardEnv.card of
-        FlashCardPlainText plainTextCard ->
-            Element.column [padding 10, spacing 10] [
-                Element.text plainTextCard.question
-                , Element.text plainTextCard.answer
-            ]
+            Success cardId ->
+                Element.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
+    in
+    elements
+    
 
 
-viewPlainTextFlashcardPrompt : PlainTextCard -> PromptStatus -> Element Msg
-viewPlainTextFlashcardPrompt card ps =
+viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
+viewPlainTextFlashcardPrompt card cId ps =
     let
         elements = case ps of
             Idle ->
@@ -202,7 +237,7 @@ viewPlainTextFlashcardPrompt card ps =
                             , Element.width fill
                             ]
                             {
-                                onPress = Nothing
+                                onPress = Just <| UserSelfGrade cId Incorrect
                                 , label = Element.text "X"
                             }
                         , Input.button
@@ -214,15 +249,13 @@ viewPlainTextFlashcardPrompt card ps =
                             , Element.width fill
                             ]
                             {
-                                onPress = Nothing 
+                                onPress = Just <| UserSelfGrade cId Correct 
                                 , label = Element.text "✔"
                             }
                     ]
                 ]
     in
     elements
-   
-
 
 viewPrompt : Model -> Element Msg
 viewPrompt model =
@@ -241,7 +274,7 @@ viewPrompt model =
                         Just env ->
                             case env.card of
                                 FlashCardPlainText plainTextCard ->
-                                    viewPlainTextFlashcardPrompt plainTextCard model.promptStatus
+                                    viewPlainTextFlashcardPrompt plainTextCard env.id model.promptStatus
                         Nothing ->
                             Element.text "You have studied all your cards!"
                 in

@@ -21,10 +21,9 @@ import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
-import Api.Card exposing (CardId)
+import Api.Card exposing (CardId, FlashCard, CardEnvelope, PromptFrequency(..), grade)
 import Api.Card exposing (FlashCard)
 import Api.Card exposing (CardEnvelope)
-import Api.Card exposing (PromptFrequency(..))
 
 
 type alias Model =
@@ -192,6 +191,23 @@ updateFromFrontend sessionId clientId msg model =
                 asList = Dict.values userCards
             in
             (model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))))
+        
+        UserSubmitGrade_Study cardId grade_ ->
+            -- We've received a msg to apply this grade to the specified cardId
+            let 
+                card = Dict.get cardId model.cards
+            in
+            case card of
+                Nothing ->
+                    -- TODO: Error handling here
+                    (model, Cmd.none)
+                Just card_ ->
+                    let
+                        c = grade model.now card_ grade_
+                        cards = Dict.insert c.id c model.cards
+                    in
+                    ({model | cards = cards}, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))))
+
 
 getSessionUser : SessionId -> Model -> Maybe UserFull
 getSessionUser sid model =
