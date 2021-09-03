@@ -22,6 +22,7 @@ import View exposing (View)
 import Page
 import Bridge exposing (sendToBackend)
 import Dict
+import List
 import Api.Card exposing (PlainTextCard)
 -- import Gen.Model exposing (Model(..))
 
@@ -48,6 +49,7 @@ type alias Model =
         , promptStatus : PromptStatus
         , gradeSubmit : Data (CardId)
         , sessionSummary : Data (StudySessionSummary)
+        , user : Maybe User
     }
 
 
@@ -58,6 +60,7 @@ type Msg
     | UserSelfGrade CardId Grade
     | GotGradedResponse (Data CardId)
     | GotStudySessionSummary (Data StudySessionSummary)
+    | UserStartStudySession
 
 
 init : Shared.Model -> ( Model, Effect Msg )
@@ -76,6 +79,7 @@ init shared =
                 , sessionSummary = shouldFetchSummary
                 , promptStatus = Idle
                 , gradeSubmit = NotAsked
+                , user = shared.user
             }
         
         effect_ = case model_.sessionSummary of
@@ -87,11 +91,11 @@ init shared =
     (model_, effect_)
 
 
-fetchUsersStudyCards : Shared.Model -> Model -> Cmd Msg
-fetchUsersStudyCards shared _ =
-    case shared.user of
-        Just user ->
-            sendToBackend <| FetchUsersStudyCards_Study user
+fetchUsersStudyCards : Maybe User -> Cmd Msg
+fetchUsersStudyCards user =
+    case user of
+        Just u ->
+            sendToBackend <| FetchUsersStudyCards_Study u
         Nothing ->
             Cmd.none
 
@@ -138,7 +142,7 @@ update msg model =
             let
                 maybeCardId = Data.toMaybe cardId
                 maybeCards = Data.toMaybe model.cardDataFetch
-                updatedCards = case maybeCards of
+                (updatedCards, effect) = case maybeCards of
                     Just cards ->
                         let
                             isCard : Maybe CardId -> CardEnvelope-> Bool
@@ -151,24 +155,33 @@ update msg model =
                             -- This feels a bit odd, but rather than fetch all cards from the backend again, we can
                             -- sneakily reset the state here to the
                             newCards = List.filter (isCard maybeCardId) cards
+
+                            -- if we've reached the end of our study session 
+                            eff = if List.length newCards > 0 then Effect.none else Effect.fromCmd <| (fetchUsersStudyCards model.user)
                         in
-                        Success newCards
+                        (Success newCards, eff)
                     Nothing ->
                     -- This shouldn't happen. it would mean we've received a graded card response while our current
                     -- user has no cards. Let's reset state /shrug
-                        NotAsked
+                        (NotAsked, Effect.none)
             in
             
             ({model 
             | gradeSubmit = cardId
             , cardDataFetch = updatedCards
-            , promptStatus = Idle
-            }, Effect.none)
+            , promptStatus = QuestionPrompted
+            }, effect)
         
         GotStudySessionSummary summary ->
             ({model 
             | sessionSummary = summary
             }, Effect.none)
+        
+        UserStartStudySession ->
+            (
+                model
+                , Effect.fromCmd <| fetchUsersStudyCards model.user
+            )
             
 
 -- SUBSCRIPTIONS
@@ -312,7 +325,21 @@ viewPrompt model =
     let
         elements = case model.cardDataFetch of
             NotAsked ->
-                Element.text "Not asked."
+                Element.column [] [
+                    Element.text <| "Click to start today's session"
+                    , Input.button
+                        [ Background.color colors.darkCharcoal
+                        , Font.color colors.lightBlue
+                        , Border.color colors.lightGrey
+                        , paddingXY 32 16
+                        , Border.rounded 3
+                        , Element.width fill
+                        ]
+                        {
+                            onPress = Just UserStartStudySession
+                            , label = Element.text "Start session."
+                        }
+                ]
             Loading ->
                 Element.text "Loading.."
             Failure errs ->

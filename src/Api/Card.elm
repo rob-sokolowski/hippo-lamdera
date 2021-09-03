@@ -47,36 +47,37 @@ type PromptFrequency
 processGrade : Time.Posix -> CardEnvelope -> Grade -> CardEnvelope
 processGrade now c g =
     let
-        addDays n = TE.add TE.Day n Time.utc now
+        nowPlusDays n = TE.add TE.Day n Time.utc now
+        nowMinusTwo = TE.add TE.Second -2 Time.utc now
         (freq, next) = case g of
             Correct ->
                 case c.frequency of
                     Immediately ->
-                        (OneDay, now)
+                        (OneDay, nowPlusDays 1)
                     OneDay ->
-                        (TwoDays, addDays 1)
+                        (TwoDays, nowPlusDays 2)
                     TwoDays ->
-                        (SevenDays, addDays 2)
+                        (SevenDays, nowPlusDays 7)
                     SevenDays ->
-                        (FourteenDays, addDays 7)
+                        (FourteenDays, nowPlusDays 14)
                     FourteenDays ->
-                        (ThirtyDays, addDays 14)
+                        (ThirtyDays, nowPlusDays 30)
                     ThirtyDays ->
-                        (ThirtyDays, addDays 30)
+                        (ThirtyDays, nowPlusDays 30)
             Incorrect ->
                 case c.frequency of
                     Immediately ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
                     OneDay ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
                     TwoDays ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
                     SevenDays ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
                     FourteenDays ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
                     ThirtyDays ->
-                        (Immediately, now)
+                        (Immediately, nowMinusTwo)
     in
     {c | frequency = freq, nextPromptSchedFor = next}
 

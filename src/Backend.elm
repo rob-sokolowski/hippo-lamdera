@@ -31,6 +31,9 @@ type alias Model =
     BackendModel
 
 
+ticMs = 1000
+
+
 app : { init : (Model, Cmd BackendMsg), update : BackendMsg -> Model -> (Model, Cmd BackendMsg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd BackendMsg), subscriptions : Model -> Sub BackendMsg }
 app =
     Lamdera.backend
@@ -45,7 +48,7 @@ subscriptions : Model -> Sub BackendMsg
 subscriptions model =
     Sub.batch [
         onConnect CheckSession
-        , Time.every 1000 Tick
+        , Time.every ticMs Tick
     ]
 
 init : ( Model, Cmd BackendMsg )
