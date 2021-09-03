@@ -2,7 +2,7 @@ module Pages.Study exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Gen.Params.Study exposing (Params)
-import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..), CardId)
+import Api.Card exposing (CardEnvelope, FlashCard(..), Grade(..), CardId, StudySessionSummary)
 import Api.User exposing (User)
 import Api.Data exposing (..)
 import Api.Data as Data
@@ -22,7 +22,9 @@ import View exposing (View)
 import Page
 import Bridge exposing (sendToBackend)
 import Dict
+import List
 import Api.Card exposing (PlainTextCard)
+-- import Gen.Model exposing (Model(..))
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -46,38 +48,9 @@ type alias Model =
         --       I'm not sure where that should live, so punting on that decision atm.
         , promptStatus : PromptStatus
         , gradeSubmit : Data (CardId)
+        , sessionSummary : Data (StudySessionSummary)
+        , user : Maybe User
     }
-
-
-init : Shared.Model -> ( Model, Effect Msg )
-init shared =
-    let
-        fetch = case shared.user of
-            Just _ ->
-                Loading
-
-            Nothing ->
-                NotAsked
-
-        model_ = {
-                cardDataFetch = fetch -- fetch immediately if we have a user
-                , promptStatus = Idle
-                , gradeSubmit = NotAsked
-            }
-    in
-    (model_, Effect.fromCmd <| fetchUsersStudyCards shared model_)
-
-
-fetchUsersStudyCards : Shared.Model -> Model -> Cmd Msg
-fetchUsersStudyCards shared _ =
-    case shared.user of
-        Just user ->
-            sendToBackend <| FetchUsersStudyCards_Study user
-        Nothing ->
-            Cmd.none
-
-
--- UPDATE
 
 
 type Msg
@@ -86,6 +59,59 @@ type Msg
     | UserClickedReveal
     | UserSelfGrade CardId Grade
     | GotGradedResponse (Data CardId)
+    | GotStudySessionSummary (Data StudySessionSummary)
+    | UserStartStudySession
+
+
+init : Shared.Model -> ( Model, Effect Msg )
+init shared =
+    let
+        -- if a user is present, we fetch their study session summary immediately
+        shouldFetchSummary = case shared.user of
+            Just _ ->
+                Loading
+
+            Nothing ->
+                NotAsked
+
+        model_ = {
+                cardDataFetch = NotAsked
+                , sessionSummary = shouldFetchSummary
+                , promptStatus = Idle
+                , gradeSubmit = NotAsked
+                , user = shared.user
+            }
+        
+        effect_ = case model_.sessionSummary of
+            Loading ->
+                Effect.fromCmd <| fetchUsersStudySessionSumary shared
+            _ ->
+                Effect.none
+    in
+    (model_, effect_)
+
+
+fetchUsersStudyCards : Maybe User -> Cmd Msg
+fetchUsersStudyCards user =
+    case user of
+        Just u ->
+            sendToBackend <| FetchUsersStudyCards_Study u
+        Nothing ->
+            Cmd.none
+
+
+fetchUsersStudySessionSumary : Shared.Model -> Cmd Msg
+fetchUsersStudySessionSumary shared =
+    case shared.user of
+        Just user ->
+            sendToBackend <| FetchUsersStudySummary_Study user
+        Nothing ->
+            Cmd.none
+
+
+-- UPDATE
+
+
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -116,7 +142,7 @@ update msg model =
             let
                 maybeCardId = Data.toMaybe cardId
                 maybeCards = Data.toMaybe model.cardDataFetch
-                updatedCards = case maybeCards of
+                (updatedCards, effect) = case maybeCards of
                     Just cards ->
                         let
                             isCard : Maybe CardId -> CardEnvelope-> Bool
@@ -129,18 +155,34 @@ update msg model =
                             -- This feels a bit odd, but rather than fetch all cards from the backend again, we can
                             -- sneakily reset the state here to the
                             newCards = List.filter (isCard maybeCardId) cards
+
+                            -- if we've reached the end of our study session 
+                            eff = if List.length newCards > 0 then Effect.none else Effect.fromCmd <| (fetchUsersStudyCards model.user)
                         in
-                        Success newCards
+                        (Success newCards, eff)
                     Nothing ->
                     -- This shouldn't happen. it would mean we've received a graded card response while our current
                     -- user has no cards. Let's reset state /shrug
-                        NotAsked
+                        (NotAsked, Effect.none)
             in
             
             ({model 
             | gradeSubmit = cardId
             , cardDataFetch = updatedCards
+            , promptStatus = QuestionPrompted
+            }, effect)
+        
+        GotStudySessionSummary summary ->
+            ({model 
+            | sessionSummary = summary
             }, Effect.none)
+        
+        UserStartStudySession ->
+            (
+                model
+                , Effect.fromCmd <| fetchUsersStudyCards model.user
+            )
+            
 
 -- SUBSCRIPTIONS
 
@@ -164,7 +206,8 @@ view _ model =
 viewElements : Model -> Element Msg
 viewElements model =
     Element.column [centerX] [
-        viewPrompt model
+        viewStudySessionSummary model.sessionSummary
+        , viewPrompt model
         , viewGradeSumbissionPanel model
     ]
 
@@ -257,12 +300,46 @@ viewPlainTextFlashcardPrompt card cId ps =
     in
     elements
 
+viewStudySessionSummary : Data StudySessionSummary -> Element Msg
+viewStudySessionSummary summary =
+    let
+        elements = case summary of
+            NotAsked ->
+                Element.text "not asked"
+            Loading ->
+                Element.text "loading"
+            Success s ->
+                Element.column [] [
+                    Element.text <| "Summary:"
+                    , Element.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
+                    , Element.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
+                ]
+            Failure errs ->
+                Element.column [] <| List.map (\e -> Element.text e) errs
+    in
+    elements
+    
+
 viewPrompt : Model -> Element Msg
 viewPrompt model =
     let
         elements = case model.cardDataFetch of
             NotAsked ->
-                Element.text "Not asked."
+                Element.column [] [
+                    Element.text <| "Click to start today's session"
+                    , Input.button
+                        [ Background.color colors.darkCharcoal
+                        , Font.color colors.lightBlue
+                        , Border.color colors.lightGrey
+                        , paddingXY 32 16
+                        , Border.rounded 3
+                        , Element.width fill
+                        ]
+                        {
+                            onPress = Just UserStartStudySession
+                            , label = Element.text "Start session."
+                        }
+                ]
             Loading ->
                 Element.text "Loading.."
             Failure errs ->

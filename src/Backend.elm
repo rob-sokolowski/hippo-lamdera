@@ -2,8 +2,8 @@ module Backend exposing (..)
 
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
-import Api.User exposing (Email, UserFull, UserId)
-import Bridge exposing (..)
+import Api.User exposing (Email, UserFull, UserId, User)
+import Bridge exposing (ToBackend(..))
 import Dict
 import Dict.Extra as Dict
 import Duration exposing (Duration)
@@ -14,6 +14,7 @@ import Pages.Home_
 import Pages.Login
 import Pages.Cards
 import Pages.Study
+import Debug
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
@@ -21,13 +22,16 @@ import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
-import Api.Card exposing (CardId, FlashCard, CardEnvelope, PromptFrequency(..), grade)
+import Api.Card exposing (CardId, FlashCard, CardEnvelope, PromptFrequency(..), processGrade)
 import Api.Card exposing (FlashCard)
 import Api.Card exposing (CardEnvelope)
 
 
 type alias Model =
     BackendModel
+
+
+ticMs = 1000
 
 
 app : { init : (Model, Cmd BackendMsg), update : BackendMsg -> Model -> (Model, Cmd BackendMsg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd BackendMsg), subscriptions : Model -> Sub BackendMsg }
@@ -44,7 +48,7 @@ subscriptions : Model -> Sub BackendMsg
 subscriptions model =
     Sub.batch [
         onConnect CheckSession
-        , Time.every 10000 Tick
+        , Time.every ticMs Tick
     ]
 
 init : ( Model, Cmd BackendMsg )
@@ -187,7 +191,10 @@ updateFromFrontend sessionId clientId msg model =
 
         FetchUsersStudyCards_Study user ->
             let
-                userCards = Dict.filter (\_ env -> env.userId == user.id) model.cards
+                userCards = Dict.filter (\_ cardEnv -> 
+                    (cardEnv.userId == user.id)
+                    && (Time.posixToMillis cardEnv.nextPromptSchedFor <= Time.posixToMillis model.now))
+                    model.cards
                 asList = Dict.values userCards
             in
             (model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))))
@@ -203,10 +210,28 @@ updateFromFrontend sessionId clientId msg model =
                     (model, Cmd.none)
                 Just card_ ->
                     let
-                        c = grade model.now card_ grade_
+                        c = processGrade model.now card_ grade_
                         cards = Dict.insert c.id c model.cards
                     in
                     ({model | cards = cards}, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))))
+
+        FetchUsersStudySummary_Study user ->
+            let
+                totalUserCards = Dict.filter (\_ cardEnv -> cardEnv.userId == user.id) model.cards |> Dict.size
+                cardsToStudyNow = Dict.filter (\_ cardEnv -> cardEnv.userId == user.id && isCardScheduled model.now cardEnv) model.cards |> Dict.size
+
+                studySessionSummary = 
+                    {
+                        usersTotalCardCount = totalUserCards
+                        , cardsToStudy = cardsToStudyNow
+                    }
+            in
+            
+        
+            (
+                model
+                , send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
+            )
 
 
 getSessionUser : SessionId -> Model -> Maybe UserFull
@@ -231,3 +256,9 @@ profileByUsername username model =
 
 profileByEmail email model =
     model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
+
+
+-- utiliity funcs
+isCardScheduled : Time.Posix -> CardEnvelope -> Bool
+isCardScheduled now cardEnv =
+    Time.posixToMillis now >= Time.posixToMillis cardEnv.nextPromptSchedFor

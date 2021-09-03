@@ -183,7 +183,7 @@ viewPlainTextCardForm (card, selectedFormType) userId =
                 , Element.alignLeft
                 , Font.size 36
                 ]
-                (Element.text "Welcome to the new card editor!")
+                (Element.text "Add a new flash card:")
             , Input.radio
                 [ spacing 12
                 , Background.color grey
