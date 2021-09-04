@@ -58,7 +58,7 @@ type alias Model =
 
 
 type Msg
-    = Updated EditorForm String
+    = Updated EditorForm EditorField String
     | ToggledOption SelectedFormRadioOption
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
@@ -68,11 +68,13 @@ type SelectedFormRadioOption
     = MarkdownRadioOption
     | PlainTextRadioOption
 
-type PlainTextCardFormField
-    = QuestionField
-    | AnswerField
 
-
+type EditorField
+    -- TODO: I'm unsure if this is normal, or the _ this is a smell
+    = PlainText_Question
+    | PlainText_Answer
+    | Markdown_Question
+    | Markdown_Answer
 
 init : User -> ( Model, Effect Msg )
 init user =
@@ -97,27 +99,47 @@ defaultMarkdownCard = MarkdownCard "" "" []
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Updated form_ newStr ->
-            case form_ of
-                PlainTextForm form ->
-                    (model, Effect.none)
-                MarkdownForm form ->
-                    (model, Effect.none)
-                
+        Updated form_ field newVal ->
+            let
+                newForm = case form_ of
+                    PlainTextForm card ->
+                        case field of
+                            PlainText_Question ->
+                                PlainTextForm {card | question = newVal}
+                            PlainText_Answer ->
+                                PlainTextForm {card | answer = newVal}
+                            _ ->
+                                -- smell?
+                                PlainTextForm defaultPlaintextCard
+                    MarkdownForm card ->
+                        case field of
+                            Markdown_Question ->
+                                MarkdownForm {card | question = newVal}
+                            Markdown_Answer ->
+                                MarkdownForm {card | answer = newVal}
+                            _ ->
+                                -- smell?
+                                MarkdownForm defaultMarkdownCard
+            in
+            ({ model
+            | editorForm = newForm
+            }, Effect.none)            
 
         ToggledOption selection ->
         -- TODO: We're holding two state variables, `selectedType` and `card`. Is this necessary?
         --       Also, this is a lazy implementation, so state is trampled on every toggle. (I'm OK with this for now)
             let
-                newForm = case selection of
+                (newForm, option) = case selection of
                     MarkdownRadioOption ->
-                        PlainTextForm defaultPlaintextCard
+                        (MarkdownForm defaultMarkdownCard, MarkdownRadioOption)
                     PlainTextRadioOption ->
-                        MarkdownForm defaultMarkdownCard
+                        (PlainTextForm defaultPlaintextCard, PlainTextRadioOption)
+                        
             in
             
             ({model
             | editorForm = newForm
+            , selectedOption = option
             }
             , Effect.none)
 
@@ -204,13 +226,21 @@ viewCardTypeSelector model =
 
 
 viewMarkdownEditor : MarkdownCard -> Element Msg
-viewMarkdownEditor card =   
+viewMarkdownEditor card =
     Element.column [] [
         Input.multiline [padding 5]
         {
-            onChange = \text -> Updated (MarkdownForm card) text
+            onChange = (\text -> Updated (MarkdownForm card) Markdown_Question text)
             , text = card.question
             , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
+            , label = Input.labelAbove [] (Element.text "Label above??")
+            , spellcheck = True
+        }
+        , Input.multiline [padding 5]
+        {
+            onChange = (\text -> Updated (MarkdownForm card) Markdown_Answer text)
+            , text = card.answer
+            , placeholder = Just <| Input.placeholder [] (Element.text "Answer prompt:")
             , label = Input.labelAbove [] (Element.text "Label above??")
             , spellcheck = True
         }
@@ -245,7 +275,7 @@ viewPlainTextEditor card userId =
                 ]
                 { text = card.question
                 , placeholder = Just <| Input.placeholder [] (Element.text "Question goes here..")
-                , onChange = (\text -> Updated (PlainTextForm card) text)
+                , onChange = (\text -> Updated (PlainTextForm card) PlainText_Question text)
                 , label = Input.labelAbove [ Font.size 14 ] (Element.text "Flash card prompt")
                 , spellcheck = True
                 }
@@ -257,7 +287,7 @@ viewPlainTextEditor card userId =
                 ]
                 { text = card.answer
                 , placeholder = Just <| Input.placeholder [] (Element.text "Input answer here")
-                , onChange = (\text -> Updated (PlainTextForm card) text)
+                , onChange = (\text -> Updated (PlainTextForm card) PlainText_Answer text)
                 , label = Input.labelAbove [ Font.size 14 ] (Element.text "Answer prompt:")
                 , spellcheck = True
                 }
