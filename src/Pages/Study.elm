@@ -25,7 +25,9 @@ import Dict
 import List
 import Api.Card exposing (PlainTextCard)
 import Api.Card exposing (MarkdownCard)
--- import Gen.Model exposing (Model(..))
+import Markdown.Option exposing (..)
+import Markdown.Render
+import Html exposing (Html)
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -62,6 +64,7 @@ type Msg
     | GotGradedResponse (Data CardId)
     | GotStudySessionSummary (Data StudySessionSummary)
     | UserStartStudySession
+    | MarkdownMsg Markdown.Render.MarkdownMsg
 
 
 init : Shared.Model -> ( Model, Effect Msg )
@@ -183,6 +186,9 @@ update msg model =
                 model
                 , Effect.fromCmd <| fetchUsersStudyCards model.user
             )
+        
+        MarkdownMsg _ ->
+            ( model, Effect.none )
             
 
 -- SUBSCRIPTIONS
@@ -245,7 +251,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , padding 10
                     , spacing 20
                 ] [
-                    Element.text card.renderedQuestion
+                    viewRenderedQuestion card
                     , Element.row [spacing 10] [
                         Input.button
                             [ Background.color colors.darkCharcoal
@@ -268,8 +274,8 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , padding 10
                     , spacing 20
                 ] [
-                    Element.text card.renderedQuestion
-                    , Element.text card.renderedAnswer
+                    viewRenderedQuestion card
+                    , viewRenderedAnswer card
                     , Element.row [spacing 10] [
                         Input.button
                             [ Background.color colors.darkCharcoal
@@ -299,6 +305,19 @@ viewMarkdownFlashcardPrompt card cid ps =
                 ]
     in
     elements
+
+
+viewRenderedQuestion : MarkdownCard -> Element Msg
+viewRenderedQuestion card =
+    Element.html 
+        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg )
+
+
+viewRenderedAnswer : MarkdownCard -> Element Msg
+viewRenderedAnswer card =
+    Element.html 
+        (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg )
+
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
 viewPlainTextFlashcardPrompt card cid ps =
