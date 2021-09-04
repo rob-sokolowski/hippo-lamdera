@@ -26,6 +26,8 @@ import Bridge exposing (ToBackend(..))
 import Pages.Settings exposing (Msg(..))
 import Lamdera
 import Api.Card exposing (CardEnvelope)
+import Markdown.Option exposing (..)
+import Markdown.Render
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -62,6 +64,7 @@ type Msg
     | ToggledOption SelectedFormRadioOption
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
+    | MarkdownMsg Markdown.Render.MarkdownMsg
 
 
 type SelectedFormRadioOption
@@ -89,7 +92,7 @@ init user =
 
 defaultPlaintextCard = PlainTextCard "" ""
 
-defaultMarkdownCard = MarkdownCard "" "" "" "" []
+defaultMarkdownCard = MarkdownCard "" (renderMarkdown "") "" (renderMarkdown "") []
 
 
 -- UPDATE
@@ -167,6 +170,8 @@ update msg model =
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
 
+        MarkdownMsg _ ->
+            ( model, Effect.none )
 
 
 -- SUBSCRIPTIONS
@@ -260,6 +265,18 @@ viewCardTypeSelector model =
     ]
 
 
+viewRenderedQuestion : MarkdownCard -> Element Msg
+viewRenderedQuestion card =
+    Element.html 
+        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg )
+
+
+viewRenderedAnswer : MarkdownCard -> Element Msg
+viewRenderedAnswer card =
+    Element.html 
+        (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg )
+
+
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
     Element.column [] [
@@ -272,7 +289,7 @@ viewMarkdownEditor card =
                 , label = Input.labelAbove [] (Element.text "Label above??")
                 , spellcheck = True
             }
-            , Element.text <| card.renderedQuestion
+            , viewRenderedQuestion card
         ]
         , Element.row [] [
             Input.multiline [padding 5]
@@ -283,7 +300,7 @@ viewMarkdownEditor card =
                 , label = Input.labelAbove [] (Element.text "Label above??")
                 , spellcheck = True
             }
-            , Element.text <| card.renderedAnswer
+            , viewRenderedAnswer card
         ]
     ]
     
