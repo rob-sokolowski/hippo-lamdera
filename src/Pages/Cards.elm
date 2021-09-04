@@ -43,14 +43,14 @@ page shared req =
 
 -- INIT
 
-type FormType
-    = PlainTextForm
-    | MarkdownForm
+type EditorForm
+    = PlainTextForm PlainTextCard
+    | MarkdownForm MarkdownCard
+
 
 type alias Model =
     {
-        selectedType : FormType
-        , card : FlashCard
+        editorForm : EditorForm
         , cardSubmitStatus : Data CardId
         , user : User
     }
@@ -58,7 +58,8 @@ type alias Model =
 
 type Msg
     = Updated PlainTextCard PlainTextCardFormField String
-    | SelectedFormType FormType
+    | UpdatedMarkdown String
+    | SelectedFormType EditorForm
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
 
@@ -71,7 +72,7 @@ type PlainTextCardFormField
 
 init : User -> ( Model, Effect Msg )
 init user =
-    ( { selectedType = PlainTextForm
+    ( { editorForm = PlainTextForm
         , card = PlainText (PlainTextCard "" "")
         , cardSubmitStatus = NotAsked
         , user = user
@@ -106,14 +107,14 @@ update msg model =
         --       Also, this is a lazy implementation, so state is trampled on every toggle. (I'm OK with this for now)
             let
                 newCard = case newSelection of
-                    PlainTextForm ->
-                        PlainText (PlainTextCard "" "")
-                    MarkdownForm ->
-                        Markdown (MarkdownCard "" "" [])
+                    PlainTextForm card->
+                        PlainText card
+                    MarkdownForm card ->
+                        Markdown card
             in
             
             ({model
-            | selectedType = newSelection
+            | editorForm = newSelection
             , card = newCard
             }
             , Effect.none)
@@ -132,6 +133,8 @@ update msg model =
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
 
+        UpdatedMarkdown _ ->
+            (model, Effect.none)
 
 
 -- SUBSCRIPTIONS
@@ -154,18 +157,18 @@ viewElements : Model -> Element Msg
 viewElements model =
     Element.column [centerX] [
         viewCardTypeSelector model
-        , viewCardForm model
+        , viewCardForm model.editorForm model.user
         , viewCardSubmitStatus model
     ]
 
 
-viewCardForm : Model -> Element Msg
-viewCardForm model =
-    case model.card of
-        PlainText card ->
-             el [] (viewPlainTextCardForm (card, model.selectedType) model.user.id )
-        Markdown card ->
-             el [] (viewMarkdownEditor model)
+viewCardForm : EditorForm -> User -> Element Msg
+viewCardForm form user =
+    case form of
+        PlainTextForm plainTextCard ->
+             el [] (viewPlainTextEditor plainTextCard user.id )
+        MarkdownForm markdownCard ->
+             el [] (viewMarkdownEditor markdownCard)
 
 
 viewCardSubmitStatus : Model -> Element Msg
@@ -189,7 +192,7 @@ viewCardTypeSelector model =
         [ spacing 12
         , Background.color grey
         ]
-        { selected = Just model.selectedType
+        { selected = Just model.editorForm
         , onChange = SelectedFormType
         , label = Input.labelAbove [ Font.size 14, paddingXY 0 12 ] (Element.text "What type of flash card?")
         , options =
@@ -199,13 +202,26 @@ viewCardTypeSelector model =
         }
     ]
 
-viewMarkdownEditor : Model -> Element Msg
-viewMarkdownEditor model =
-    Element.text <| "This will be the Markdown editor!"
+
+viewMarkdownEditor : MarkdownCard -> Element Msg
+viewMarkdownEditor card =   
+    Element.column [] [
+        Input.multiline [padding 5]
+        {
+            onChange = \text -> UpdatedMarkdown text
+            , text = card.question
+            , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
+            , label = Input.labelAbove [] (Element.text "Label above??")
+            , spellcheck = True
+        }
+    ]
+    
 
 
-viewPlainTextCardForm : (PlainTextCard, FormType) -> UserId -> Element Msg
-viewPlainTextCardForm (card, selectedFormType) userId =
+
+
+viewPlainTextEditor : PlainTextCard -> UserId -> Element Msg
+viewPlainTextEditor card userId =
     let
         update_ : String -> PlainTextCard
         update_ updatedInput =
