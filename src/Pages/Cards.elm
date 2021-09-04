@@ -89,11 +89,15 @@ init user =
 
 defaultPlaintextCard = PlainTextCard "" ""
 
-defaultMarkdownCard = MarkdownCard "" "" []
+defaultMarkdownCard = MarkdownCard "" "" "" "" []
 
 
 -- UPDATE
 
+
+renderMarkdown : String -> String
+renderMarkdown str =
+    "Rendered: " ++ str
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -114,9 +118,15 @@ update msg model =
                     MarkdownForm card ->
                         case field of
                             Markdown_Question ->
-                                MarkdownForm {card | question = newVal}
+                                MarkdownForm {card 
+                                | question = newVal
+                                , renderedQuestion = renderMarkdown newVal
+                                }
                             Markdown_Answer ->
-                                MarkdownForm {card | answer = newVal}
+                                MarkdownForm {card
+                                | answer = newVal
+                                , renderedAnswer = renderMarkdown newVal
+                                }
                             _ ->
                                 -- smell?
                                 MarkdownForm defaultMarkdownCard
@@ -180,9 +190,34 @@ viewElements model =
     Element.column [centerX] [
         viewCardTypeSelector model
         , viewCardForm model.editorForm model.user
+        , viewCardSubmission model.editorForm model.user
         , viewCardSubmitStatus model
     ]
 
+
+viewCardSubmission : EditorForm -> User -> Element Msg
+viewCardSubmission form user =
+    let
+        onPress_ = case form of
+            PlainTextForm card ->
+                Just <| Submitted (PlainText card) user.id
+            MarkdownForm card ->
+                Just <| Submitted (Markdown card) user.id
+    in
+    
+    Element.column [] [
+    Input.button
+                [ Background.color blue
+                , Font.color white
+                , Border.color darkBlue
+                , paddingXY 32 16
+                , Border.rounded 3
+                , Element.width fill
+                ]
+                { onPress = onPress_
+                , label = Element.text "Save card!"
+                }
+    ]
 
 viewCardForm : EditorForm -> User -> Element Msg
 viewCardForm form user =
@@ -228,22 +263,28 @@ viewCardTypeSelector model =
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
     Element.column [] [
-        Input.multiline [padding 5]
-        {
-            onChange = (\text -> Updated (MarkdownForm card) Markdown_Question text)
-            , text = card.question
-            , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
-            , label = Input.labelAbove [] (Element.text "Label above??")
-            , spellcheck = True
-        }
-        , Input.multiline [padding 5]
-        {
-            onChange = (\text -> Updated (MarkdownForm card) Markdown_Answer text)
-            , text = card.answer
-            , placeholder = Just <| Input.placeholder [] (Element.text "Answer prompt:")
-            , label = Input.labelAbove [] (Element.text "Label above??")
-            , spellcheck = True
-        }
+        Element.row [] [
+            Input.multiline [padding 5]
+            {
+                onChange = (\text -> Updated (MarkdownForm card) Markdown_Question text)
+                , text = card.question
+                , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
+                , label = Input.labelAbove [] (Element.text "Label above??")
+                , spellcheck = True
+            }
+            , Element.text <| card.renderedQuestion
+        ]
+        , Element.row [] [
+            Input.multiline [padding 5]
+            {
+                onChange = (\text -> Updated (MarkdownForm card) Markdown_Answer text)
+                , text = card.answer
+                , placeholder = Just <| Input.placeholder [] (Element.text "Answer prompt:")
+                , label = Input.labelAbove [] (Element.text "Label above??")
+                , spellcheck = True
+            }
+            , Element.text <| card.renderedAnswer
+        ]
     ]
     
 
@@ -290,18 +331,6 @@ viewPlainTextEditor card userId =
                 , onChange = (\text -> Updated (PlainTextForm card) PlainText_Answer text)
                 , label = Input.labelAbove [ Font.size 14 ] (Element.text "Answer prompt:")
                 , spellcheck = True
-                }
-            
-            , Input.button
-                [ Background.color blue
-                , Font.color white
-                , Border.color darkBlue
-                , paddingXY 32 16
-                , Border.rounded 3
-                , Element.width fill
-                ]
-                { onPress = Just <| Submitted (PlainText card) userId
-                , label = Element.text "Save card!"
                 }
             ]
 
