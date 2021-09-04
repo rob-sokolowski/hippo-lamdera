@@ -198,7 +198,7 @@ subscriptions model =
 
 view : User -> Model -> View Msg
 view _ model =
-    { title = "Title string for cards"
+    { title = "Study Your Cards"
     , body = [layout [] <| viewElements model]
     }
 
@@ -230,6 +230,10 @@ viewGradeSumbissionPanel model =
     in
     elements
     
+
+viewMarkdownFlashcardPrompt : Model -> Element Msg
+viewMarkdownFlashcardPrompt model =
+    Element.text <| "This will be the markdown flashcard prompt"
 
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
@@ -350,8 +354,10 @@ viewPrompt model =
                     els = case card of
                         Just env ->
                             case env.card of
-                                FlashCardPlainText plainTextCard ->
+                                PlainText plainTextCard ->
                                     viewPlainTextFlashcardPrompt plainTextCard env.id model.promptStatus
+                                Markdown card_ ->
+                                    viewMarkdownFlashcardPrompt model
                         Nothing ->
                             Element.text "You have studied all your cards!"
                 in
