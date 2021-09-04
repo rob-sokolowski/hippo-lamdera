@@ -50,19 +50,23 @@ type EditorForm
 
 type alias Model =
     {
-        editorForm : EditorForm
+        selectedOption : SelectedFormRadioOption
+        , editorForm : EditorForm
         , cardSubmitStatus : Data CardId
         , user : User
     }
 
 
 type Msg
-    = Updated PlainTextCard PlainTextCardFormField String
-    | UpdatedMarkdown String
-    | SelectedFormType EditorForm
+    = Updated EditorForm String
+    | ToggledOption SelectedFormRadioOption
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
 
+
+type SelectedFormRadioOption
+    = MarkdownRadioOption
+    | PlainTextRadioOption
 
 type PlainTextCardFormField
     = QuestionField
@@ -72,14 +76,18 @@ type PlainTextCardFormField
 
 init : User -> ( Model, Effect Msg )
 init user =
-    ( { editorForm = PlainTextForm
-        , card = PlainText (PlainTextCard "" "")
+    ( { selectedOption = MarkdownRadioOption
+        , editorForm = MarkdownForm defaultMarkdownCard
         , cardSubmitStatus = NotAsked
         , user = user
       }
     , Effect.none
     )
 
+
+defaultPlaintextCard = PlainTextCard "" ""
+
+defaultMarkdownCard = MarkdownCard "" "" []
 
 
 -- UPDATE
@@ -89,33 +97,27 @@ init user =
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Updated card field val ->
-                case field of
-                    QuestionField ->
-                        let
-                            newCard = {card | question = val}
-                        in
-                        ({ model | card = PlainText newCard}, Effect.none)
-                    AnswerField ->
-                        let                        
-                            newCard = {card | answer = val}
-                        in
-                        ({ model | card = PlainText newCard}, Effect.none)
+        Updated form_ newStr ->
+            case form_ of
+                PlainTextForm form ->
+                    (model, Effect.none)
+                MarkdownForm form ->
+                    (model, Effect.none)
+                
 
-        SelectedFormType newSelection ->
+        ToggledOption selection ->
         -- TODO: We're holding two state variables, `selectedType` and `card`. Is this necessary?
         --       Also, this is a lazy implementation, so state is trampled on every toggle. (I'm OK with this for now)
             let
-                newCard = case newSelection of
-                    PlainTextForm card->
-                        PlainText card
-                    MarkdownForm card ->
-                        Markdown card
+                newForm = case selection of
+                    MarkdownRadioOption ->
+                        PlainTextForm defaultPlaintextCard
+                    PlainTextRadioOption ->
+                        MarkdownForm defaultMarkdownCard
             in
             
             ({model
-            | editorForm = newSelection
-            , card = newCard
+            | editorForm = newForm
             }
             , Effect.none)
 
@@ -133,8 +135,6 @@ update msg model =
                 Success cardId ->
                     ({model | cardSubmitStatus = Success cardId}, Effect.none)
 
-        UpdatedMarkdown _ ->
-            (model, Effect.none)
 
 
 -- SUBSCRIPTIONS
@@ -192,12 +192,12 @@ viewCardTypeSelector model =
         [ spacing 12
         , Background.color grey
         ]
-        { selected = Just model.editorForm
-        , onChange = SelectedFormType
+        { selected = Just model.selectedOption
+        , onChange = ToggledOption
         , label = Input.labelAbove [ Font.size 14, paddingXY 0 12 ] (Element.text "What type of flash card?")
         , options =
-            [ Input.option MarkdownForm (Element.text "Markdown")
-            , Input.option PlainTextForm (Element.text "Plain text card")
+            [ Input.option MarkdownRadioOption (Element.text "Markdown")
+            , Input.option PlainTextRadioOption (Element.text "Plain text")
             ]
         }
     ]
@@ -208,7 +208,7 @@ viewMarkdownEditor card =
     Element.column [] [
         Input.multiline [padding 5]
         {
-            onChange = \text -> UpdatedMarkdown text
+            onChange = \text -> Updated (MarkdownForm card) text
             , text = card.question
             , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
             , label = Input.labelAbove [] (Element.text "Label above??")
@@ -216,9 +216,6 @@ viewMarkdownEditor card =
         }
     ]
     
-
-
-
 
 viewPlainTextEditor : PlainTextCard -> UserId -> Element Msg
 viewPlainTextEditor card userId =
@@ -247,8 +244,8 @@ viewPlainTextEditor card userId =
                 , padding 6
                 ]
                 { text = card.question
-                , placeholder = Nothing
-                , onChange = Updated card QuestionField
+                , placeholder = Just <| Input.placeholder [] (Element.text "Question goes here..")
+                , onChange = (\text -> Updated (PlainTextForm card) text)
                 , label = Input.labelAbove [ Font.size 14 ] (Element.text "Flash card prompt")
                 , spellcheck = True
                 }
@@ -259,8 +256,8 @@ viewPlainTextEditor card userId =
                 , padding 6
                 ]
                 { text = card.answer
-                , placeholder = Nothing
-                , onChange = Updated card AnswerField
+                , placeholder = Just <| Input.placeholder [] (Element.text "Input answer here")
+                , onChange = (\text -> Updated (PlainTextForm card) text)
                 , label = Input.labelAbove [ Font.size 14 ] (Element.text "Answer prompt:")
                 , spellcheck = True
                 }
