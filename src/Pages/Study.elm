@@ -24,6 +24,7 @@ import Bridge exposing (sendToBackend)
 import Dict
 import List
 import Api.Card exposing (PlainTextCard)
+import Api.Card exposing (MarkdownCard)
 -- import Gen.Model exposing (Model(..))
 
 
@@ -231,13 +232,76 @@ viewGradeSumbissionPanel model =
     elements
     
 
-viewMarkdownFlashcardPrompt : Model -> Element Msg
-viewMarkdownFlashcardPrompt model =
-    Element.text <| "This will be the markdown flashcard prompt"
-
+viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
+viewMarkdownFlashcardPrompt card cid ps =
+    let
+        elements = case ps of
+            Idle ->
+                Element.none
+            QuestionPrompted ->
+                 Element.column [
+                    Border.width 2
+                    , Border.color colors.darkCharcoal
+                    , padding 10
+                    , spacing 20
+                ] [
+                    Element.text card.renderedQuestion
+                    , Element.row [spacing 10] [
+                        Input.button
+                            [ Background.color colors.darkCharcoal
+                            , Font.color colors.lightBlue
+                            , Border.color colors.lightGrey
+                            , paddingXY 32 16
+                            , Border.rounded 3
+                            , Element.width fill
+                            ]
+                            {
+                                onPress = Just UserClickedReveal
+                                , label = Element.text "Reveal"
+                            }
+                    ]
+                ]
+            AnswerRevealed ->
+                Element.column [
+                    Border.width 2
+                    , Border.color colors.darkCharcoal
+                    , padding 10
+                    , spacing 20
+                ] [
+                    Element.text card.renderedQuestion
+                    , Element.text card.renderedAnswer
+                    , Element.row [spacing 10] [
+                        Input.button
+                            [ Background.color colors.darkCharcoal
+                            , Font.color colors.lightBlue
+                            , Border.color colors.lightGrey
+                            , paddingXY 32 16
+                            , Border.rounded 3
+                            , Element.width fill
+                            ]
+                            {
+                                onPress = Just <| UserSelfGrade cid Incorrect
+                                , label = Element.text "X"
+                            }
+                        , Input.button
+                            [ Background.color colors.darkCharcoal
+                            , Font.color colors.lightBlue
+                            , Border.color colors.lightGrey
+                            , paddingXY 32 16
+                            , Border.rounded 3
+                            , Element.width fill
+                            ]
+                            {
+                                onPress = Just <| UserSelfGrade cid Correct 
+                                , label = Element.text "✔"
+                            }
+                    ]
+                ]
+    in
+    elements
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
-viewPlainTextFlashcardPrompt card cId ps =
+viewPlainTextFlashcardPrompt card cid ps =
     let
         elements = case ps of
             Idle ->
@@ -284,7 +348,7 @@ viewPlainTextFlashcardPrompt card cId ps =
                             , Element.width fill
                             ]
                             {
-                                onPress = Just <| UserSelfGrade cId Incorrect
+                                onPress = Just <| UserSelfGrade cid Incorrect
                                 , label = Element.text "X"
                             }
                         , Input.button
@@ -296,7 +360,7 @@ viewPlainTextFlashcardPrompt card cId ps =
                             , Element.width fill
                             ]
                             {
-                                onPress = Just <| UserSelfGrade cId Correct 
+                                onPress = Just <| UserSelfGrade cid Correct 
                                 , label = Element.text "✔"
                             }
                     ]
@@ -354,10 +418,10 @@ viewPrompt model =
                     els = case card of
                         Just env ->
                             case env.card of
-                                PlainText plainTextCard ->
-                                    viewPlainTextFlashcardPrompt plainTextCard env.id model.promptStatus
+                                PlainText card_ ->
+                                    viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
                                 Markdown card_ ->
-                                    viewMarkdownFlashcardPrompt model
+                                    viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
                         Nothing ->
                             Element.text "You have studied all your cards!"
                 in
