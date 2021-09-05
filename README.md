@@ -20,7 +20,7 @@ Here, you can create both sides of a card using Markdown. The previews are rende
 
 
 ### Study session:
-All cards have a `nextPromptScheduledAt` field. If you're consistently recalling a card's answer correctly, this date get pushed further into the future on each correct response. Cards you're not doing well on will be scheduled for prompting more frequently.
+All cards have a `nextPromptScheduledAt` field. If you're consistently recalling a card's answer correctly, this date gets pushed further into the future on each correct response. Cards you're not doing well on will be scheduled for prompting more frequently.
 
 
 Sample prompt:
