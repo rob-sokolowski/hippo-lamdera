@@ -4,6 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
+import Components.Styling as S
 import Debug exposing (..)
 import Effect exposing (Effect)
 import Element exposing (..)
@@ -204,17 +205,32 @@ subscriptions _ =
 view : User -> Model -> View Msg
 view _ model =
     { title = "New Card Editor"
-    , body = [ layout [] <| viewElements model ]
+    , body = [ layout [ Element.width fill, height fill ] <| viewElements model ]
     }
 
 
 viewElements : Model -> Element Msg
 viewElements model =
-    Element.column [ centerX ]
-        [ viewCardTypeSelector model
-        , viewCardForm model.editorForm model.user
-        , viewCardSubmission model.editorForm model.user
-        , viewCardSubmitStatus model
+    Element.row
+        [ Element.width <| Element.minimum 600 fill
+        , padding 20
+        , height fill
+        , Font.size 16
+        ]
+        [ Element.column
+            [ Background.color S.softGrey
+            , padding 10
+            , spacing 10
+            ]
+            [ viewCardTypeSelector model
+            , viewCardSubmission model.editorForm model.user
+            , viewCardSubmitStatus model
+            ]
+        , Element.column
+            [ padding 10
+            ]
+            [ viewCardForm model.editorForm model.user
+            ]
         ]
 
 
@@ -229,19 +245,24 @@ viewCardSubmission form user =
                 MarkdownForm card ->
                     Just <| Submitted (Markdown card) user.id
     in
-    Element.column []
-        [ Input.button
-            [ Background.color blue
-            , Font.color white
-            , Border.color darkBlue
-            , paddingXY 32 16
-            , Border.rounded 3
+    el
+        [ Element.width fill
+        ]
+    <|
+        Input.button
+            [ Background.color S.grey
+            , Font.bold
+
+            -- , Font.color
+            , Border.color S.blue
+            , Border.width 2
+            , padding 10
+            , Border.rounded 5
             , Element.width fill
             ]
             { onPress = onPress_
-            , label = Element.text "Save card!"
+            , label = Element.text "Submit"
             }
-        ]
 
 
 viewCardForm : EditorForm -> User -> Element Msg
@@ -272,14 +293,17 @@ viewCardSubmitStatus model =
 
 viewCardTypeSelector : Model -> Element Msg
 viewCardTypeSelector model =
-    Element.column []
+    Element.column
+        [ padding 10
+        ]
         [ Input.radio
-            [ spacing 12
-            , Background.color grey
+            [ spacing 10
+            , padding 10
+            , Background.color S.grey
             ]
             { selected = Just model.selectedOption
             , onChange = ToggledOption
-            , label = Input.labelAbove [ Font.size 14, paddingXY 0 12 ] (Element.text "What type of flash card?")
+            , label = Input.labelAbove [ paddingXY 0 12 ] (Element.text "What type of flash card?")
             , options =
                 [ Input.option MarkdownRadioOption (Element.text "Markdown")
                 , Input.option PlainTextRadioOption (Element.text "Plain text")
@@ -376,23 +400,3 @@ viewPlainTextEditor card userId =
 --     Element.column [] [
 --     ]
 -- color defs
-
-
-white =
-    Element.rgb 1 1 1
-
-
-grey =
-    Element.rgb 0.9 0.9 0.9
-
-
-blue =
-    Element.rgb 0 0.4 0.7
-
-
-red =
-    Element.rgb 0.8 0 0
-
-
-darkBlue =
-    Element.rgb 0 0 0.8
