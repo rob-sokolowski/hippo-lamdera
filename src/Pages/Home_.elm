@@ -32,21 +32,20 @@ type alias Model =
     }
 
 
-type Tab =
-    Global
-
+type Tab
+    = Global
 
 
 init : Shared.Model -> ( Model, Cmd Msg )
 init shared =
     let
         model : Model
-        model = Model Global
+        model =
+            Model Global
     in
     ( model
     , Cmd.none
     )
-
 
 
 
@@ -64,9 +63,9 @@ type alias Tag =
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
 update shared msg model =
     case msg of
-       Noop ->
-            (model, Cmd.none)
-            
+        Noop ->
+            ( model, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -88,8 +87,6 @@ view shared model =
                     , p [] [ text "flash cards" ]
                     ]
                 ]
-            
             ]
         ]
     }
-

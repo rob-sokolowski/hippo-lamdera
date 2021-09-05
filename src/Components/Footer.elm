@@ -10,9 +10,7 @@ view =
         [ div [ class "container" ]
             [ a [ class "logo-font", href "/" ] [ text "hippo" ]
             , span [ class "attribution" ]
-                [ 
-                
-                 text "Code & design licensed under MIT."
+                [ text "Code & design licensed under MIT."
                 ]
             ]
         ]
