@@ -4,6 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data as Data exposing (..)
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..), sendToBackend)
+import Components.Styling as S
 import Dict
 import Effect exposing (Effect)
 import Element exposing (..)
@@ -223,16 +224,25 @@ subscriptions model =
 view : User -> Model -> View Msg
 view _ model =
     { title = "Study Your Cards"
-    , body = [ layout [] <| viewElements model ]
+    , body =
+        [ layout [] <| viewElements model
+        ]
     }
 
 
 viewElements : Model -> Element Msg
 viewElements model =
-    Element.column [ centerX ]
-        [ viewStudySessionSummary model.sessionSummary
-        , viewPrompt model
-        , viewGradeSumbissionPanel model
+    Element.row
+        [ padding 20
+        , spacing 10
+        ]
+        [ Element.column []
+            [ viewStudySessionSummary model.sessionSummary
+            , viewGradeSumbissionPanel model
+            ]
+        , Element.column []
+            [ viewPrompt model
+            ]
         ]
 
 
@@ -251,7 +261,7 @@ viewGradeSumbissionPanel model =
                     Element.column [] <| List.map (\e -> Element.text e) errs
 
                 Success cardId ->
-                    Element.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
+                    el [ Font.size 14, paddingEach { top = 10, right = 0, left = 0, bottom = 10 } ] <| Element.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
     in
     elements
 
@@ -265,60 +275,102 @@ viewMarkdownFlashcardPrompt card cid ps =
                     Element.none
 
                 QuestionPrompted ->
-                    Element.column
-                        [ Border.width 2
-                        , Border.color colors.darkCharcoal
+                    Element.row
+                        [ Border.width 1
+                        , Border.color S.black
+                        , Background.color S.softGrey
                         , padding 10
-                        , spacing 20
+                        , spacing 10
                         ]
-                        [ viewRenderedQuestion card
-                        , Element.row [ spacing 10 ]
-                            [ Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
+                        [ el
+                            [ Background.color S.white
+                            , Border.rounded 10
+                            , padding 10
+                            , Element.width <| Element.minimum 400 fill
+                            , Element.height <| Element.minimum 200 fill
+                            ]
+                          <|
+                            viewRenderedQuestion card
+                        , el
+                            [ Element.width <| px 400
+                            , Element.height <| Element.minimum 200 fill
+                            ]
+                          <|
+                            Input.button
+                                [ Background.color S.medGrey
+                                , Font.color S.black
+                                , Font.bold
+                                , Border.color S.dimGrey
+                                , Border.width 5
                                 , paddingXY 32 16
-                                , Border.rounded 3
+                                , Border.rounded 10
                                 , Element.width fill
+                                , Element.height fill
+                                , centerX
                                 ]
                                 { onPress = Just UserClickedReveal
-                                , label = Element.text "Reveal"
+                                , label = el [ centerX ] <| Element.text "Reveal"
                                 }
-                            ]
                         ]
 
                 AnswerRevealed ->
-                    Element.column
-                        [ Border.width 2
+                    Element.row
+                        [ Border.width 5
                         , Border.color colors.darkCharcoal
+                        , Background.color S.softGrey
                         , padding 10
-                        , spacing 20
+                        , spacing 10
                         ]
-                        [ viewRenderedQuestion card
-                        , viewRenderedAnswer card
-                        , Element.row [ spacing 10 ]
-                            [ Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
-                                , paddingXY 32 16
-                                , Border.rounded 3
-                                , Element.width fill
+                        [ el
+                            [ Background.color S.white
+                            , Border.rounded 10
+                            , padding 10
+                            , Element.width <| px 400
+                            , Element.height <| Element.minimum 200 fill
+                            ]
+                          <|
+                            viewRenderedQuestion card
+                        , Element.column [ spacing 5 ]
+                            [ el
+                                [ Background.color S.white
+                                , Border.rounded 10
+                                , padding 10
+                                , Element.width <| px 400
+                                , Element.height <| Element.minimum 200 fill
                                 ]
-                                { onPress = Just <| UserSelfGrade cid Incorrect
-                                , label = Element.text "X"
-                                }
-                            , Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
-                                , paddingXY 32 16
-                                , Border.rounded 3
+                              <|
+                                viewRenderedAnswer card
+                            , Element.row
+                                [ spacing 10
                                 , Element.width fill
+                                , Element.height <| Element.minimum 60 fill
+                                , Font.size 36
                                 ]
-                                { onPress = Just <| UserSelfGrade cid Correct
-                                , label = Element.text "✔"
-                                }
+                                [ Input.button
+                                    [ Background.color S.medGrey
+                                    , Font.color S.black
+                                    , Font.bold
+                                    , Border.color S.black
+                                    , Border.rounded 5
+                                    , Element.width fill
+                                    , Element.height fill
+                                    ]
+                                    { onPress = Just <| UserSelfGrade cid Incorrect
+                                    , label = el [ centerX ] <| Element.text "X"
+                                    }
+                                , Input.button
+                                    [ Background.color S.medGrey
+                                    , Font.color S.black
+                                    , Border.color colors.lightGrey
+                                    , Border.rounded 10
+                                    , Border.rounded 5
+                                    , Element.width fill
+                                    , Element.height fill
+                                    ]
+                                    { onPress = Just <| UserSelfGrade cid Correct
+                                    , label = el [ centerX ] <| Element.text "✔"
+                                    }
+                                ]
                             ]
                         ]
     in
@@ -370,10 +422,9 @@ viewPlainTextFlashcardPrompt card cid ps =
 
                 AnswerRevealed ->
                     Element.column
-                        [ Border.width 2
-                        , Border.color colors.darkCharcoal
+                        [ Border.width 5
+                        , Border.color S.red
                         , padding 10
-                        , spacing 20
                         ]
                         [ Element.text card.question
                         , Element.text card.answer
@@ -418,7 +469,7 @@ viewStudySessionSummary summary =
                     Element.text "loading"
 
                 Success s ->
-                    Element.column []
+                    Element.column [ Font.size 14 ]
                         [ Element.text <| "Summary:"
                         , Element.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
                         , Element.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
@@ -479,7 +530,7 @@ viewPrompt model =
                         [ els
                         ]
     in
-    Element.column [ padding 10, spacing 10 ] [ elements ]
+    elements
 
 
 type PromptStatus

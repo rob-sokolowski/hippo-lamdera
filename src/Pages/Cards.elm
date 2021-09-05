@@ -4,6 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
+import Components.Styling as S
 import Debug exposing (..)
 import Effect exposing (Effect)
 import Element exposing (..)
@@ -204,17 +205,36 @@ subscriptions _ =
 view : User -> Model -> View Msg
 view _ model =
     { title = "New Card Editor"
-    , body = [ layout [] <| viewElements model ]
+    , body = [ layout [ Element.width fill, height fill ] <| viewElements model ]
     }
 
 
 viewElements : Model -> Element Msg
 viewElements model =
-    Element.column [ centerX ]
-        [ viewCardTypeSelector model
-        , viewCardForm model.editorForm model.user
-        , viewCardSubmission model.editorForm model.user
-        , viewCardSubmitStatus model
+    Element.row
+        [ padding 20
+
+        -- , height fill
+        , Font.size 16
+        ]
+        [ Element.column
+            [ Background.color S.softGrey
+            , Element.width <| px 200
+            , padding 10
+            , spacing 10
+            ]
+            [ viewCardTypeSelector model
+            , viewCardSubmission model.editorForm model.user
+            , viewCardSubmitStatus model
+            ]
+        , Element.column
+            [ padding 10
+            , Border.width 2
+            , Border.color S.blue
+            , Element.width <| Element.minimum 600 fill
+            ]
+            [ viewCardForm model.editorForm model.user
+            ]
         ]
 
 
@@ -229,19 +249,22 @@ viewCardSubmission form user =
                 MarkdownForm card ->
                     Just <| Submitted (Markdown card) user.id
     in
-    Element.column []
-        [ Input.button
-            [ Background.color blue
-            , Font.color white
-            , Border.color darkBlue
-            , paddingXY 32 16
-            , Border.rounded 3
+    el
+        [ Element.width fill
+        ]
+    <|
+        Input.button
+            [ Background.color S.grey
+            , Font.bold
+            , Border.color S.darkBlue
+            , Border.width 1
+            , padding 10
+            , Border.rounded 5
             , Element.width fill
             ]
             { onPress = onPress_
-            , label = Element.text "Save card!"
+            , label = Element.text "Submit"
             }
-        ]
 
 
 viewCardForm : EditorForm -> User -> Element Msg
@@ -251,7 +274,12 @@ viewCardForm form user =
             el [] (viewPlainTextEditor plainTextCard user.id)
 
         MarkdownForm markdownCard ->
-            el [] (viewMarkdownEditor markdownCard)
+            el
+                [ Element.width fill
+
+                -- , Element.height fill
+                ]
+                (viewMarkdownEditor markdownCard)
 
 
 viewCardSubmitStatus : Model -> Element Msg
@@ -272,14 +300,17 @@ viewCardSubmitStatus model =
 
 viewCardTypeSelector : Model -> Element Msg
 viewCardTypeSelector model =
-    Element.column []
+    Element.column
+        [ padding 10
+        ]
         [ Input.radio
-            [ spacing 12
-            , Background.color grey
+            [ spacing 10
+            , padding 10
+            , Background.color S.grey
             ]
             { selected = Just model.selectedOption
             , onChange = ToggledOption
-            , label = Input.labelAbove [ Font.size 14, paddingXY 0 12 ] (Element.text "What type of flash card?")
+            , label = Input.labelAbove [ paddingXY 0 12 ] (Element.text "What type of flash card?")
             , options =
                 [ Input.option MarkdownRadioOption (Element.text "Markdown")
                 , Input.option PlainTextRadioOption (Element.text "Plain text")
@@ -300,28 +331,70 @@ viewRenderedAnswer card =
         (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
 
 
+markdownQuestionPlaceholder =
+    Just <| Input.placeholder [] <| Element.text """
+    Enter Markdown here!
+    """
+
+
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
-    Element.column []
-        [ Element.row []
-            [ Input.multiline [ padding 5 ]
+    Element.column
+        [ padding 10
+        , spacing 10
+        ]
+        [ Element.row
+            [ padding 10
+            , spacing 10
+            , Background.color S.softGrey
+            ]
+            [ Input.multiline
+                [ padding 5
+                , Border.rounded 10
+                , Element.width <| px 400
+                , Element.height <| Element.minimum 200 fill
+                ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Question text
                 , text = card.question
-                , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
-                , label = Input.labelAbove [] (Element.text "Label above??")
+                , placeholder = markdownQuestionPlaceholder
+                , label = Input.labelAbove [] <| Element.text "Prompt side:"
                 , spellcheck = True
                 }
-            , viewRenderedQuestion card
+            , el
+                [ padding 10
+                , Element.width <| Element.px 400
+                , Element.height fill
+                , Border.rounded 10
+                , Background.color S.white
+                ]
+              <|
+                viewRenderedQuestion card
             ]
-        , Element.row []
-            [ Input.multiline [ padding 5 ]
+        , Element.row
+            [ padding 5
+            , spacing 10
+            , Background.color S.softGrey
+            ]
+            [ Input.multiline
+                [ padding 5
+                , Element.width <| px 400
+                , Element.height <| Element.minimum 200 fill
+                ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Answer text
                 , text = card.answer
-                , placeholder = Just <| Input.placeholder [] (Element.text "Answer prompt:")
-                , label = Input.labelAbove [] (Element.text "Label above??")
+                , placeholder = Just <| Input.placeholder [] (Element.text "Enter Markdown here!")
+                , label = Input.labelAbove [] <| Element.text "Answer side:"
                 , spellcheck = True
                 }
-            , viewRenderedAnswer card
+            , el
+                [ padding 10
+                , Element.width <| px 400
+                , Element.height <| Element.minimum 200 fill
+                , Border.rounded 10
+                , Background.color S.white
+                ]
+              <|
+                viewRenderedAnswer card
             ]
         ]
 
@@ -376,23 +449,3 @@ viewPlainTextEditor card userId =
 --     Element.column [] [
 --     ]
 -- color defs
-
-
-white =
-    Element.rgb 1 1 1
-
-
-grey =
-    Element.rgb 0.9 0.9 0.9
-
-
-blue =
-    Element.rgb 0 0.4 0.7
-
-
-red =
-    Element.rgb 0.8 0 0
-
-
-darkBlue =
-    Element.rgb 0 0 0.8

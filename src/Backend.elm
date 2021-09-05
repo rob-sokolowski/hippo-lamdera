@@ -1,40 +1,39 @@
 module Backend exposing (..)
 
+import Api.Card exposing (CardEnvelope, CardId, FlashCard, PromptFrequency(..), processGrade)
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
-import Api.User exposing (Email, UserFull, UserId, User)
+import Api.User exposing (Email, User, UserFull, UserId)
 import Bridge exposing (ToBackend(..))
+import Debug
 import Dict
 import Dict.Extra as Dict
 import Duration exposing (Duration)
 import Gen.Msg
 import Lamdera exposing (..)
 import List.Extra as List
+import Pages.Cards
 import Pages.Home_
 import Pages.Login
-import Pages.Cards
-import Pages.Study
-import Debug
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
+import Pages.Study
 import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
-import Api.Card exposing (CardId, FlashCard, CardEnvelope, PromptFrequency(..), processGrade)
-import Api.Card exposing (FlashCard)
-import Api.Card exposing (CardEnvelope)
 
 
 type alias Model =
     BackendModel
 
 
-ticMs = 1000
+ticMs =
+    1000
 
 
-app : { init : (Model, Cmd BackendMsg), update : BackendMsg -> Model -> (Model, Cmd BackendMsg), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> (Model, Cmd BackendMsg), subscriptions : Model -> Sub BackendMsg }
+app : { init : ( Model, Cmd BackendMsg ), update : BackendMsg -> Model -> ( Model, Cmd BackendMsg ), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg ), subscriptions : Model -> Sub BackendMsg }
 app =
     Lamdera.backend
         { init = init
@@ -46,10 +45,11 @@ app =
 
 subscriptions : Model -> Sub BackendMsg
 subscriptions model =
-    Sub.batch [
-        onConnect CheckSession
+    Sub.batch
+        [ onConnect CheckSession
         , Time.every ticMs Tick
-    ]
+        ]
+
 
 init : ( Model, Cmd BackendMsg )
 init =
@@ -75,10 +75,9 @@ update msg model =
             ( { model | sessions = model.sessions |> Dict.update sid (always (Just { userId = uid, expires = now |> Time.add Time.Day 30 Time.utc })) }
             , Time.now |> Task.perform (always (CheckSession sid cid))
             )
-        
-       
+
         Tick time ->
-            ({model | now = time}, Cmd.none)
+            ( { model | now = time }, Cmd.none )
 
         NoOpBackendMsg ->
             ( model, Cmd.none )
@@ -96,7 +95,7 @@ updateFromFrontend sessionId clientId msg model =
     case msg of
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
-       
+
         ProfileGet_Profile__Username_ { username } ->
             let
                 res =
@@ -105,7 +104,6 @@ updateFromFrontend sessionId clientId msg model =
                         |> Maybe.withDefault (Failure [ "user not found" ])
             in
             send <| PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res))
-
 
         UserAuthentication_Login { params } ->
             let
@@ -173,64 +171,75 @@ updateFromFrontend sessionId clientId msg model =
 
         CreateCard_Cards flashCard userId ->
             let
-                cardId = (Dict.size model.cards) + 1
-                envelope =
-                    {
-                        id =cardId
-                        , card=flashCard
-                        , userId=userId
-                        , createdAt=model.now
-                        , lastModifiedOn=model.now
-                        , nextPromptSchedFor=model.now
-                        , frequency=Immediately
-                    } 
-                cards_ = Dict.insert cardId envelope model.cards
-            in
+                cardId =
+                    Dict.size model.cards + 1
 
-            ({model | cards = cards_}, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))))
+                envelope =
+                    { id = cardId
+                    , card = flashCard
+                    , userId = userId
+                    , createdAt = model.now
+                    , lastModifiedOn = model.now
+                    , nextPromptSchedFor = model.now
+                    , frequency = Immediately
+                    }
+
+                cards_ =
+                    Dict.insert cardId envelope model.cards
+            in
+            ( { model | cards = cards_ }, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))) )
 
         FetchUsersStudyCards_Study user ->
             let
-                userCards = Dict.filter (\_ cardEnv -> 
-                    (cardEnv.userId == user.id)
-                    && (Time.posixToMillis cardEnv.nextPromptSchedFor <= Time.posixToMillis model.now))
-                    model.cards
-                asList = Dict.values userCards
+                userCards =
+                    Dict.filter
+                        (\_ cardEnv ->
+                            (cardEnv.userId == user.id)
+                                && (Time.posixToMillis cardEnv.nextPromptSchedFor <= Time.posixToMillis model.now)
+                        )
+                        model.cards
+
+                asList =
+                    Dict.values userCards
             in
-            (model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))))
-        
+            ( model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))) )
+
         UserSubmitGrade_Study cardId grade_ ->
             -- We've received a msg to apply this grade to the specified cardId
-            let 
-                card = Dict.get cardId model.cards
+            let
+                card =
+                    Dict.get cardId model.cards
             in
             case card of
                 Nothing ->
                     -- TODO: Error handling here
-                    (model, Cmd.none)
+                    ( model, Cmd.none )
+
                 Just card_ ->
                     let
-                        c = processGrade model.now card_ grade_
-                        cards = Dict.insert c.id c model.cards
+                        c =
+                            processGrade model.now card_ grade_
+
+                        cards =
+                            Dict.insert c.id c model.cards
                     in
-                    ({model | cards = cards}, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))))
+                    ( { model | cards = cards }, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))) )
 
         FetchUsersStudySummary_Study user ->
             let
-                totalUserCards = Dict.filter (\_ cardEnv -> cardEnv.userId == user.id) model.cards |> Dict.size
-                cardsToStudyNow = Dict.filter (\_ cardEnv -> cardEnv.userId == user.id && isCardScheduled model.now cardEnv) model.cards |> Dict.size
+                totalUserCards =
+                    Dict.filter (\_ cardEnv -> cardEnv.userId == user.id) model.cards |> Dict.size
 
-                studySessionSummary = 
-                    {
-                        usersTotalCardCount = totalUserCards
-                        , cardsToStudy = cardsToStudyNow
+                cardsToStudyNow =
+                    Dict.filter (\_ cardEnv -> cardEnv.userId == user.id && isCardScheduled model.now cardEnv) model.cards |> Dict.size
+
+                studySessionSummary =
+                    { usersTotalCardCount = totalUserCards
+                    , cardsToStudy = cardsToStudyNow
                     }
             in
-            
-        
-            (
-                model
-                , send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
+            ( model
+            , send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
             )
 
 
@@ -258,7 +267,10 @@ profileByEmail email model =
     model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
 
 
+
 -- utiliity funcs
+
+
 isCardScheduled : Time.Posix -> CardEnvelope -> Bool
 isCardScheduled now cardEnv =
     Time.posixToMillis now >= Time.posixToMillis cardEnv.nextPromptSchedFor
