@@ -20,11 +20,11 @@ Here, you can create both sides of a card using Markdown. The previews are rende
 
 
 ### Study session:
-All cards have a `nextPromptScheduledAt` field. This is
+All cards have a `nextPromptScheduledAt` field. If you're consistently recalling a card's answer correctly, this date get pushed further into the future on each correct response. Cards you're not doing well on, will be scheduled for study more frequently.
 
+
+#### Sample prompt:
 ![img](./assets/screenshot2.png)
 
-
-
-
+#### Sample self-grading panel
 ![img](./assets/screenshot3.png)
