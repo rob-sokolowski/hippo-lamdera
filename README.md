@@ -27,5 +27,5 @@ Sample prompt:
 ![img](./assets/screenshot2.png)
 
 
-Sample self-grading panel:
+Sample self-grading panel (note the overlap issue of the prompt.. still need to iron out a few UI kinks) :
 ![img](./assets/screenshot3.png)
