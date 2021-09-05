@@ -212,13 +212,14 @@ view _ model =
 viewElements : Model -> Element Msg
 viewElements model =
     Element.row
-        [ Element.width <| Element.minimum 600 fill
-        , padding 20
-        , height fill
+        [ padding 20
+
+        -- , height fill
         , Font.size 16
         ]
         [ Element.column
             [ Background.color S.softGrey
+            , Element.width <| px 200
             , padding 10
             , spacing 10
             ]
@@ -228,6 +229,9 @@ viewElements model =
             ]
         , Element.column
             [ padding 10
+            , Border.width 2
+            , Border.color S.blue
+            , Element.width <| Element.minimum 600 fill
             ]
             [ viewCardForm model.editorForm model.user
             ]
@@ -252,10 +256,8 @@ viewCardSubmission form user =
         Input.button
             [ Background.color S.grey
             , Font.bold
-
-            -- , Font.color
-            , Border.color S.blue
-            , Border.width 2
+            , Border.color S.darkBlue
+            , Border.width 1
             , padding 10
             , Border.rounded 5
             , Element.width fill
@@ -272,7 +274,12 @@ viewCardForm form user =
             el [] (viewPlainTextEditor plainTextCard user.id)
 
         MarkdownForm markdownCard ->
-            el [] (viewMarkdownEditor markdownCard)
+            el
+                [ Element.width fill
+
+                -- , Element.height fill
+                ]
+                (viewMarkdownEditor markdownCard)
 
 
 viewCardSubmitStatus : Model -> Element Msg
@@ -324,28 +331,72 @@ viewRenderedAnswer card =
         (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
 
 
+markdownQuestionPlaceholder =
+    Just <| Input.placeholder [] <| Element.text """
+    Enter Markdown here!
+    """
+
+
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
-    Element.column []
-        [ Element.row []
-            [ Input.multiline [ padding 5 ]
+    Element.column
+        [ padding 10
+        , spacing 10
+        ]
+        [ Element.row
+            [ padding 10
+            , spacing 10
+            , Background.color S.softGrey
+            ]
+            [ Input.multiline
+                [ padding 5
+                , Border.rounded 10
+                , Element.width <| Element.minimum 400 fill
+                , Element.height <| Element.minimum 200 fill
+                ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Question text
                 , text = card.question
-                , placeholder = Just <| Input.placeholder [] (Element.text "Question prompt:")
-                , label = Input.labelAbove [] (Element.text "Label above??")
+                , placeholder = markdownQuestionPlaceholder
+                , label = Input.labelAbove [] <| Element.text "Prompt side:"
                 , spellcheck = True
                 }
-            , viewRenderedQuestion card
+            , el
+                [ padding 10
+                , Element.width <| Element.minimum 400 fill
+                , Element.height fill
+                , Border.rounded 10
+                , Background.color S.white
+
+                -- , Background.color S.softGrey
+                ]
+              <|
+                viewRenderedQuestion card
             ]
-        , Element.row []
-            [ Input.multiline [ padding 5 ]
+        , Element.row
+            [ padding 5
+            , spacing 10
+            , Background.color S.softGrey
+            ]
+            [ Input.multiline
+                [ padding 5
+                , Element.width <| px 400
+                , Element.height <| Element.minimum 200 fill
+                ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Answer text
                 , text = card.answer
-                , placeholder = Just <| Input.placeholder [] (Element.text "Answer prompt:")
-                , label = Input.labelAbove [] (Element.text "Label above??")
+                , placeholder = Just <| Input.placeholder [] (Element.text "Enter Markdown here!")
+                , label = Input.labelAbove [] <| Element.text "Answer side:"
                 , spellcheck = True
                 }
-            , viewRenderedAnswer card
+            , el
+                [ padding 10
+                , Element.width <| px 400
+                , Element.height <| Element.minimum 200 fill
+                , Border.rounded 10
+                , Background.color S.white
+                ]
+              <|
+                viewRenderedAnswer card
             ]
         ]
 
