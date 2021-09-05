@@ -23,7 +23,6 @@ view options =
                         List.concat
                             [ List.map (viewLink options.currentRoute) <|
                                 [ ( "Home", Route.Home_ )
-
                                 , ( "Settings", Route.Settings )
                                 , ( "Study", Route.Study )
                                 , ( "Cards", Route.Cards )

@@ -61,18 +61,11 @@ init shared { params } =
 
 
 
-
-
-
-
-
-
 -- UPDATE
 
 
 type Msg
     = GotProfile (Data Profile)
-
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
@@ -112,6 +105,5 @@ view shared model =
 viewProfile : Shared.Model -> Profile -> Model -> Html Msg
 viewProfile shared profile model =
     div [ class "profile-page" ]
-        [ 
-        -- cool
+        [-- cool
         ]
