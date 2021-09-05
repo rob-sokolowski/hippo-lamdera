@@ -351,7 +351,7 @@ viewMarkdownEditor card =
             [ Input.multiline
                 [ padding 5
                 , Border.rounded 10
-                , Element.width <| Element.minimum 400 fill
+                , Element.width <| px 400
                 , Element.height <| Element.minimum 200 fill
                 ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Question text
@@ -362,12 +362,10 @@ viewMarkdownEditor card =
                 }
             , el
                 [ padding 10
-                , Element.width <| Element.minimum 400 fill
+                , Element.width <| Element.px 400
                 , Element.height fill
                 , Border.rounded 10
                 , Background.color S.white
-
-                -- , Background.color S.softGrey
                 ]
               <|
                 viewRenderedQuestion card
