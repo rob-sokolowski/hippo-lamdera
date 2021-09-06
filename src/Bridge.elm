@@ -1,8 +1,8 @@
 module Bridge exposing (..)
 
+import Api.Card exposing (CardId, FlashCard, Grade)
 import Api.User exposing (User, UserId)
 import Lamdera
-import Api.Card exposing (FlashCard, Grade, CardId)
 
 
 sendToBackend =
@@ -28,3 +28,4 @@ type ToBackend
     | FetchUsersStudyCards_Study User
     | FetchUsersStudySummary_Study User
     | UserSubmitGrade_Study CardId Grade
+    | FetchUsersCatalog_Catalog User

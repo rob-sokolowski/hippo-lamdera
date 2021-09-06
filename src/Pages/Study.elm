@@ -4,7 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data as Data exposing (..)
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..), sendToBackend)
-import Components.Styling as S
+import Components.Styling as S exposing (..)
 import Dict
 import Effect exposing (Effect)
 import Element exposing (..)
