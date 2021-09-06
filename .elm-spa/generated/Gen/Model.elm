@@ -23,7 +23,7 @@ import Pages.Profile.Username_
 type Model
     = Redirecting_
     | Cards Gen.Params.Cards.Params Pages.Cards.Model
-    | Catalog Gen.Params.Catalog.Params
+    | Catalog Gen.Params.Catalog.Params Pages.Catalog.Model
     | Home_ Gen.Params.Home_.Params Pages.Home_.Model
     | Login Gen.Params.Login.Params Pages.Login.Model
     | NotFound Gen.Params.NotFound.Params

@@ -26,6 +26,7 @@ view options =
                                 , ( "Settings", Route.Settings )
                                 , ( "Study", Route.Study )
                                 , ( "Cards", Route.Cards )
+                                , ( "Catalog", Route.Catalog )
                                 ]
                             , [ li [ class "nav-item" ]
                                     [ a
