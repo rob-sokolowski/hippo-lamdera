@@ -1,6 +1,7 @@
 module Gen.Msg exposing (Msg(..))
 
 import Gen.Params.Cards
+import Gen.Params.Catalog
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -9,6 +10,7 @@ import Gen.Params.Settings
 import Gen.Params.Study
 import Gen.Params.Profile.Username_
 import Pages.Cards
+import Pages.Catalog
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound

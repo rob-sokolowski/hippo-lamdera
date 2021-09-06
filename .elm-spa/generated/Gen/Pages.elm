@@ -4,6 +4,7 @@ import Browser.Navigation exposing (Key)
 import Effect exposing (Effect)
 import ElmSpa.Page
 import Gen.Params.Cards
+import Gen.Params.Catalog
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -16,6 +17,7 @@ import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
 import Page exposing (Page)
 import Pages.Cards
+import Pages.Catalog
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
@@ -43,6 +45,9 @@ init route =
     case route of
         Route.Cards ->
             pages.cards.init ()
+    
+        Route.Catalog ->
+            pages.catalog.init ()
     
         Route.Home_ ->
             pages.home_.init ()
@@ -103,6 +108,9 @@ view model_ =
         Model.Cards params model ->
             pages.cards.view params model
     
+        Model.Catalog params ->
+            pages.catalog.view params ()
+    
         Model.Home_ params model ->
             pages.home_.view params model
     
@@ -134,6 +142,9 @@ subscriptions model_ =
         Model.Cards params model ->
             pages.cards.subscriptions params model
     
+        Model.Catalog params ->
+            pages.catalog.subscriptions params ()
+    
         Model.Home_ params model ->
             pages.home_.subscriptions params model
     
@@ -162,6 +173,7 @@ subscriptions model_ =
 
 pages :
     { cards : Bundle Gen.Params.Cards.Params Pages.Cards.Model Pages.Cards.Msg
+    , catalog : Static Gen.Params.Catalog.Params
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Static Gen.Params.NotFound.Params
@@ -172,6 +184,7 @@ pages :
     }
 pages =
     { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
+    , catalog = static Pages.Catalog.view Model.Catalog
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = static Pages.NotFound.view Model.NotFound
