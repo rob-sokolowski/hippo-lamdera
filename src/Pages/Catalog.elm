@@ -5,6 +5,7 @@ import Api.Data exposing (Data(..))
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..))
 import Components.Styling as S exposing (..)
+import Dev.ComponentDemoData exposing (catalogTableDemoData)
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -167,7 +168,6 @@ viewElements model =
                         _ ->
                             el
                                 [ onClick (UserSelectedCard cardEnv)
-                                , mouseOver (UserMousesOver cardEnv)
                                 ]
                             <|
                                 Element.text "hover"
