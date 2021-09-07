@@ -1,8 +1,10 @@
 module Pages.Component_demo_catalog_table exposing (Model, Msg, page)
 
+import Animator
 import Api.Card exposing (CardEnvelope, FlashCard(..), PromptFrequency(..))
 import Components.Styling as S
 import Dev.ComponentDemoData exposing (catalogTableDemoData)
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -36,7 +38,30 @@ type alias Model =
     { zone : Time.Zone
     , catalog : List CardEnvelope
     , selectedEnv : Maybe CardEnvelope
+    , buttonStates : Animator.Timeline (Dict Id State)
     }
+
+
+type alias Id =
+    String
+
+
+type State
+    = Default
+    | Hover
+
+
+animator : Model
+animator =
+    Animator.animator
+        |> Animator.watchingWith
+            .buttonStates
+            (\newButtonStates model ->
+                { model | buttonStates = newButtonStates }
+            )
+            (\buttonStates ->
+                List.any ((==) Hover) <| Dict.values buttonStates
+            )
 
 
 init : Shared.Model -> ( Model, Effect Msg )
@@ -44,6 +69,9 @@ init shared =
     ( { zone = shared.zone
       , catalog = catalogTableDemoData
       , selectedEnv = Nothing
+      , buttonStates =
+            Animator.init <|
+                Dict.fromList [ ( "Uno", Default ), ( "Dos", Default ), ( "Tres", Default ) ]
       }
     , Effect.none
     )

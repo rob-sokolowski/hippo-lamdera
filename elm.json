@@ -4,11 +4,12 @@
         "src",
         ".elm-spa/defaults",
         ".elm-spa/generated",
-        "mdgriffith/elm-animator/1.1.1/src"
+        "mdgriffith/elm-animator/1.0.2/src"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -25,7 +26,6 @@
             "jxxcarlson/htree": "2.0.1",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
-            "mdgriffith/elm-animator": "1.1.1",
             "mdgriffith/elm-ui": "1.1.8",
             "rtfeldman/elm-iso8601-date-strings": "1.1.3",
             "ryannhg/date-format": "2.3.0",
@@ -37,7 +37,6 @@
             "NoRedInk/elm-string-conversions": "1.0.1",
             "Punie/elm-parser-extras": "1.0.0",
             "andre-dietrich/parser-combinators": "3.2.0",
-            "avh4/elm-color": "1.0.0",
             "elm/bytes": "1.0.8",
             "elm/file": "1.0.5",
             "elm/parser": "1.1.0",
