@@ -32,4 +32,4 @@ backendMsg old =
 
 toFrontend : Old.ToFrontend -> MsgMigration New.ToFrontend New.FrontendMsg
 toFrontend old =
-    ModelUnchanged
+    MsgUnchanged
