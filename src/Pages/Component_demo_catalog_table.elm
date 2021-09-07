@@ -51,7 +51,7 @@ type State
     | Hover
 
 
-animator : Model
+animator : Animator.Animator Model
 animator =
     Animator.animator
         |> Animator.watchingWith
