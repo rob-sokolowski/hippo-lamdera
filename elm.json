@@ -3,7 +3,8 @@
     "source-directories": [
         "src",
         ".elm-spa/defaults",
-        ".elm-spa/generated"
+        ".elm-spa/generated",
+        "mdgriffith/elm-animator/1.1.1/src"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
