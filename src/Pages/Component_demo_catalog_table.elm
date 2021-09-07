@@ -2,6 +2,7 @@ module Pages.Component_demo_catalog_table exposing (Model, Msg, page)
 
 import Animator
 import Api.Card exposing (CardEnvelope, FlashCard(..), PromptFrequency(..))
+import Color
 import Components.Styling as S
 import Dev.ComponentDemoData exposing (catalogTableDemoData)
 import Dict exposing (Dict)
@@ -42,6 +43,12 @@ type alias Model =
     }
 
 
+type Msg
+    = AnimatorTick Time.Posix
+    | UserHoveredButton Id
+    | UserUnhoveredButton Id
+
+
 type alias Id =
     String
 
@@ -49,19 +56,6 @@ type alias Id =
 type State
     = Default
     | Hover
-
-
-animator : Animator.Animator Model
-animator =
-    Animator.animator
-        |> Animator.watchingWith
-            .buttonStates
-            (\newButtonStates model ->
-                { model | buttonStates = newButtonStates }
-            )
-            (\buttonStates ->
-                List.any ((==) Hover) <| Dict.values buttonStates
-            )
 
 
 init : Shared.Model -> ( Model, Effect Msg )
@@ -85,24 +79,58 @@ data =
 -- UPDATE
 
 
-type Msg
-    = ReplaceMe
-
-
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
+    let
+        maybeAlways value =
+            Maybe.map (\_ -> value)
+
+        setButtonState id newState =
+            Dict.update id (maybeAlways newState) <| Animator.current model.buttonStates
+    in
     case msg of
-        ReplaceMe ->
-            ( model, Effect.none )
+        AnimatorTick newTime ->
+            ( Animator.update newTime animator model
+            , Effect.none
+            )
+
+        UserHoveredButton id ->
+            ( { model
+                | buttonStates =
+                    Animator.go Animator.quickly (setButtonState id Hover) model.buttonStates
+              }
+            , Effect.none
+            )
+
+        UserUnhoveredButton id ->
+            ( { model
+                | buttonStates =
+                    Animator.go Animator.quickly (setButtonState id Default) model.buttonStates
+              }
+            , Effect.none
+            )
 
 
 
 -- SUBSCRIPTIONS
 
 
+animator : Animator.Animator Model
+animator =
+    Animator.animator
+        |> Animator.watchingWith
+            .buttonStates
+            (\newButtonStates model ->
+                { model | buttonStates = newButtonStates }
+            )
+            (\buttonStates ->
+                List.any ((==) Hover) <| Dict.values buttonStates
+            )
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Animator.toSubscription AnimatorTick model animator
 
 
 
@@ -164,7 +192,82 @@ viewElements model =
                     ]
                 }
     in
-    viewCatalogTable catalogTableDemoData
+    Element.column []
+        [ viewCatalogTable catalogTableDemoData
+        , buttons model
+        ]
+
+
+buttons : Model -> Element Msg
+buttons model =
+    let
+        buttonState id =
+            Maybe.withDefault Default <| Dict.get id <| Animator.current model.buttonStates
+
+        borderColor id =
+            fromRgb <|
+                Color.toRgba <|
+                    if buttonState id == Hover then
+                        Color.blue
+
+                    else
+                        Color.black
+
+        fontColor id =
+            fromRgb <|
+                Color.toRgba <|
+                    if buttonState id == Hover then
+                        Color.white
+
+                    else
+                        Color.black
+
+        bgColor id =
+            fromRgb <|
+                Color.toRgba <|
+                    Animator.color model.buttonStates <|
+                        \buttonStates ->
+                            if (Maybe.withDefault Default <| Dict.get id buttonStates) == Hover then
+                                Color.lightBlue
+
+                            else
+                                Color.white
+
+        fontSize id =
+            round <|
+                Animator.linear model.buttonStates <|
+                    \buttonStates ->
+                        Animator.at <|
+                            if (Maybe.withDefault Default <| Dict.get id buttonStates) == Hover then
+                                28
+
+                            else
+                                20
+
+        button id =
+            el
+                [ width <| px 200
+                , height <| px 60
+                , Border.width 3
+                , Border.rounded 6
+                , Border.color <| borderColor id
+                , Background.color <| bgColor id
+                , Font.color <| fontColor id
+                , Font.size <| fontSize id
+                , padding 10
+                , onMouseEnter <| UserHoveredButton id
+                , onMouseLeave <| UserUnhoveredButton id
+                ]
+            <|
+                (el [ centerX, centerY ] <| text <| "Button " ++ id)
+    in
+    [ "Uno", "Dos", "Tres" ]
+        |> List.map button
+        |> column [ spacing 10, centerX, centerY ]
+
+
+
+-- utility funcs
 
 
 posixToTime : Time.Zone -> Time.Posix -> String
