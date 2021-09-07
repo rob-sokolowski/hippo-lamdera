@@ -23,6 +23,12 @@ services:
     volumes:
       - .:/root/code
     command: lamdera live
+  
+  generate_test_data:
+    image: dev-kit:latest
+    volumes:
+      - .:/home/appuser/workspace
+    command: python ./shell-scripts/generate_test_data.py
 
 networks:
   hippo-lamdera-network:

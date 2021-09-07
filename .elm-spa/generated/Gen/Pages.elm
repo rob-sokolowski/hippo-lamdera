@@ -4,6 +4,8 @@ import Browser.Navigation exposing (Key)
 import Effect exposing (Effect)
 import ElmSpa.Page
 import Gen.Params.Cards
+import Gen.Params.Catalog
+import Gen.Params.Component_demo_catalog_table
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -16,6 +18,8 @@ import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
 import Page exposing (Page)
 import Pages.Cards
+import Pages.Catalog
+import Pages.Component_demo_catalog_table
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
@@ -44,6 +48,12 @@ init route =
         Route.Cards ->
             pages.cards.init ()
     
+        Route.Catalog ->
+            pages.catalog.init ()
+    
+        Route.Component_demo_catalog_table ->
+            pages.component_demo_catalog_table.init ()
+    
         Route.Home_ ->
             pages.home_.init ()
     
@@ -71,6 +81,12 @@ update msg_ model_ =
     case ( msg_, model_ ) of
         ( Msg.Cards msg, Model.Cards params model ) ->
             pages.cards.update params msg model
+    
+        ( Msg.Catalog msg, Model.Catalog params model ) ->
+            pages.catalog.update params msg model
+    
+        ( Msg.Component_demo_catalog_table msg, Model.Component_demo_catalog_table params model ) ->
+            pages.component_demo_catalog_table.update params msg model
     
         ( Msg.Home_ msg, Model.Home_ params model ) ->
             pages.home_.update params msg model
@@ -103,6 +119,12 @@ view model_ =
         Model.Cards params model ->
             pages.cards.view params model
     
+        Model.Catalog params model ->
+            pages.catalog.view params model
+    
+        Model.Component_demo_catalog_table params model ->
+            pages.component_demo_catalog_table.view params model
+    
         Model.Home_ params model ->
             pages.home_.view params model
     
@@ -134,6 +156,12 @@ subscriptions model_ =
         Model.Cards params model ->
             pages.cards.subscriptions params model
     
+        Model.Catalog params model ->
+            pages.catalog.subscriptions params model
+    
+        Model.Component_demo_catalog_table params model ->
+            pages.component_demo_catalog_table.subscriptions params model
+    
         Model.Home_ params model ->
             pages.home_.subscriptions params model
     
@@ -162,6 +190,8 @@ subscriptions model_ =
 
 pages :
     { cards : Bundle Gen.Params.Cards.Params Pages.Cards.Model Pages.Cards.Msg
+    , catalog : Bundle Gen.Params.Catalog.Params Pages.Catalog.Model Pages.Catalog.Msg
+    , component_demo_catalog_table : Bundle Gen.Params.Component_demo_catalog_table.Params Pages.Component_demo_catalog_table.Model Pages.Component_demo_catalog_table.Msg
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Static Gen.Params.NotFound.Params
@@ -172,6 +202,8 @@ pages :
     }
 pages =
     { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
+    , catalog = bundle Pages.Catalog.page Model.Catalog Msg.Catalog
+    , component_demo_catalog_table = bundle Pages.Component_demo_catalog_table.page Model.Component_demo_catalog_table Msg.Component_demo_catalog_table
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = static Pages.NotFound.view Model.NotFound

@@ -5,6 +5,8 @@ module Gen.Route exposing
     )
 
 import Gen.Params.Cards
+import Gen.Params.Catalog
+import Gen.Params.Component_demo_catalog_table
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -18,6 +20,8 @@ import Url.Parser as Parser exposing ((</>), Parser)
 
 type Route
     = Cards
+    | Catalog
+    | Component_demo_catalog_table
     | Home_
     | Login
     | NotFound
@@ -36,6 +40,8 @@ routes : List (Parser (Route -> a) a)
 routes =
     [ Parser.map Home_ Gen.Params.Home_.parser
     , Parser.map Cards Gen.Params.Cards.parser
+    , Parser.map Catalog Gen.Params.Catalog.parser
+    , Parser.map Component_demo_catalog_table Gen.Params.Component_demo_catalog_table.parser
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Register Gen.Params.Register.parser
@@ -55,6 +61,12 @@ toHref route =
     case route of
         Cards ->
             joinAsHref [ "cards" ]
+    
+        Catalog ->
+            joinAsHref [ "catalog" ]
+    
+        Component_demo_catalog_table ->
+            joinAsHref [ "component_demo_catalog_table" ]
     
         Home_ ->
             joinAsHref []

@@ -5,7 +5,6 @@ import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
 import Components.Styling as S
-import Debug exposing (..)
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background exposing (..)

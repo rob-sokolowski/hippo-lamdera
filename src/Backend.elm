@@ -13,6 +13,7 @@ import Gen.Msg
 import Lamdera exposing (..)
 import List.Extra as List
 import Pages.Cards
+import Pages.Catalog
 import Pages.Home_
 import Pages.Login
 import Pages.Profile.Username_
@@ -190,6 +191,9 @@ updateFromFrontend sessionId clientId msg model =
             ( { model | cards = cards_ }, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))) )
 
         FetchUsersStudyCards_Study user ->
+            -- Fetches cards for the case of starting a study session. criteria:
+            --      * cards belong to the user
+            --      * card's next prompt schedule is in the past
             let
                 userCards =
                     Dict.filter
@@ -203,6 +207,21 @@ updateFromFrontend sessionId clientId msg model =
                     Dict.values userCards
             in
             ( model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))) )
+
+        FetchUsersCatalog_Catalog user ->
+            -- Fetches all cards belonging to a user, note this doesn't take time into account!
+            let
+                userCards =
+                    Dict.filter
+                        (\_ cardEnv ->
+                            cardEnv.userId == user.id
+                        )
+                        model.cards
+
+                asList =
+                    Dict.values userCards
+            in
+            ( model, send_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotUserCatalog <| Success asList))) )
 
         UserSubmitGrade_Study cardId grade_ ->
             -- We've received a msg to apply this grade to the specified cardId
