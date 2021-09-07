@@ -1788,7 +1788,7 @@ If we're in transition, this is 0.
 -}
 dwellingTime : Timeline state -> Float
 dwellingTime timeline =
-    case Debug.log "status" <| status timeline of
+    case status timeline of
         Dwelling x ->
             Duration.inMilliseconds x
 
