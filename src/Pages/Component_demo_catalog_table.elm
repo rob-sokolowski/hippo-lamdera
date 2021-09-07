@@ -213,15 +213,6 @@ buttons model =
                     else
                         Color.black
 
-        fontColor id =
-            fromRgb <|
-                Color.toRgba <|
-                    if buttonState id == Hover then
-                        Color.white
-
-                    else
-                        Color.black
-
         bgColor id =
             fromRgb <|
                 Color.toRgba <|
@@ -233,17 +224,6 @@ buttons model =
                             else
                                 Color.white
 
-        fontSize id =
-            round <|
-                Animator.linear model.buttonStates <|
-                    \buttonStates ->
-                        Animator.at <|
-                            if (Maybe.withDefault Default <| Dict.get id buttonStates) == Hover then
-                                28
-
-                            else
-                                20
-
         button id =
             el
                 [ width <| px 200
@@ -252,8 +232,6 @@ buttons model =
                 , Border.rounded 6
                 , Border.color <| borderColor id
                 , Background.color <| bgColor id
-                , Font.color <| fontColor id
-                , Font.size <| fontSize id
                 , padding 10
                 , onMouseEnter <| UserHoveredButton id
                 , onMouseLeave <| UserUnhoveredButton id
