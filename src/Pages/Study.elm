@@ -275,7 +275,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     Element.none
 
                 QuestionPrompted ->
-                    Element.row
+                    Element.column
                         [ Border.width 1
                         , Border.color S.black
                         , Background.color S.softGrey
@@ -314,7 +314,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                         ]
 
                 AnswerRevealed ->
-                    Element.row
+                    Element.column
                         [ Border.width 5
                         , Border.color colors.darkCharcoal
                         , Background.color S.softGrey
