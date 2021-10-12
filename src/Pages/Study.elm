@@ -286,14 +286,14 @@ viewMarkdownFlashcardPrompt card cid ps =
                             [ Background.color S.white
                             , Border.rounded 10
                             , padding 10
-                            , Element.width <| Element.minimum 400 fill
-                            , Element.height <| Element.minimum 200 fill
+                            , Element.width <| Element.minimum 800 fill
+                            , Element.height <| Element.minimum 400 fill
                             ]
                           <|
                             viewRenderedQuestion card
                         , el
-                            [ Element.width <| px 400
-                            , Element.height <| Element.minimum 200 fill
+                            [ Element.width <| px 800
+                            , Element.height <| Element.minimum 400 fill
                             ]
                           <|
                             Input.button
@@ -325,8 +325,8 @@ viewMarkdownFlashcardPrompt card cid ps =
                             [ Background.color S.white
                             , Border.rounded 10
                             , padding 10
-                            , Element.width <| px 400
-                            , Element.height <| Element.minimum 200 fill
+                            , Element.width <| px 800
+                            , Element.height <| Element.minimum 400 fill
                             ]
                           <|
                             viewRenderedQuestion card
@@ -335,8 +335,8 @@ viewMarkdownFlashcardPrompt card cid ps =
                                 [ Background.color S.white
                                 , Border.rounded 10
                                 , padding 10
-                                , Element.width <| px 400
-                                , Element.height <| Element.minimum 200 fill
+                                , Element.width <| px 800
+                                , Element.height <| Element.minimum 400 fill
                                 ]
                               <|
                                 viewRenderedAnswer card
