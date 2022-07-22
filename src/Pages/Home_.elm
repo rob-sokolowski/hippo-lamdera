@@ -100,12 +100,7 @@ view : Shared.Model -> Model -> View Msg
 view shared model =
     { title = "Homepage"
     , body =
-        [ layout
-            [ Font.size 16
-            , width fill
-            , height fill
-            ]
-            (elements model)
+        [ elements model
         ]
     }
 

@@ -3,9 +3,9 @@ module Shared exposing
     , Model
     , Msg(..)
     , init
+    , sharedView
     , subscriptions
     , update
-    , view
     )
 
 import Api.User exposing (User)
@@ -83,12 +83,12 @@ subscriptions _ _ =
 -- VIEW
 
 
-view :
+sharedView :
     Request
     -> { page : View msg, toMsg : Msg -> msg }
     -> Model
     -> View msg
-view req { page, toMsg } model =
+sharedView req { page, toMsg } model =
     { title =
         if String.isEmpty page.title then
             "Hippo"

@@ -4,6 +4,7 @@ import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
 import Effect
+import Element as E exposing (..)
 import Gen.Model
 import Gen.Pages as Pages
 import Gen.Route as Route
@@ -144,13 +145,28 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    Shared.view (Request.create () model.url model.key)
-        { page =
-            Pages.view model.page model.shared model.url model.key
-                |> View.map Page
-        , toMsg = Shared
-        }
-        model.shared
+    let
+        pageElements =
+            Shared.sharedView (Request.create () model.url model.key)
+                { page =
+                    Pages.view model.page model.shared model.url model.key
+                        |> View.map Page
+                , toMsg = Shared
+                }
+                model.shared
+
+        -- TODO: This feels wrong.
+        firstElement =
+            case List.head pageElements.body of
+                Nothing ->
+                    E.none
+
+                Just e ->
+                    e
+    in
+    { title = pageElements.title
+    , body = [ layout [] firstElement ]
+    }
 
 
 

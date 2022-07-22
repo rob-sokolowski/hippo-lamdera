@@ -94,6 +94,9 @@ update msg_ model_ =
         ( Msg.Login msg, Model.Login params model ) ->
             pages.login.update params msg model
     
+        ( Msg.NotFound msg, Model.NotFound params model ) ->
+            pages.notFound.update params msg model
+    
         ( Msg.Register msg, Model.Register params model ) ->
             pages.register.update params msg model
     
@@ -131,8 +134,8 @@ view model_ =
         Model.Login params model ->
             pages.login.view params model
     
-        Model.NotFound params ->
-            pages.notFound.view params ()
+        Model.NotFound params model ->
+            pages.notFound.view params model
     
         Model.Register params model ->
             pages.register.view params model
@@ -168,8 +171,8 @@ subscriptions model_ =
         Model.Login params model ->
             pages.login.subscriptions params model
     
-        Model.NotFound params ->
-            pages.notFound.subscriptions params ()
+        Model.NotFound params model ->
+            pages.notFound.subscriptions params model
     
         Model.Register params model ->
             pages.register.subscriptions params model
@@ -194,7 +197,7 @@ pages :
     , component_demo_catalog_table : Bundle Gen.Params.Component_demo_catalog_table.Params Pages.Component_demo_catalog_table.Model Pages.Component_demo_catalog_table.Msg
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
-    , notFound : Static Gen.Params.NotFound.Params
+    , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
     , settings : Bundle Gen.Params.Settings.Params Pages.Settings.Model Pages.Settings.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
@@ -206,7 +209,7 @@ pages =
     , component_demo_catalog_table = bundle Pages.Component_demo_catalog_table.page Model.Component_demo_catalog_table Msg.Component_demo_catalog_table
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
-    , notFound = static Pages.NotFound.view Model.NotFound
+    , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , register = bundle Pages.Register.page Model.Register Msg.Register
     , settings = bundle Pages.Settings.page Model.Settings Msg.Settings
     , study = bundle Pages.Study.page Model.Study Msg.Study

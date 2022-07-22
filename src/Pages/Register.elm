@@ -5,6 +5,7 @@ import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.UserForm
 import Effect exposing (Effect)
+import Element as E exposing (..)
 import Gen.Route as Route
 import Page
 import Request exposing (Request)
@@ -126,29 +127,35 @@ subscriptions _ =
 view : Model -> View Msg
 view model =
     { title = "Sign up"
-    , body =
-        [ Components.UserForm.view
-            { user = model.user
-            , label = "Sign up"
-            , onFormSubmit = AttemptedSignUp
-            , alternateLink = { label = "Have an account?", route = Route.Login }
-            , fields =
-                [ { label = "Your Name"
-                  , type_ = "text"
-                  , value = model.username
-                  , onInput = Updated Username
-                  }
-                , { label = "Email"
-                  , type_ = "email"
-                  , value = model.email
-                  , onInput = Updated Email
-                  }
-                , { label = "Password"
-                  , type_ = "password"
-                  , value = model.password
-                  , onInput = Updated Password
-                  }
-                ]
-            }
-        ]
+    , body = [ elements model ]
+
+    --[ Components.UserForm.view
+    --    { user = model.user
+    --    , label = "Sign up"
+    --    , onFormSubmit = AttemptedSignUp
+    --    , alternateLink = { label = "Have an account?", route = Route.Login }
+    --    , fields =
+    --        [ { label = "Your Name"
+    --          , type_ = "text"
+    --          , value = model.username
+    --          , onInput = Updated Username
+    --          }
+    --        , { label = "Email"
+    --          , type_ = "email"
+    --          , value = model.email
+    --          , onInput = Updated Email
+    --          }
+    --        , { label = "Password"
+    --          , type_ = "password"
+    --          , value = model.password
+    --          , onInput = Updated Password
+    --          }
+    --        ]
+    --    }
+    --]
     }
+
+
+elements : Model -> Element Msg
+elements model =
+    E.text "Register"

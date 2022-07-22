@@ -204,7 +204,7 @@ subscriptions _ =
 view : User -> Model -> View Msg
 view _ model =
     { title = "New Card Editor"
-    , body = [ layout [ Element.width fill, height fill ] <| viewElements model ]
+    , body = [ viewElements model ]
     }
 
 

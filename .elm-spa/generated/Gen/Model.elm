@@ -29,7 +29,7 @@ type Model
     | Component_demo_catalog_table Gen.Params.Component_demo_catalog_table.Params Pages.Component_demo_catalog_table.Model
     | Home_ Gen.Params.Home_.Params Pages.Home_.Model
     | Login Gen.Params.Login.Params Pages.Login.Model
-    | NotFound Gen.Params.NotFound.Params
+    | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
     | Register Gen.Params.Register.Params Pages.Register.Model
     | Settings Gen.Params.Settings.Params Pages.Settings.Model
     | Study Gen.Params.Study.Params Pages.Study.Model
