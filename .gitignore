@@ -6,3 +6,4 @@ repl-temp-*
 node_modules/
 .vscode/
 lamdera.exe
+.idea/
