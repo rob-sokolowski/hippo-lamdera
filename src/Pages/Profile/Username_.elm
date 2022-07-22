@@ -6,6 +6,7 @@ import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.IconButton as IconButton
 import Components.NotFound
+import Element as E exposing (..)
 import Gen.Params.Profile.Username_ exposing (Params)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, src)
@@ -89,16 +90,17 @@ subscriptions _ =
 view : Shared.Model -> Model -> View Msg
 view shared model =
     { title = "Profile"
-    , body =
-        case model.profile of
-            Api.Data.Success profile ->
-                [ viewProfile shared profile model ]
+    , body = [ elements model ]
 
-            Api.Data.Failure _ ->
-                [ Components.NotFound.view ]
-
-            _ ->
-                []
+    --case model.profile of
+    --    Api.Data.Success profile ->
+    --        [ viewProfile shared profile model ]
+    --
+    --    Api.Data.Failure _ ->
+    --        [ Components.NotFound.view ]
+    --
+    --    _ ->
+    --        []
     }
 
 
@@ -107,3 +109,8 @@ viewProfile shared profile model =
     div [ class "profile-page" ]
         [-- cool
         ]
+
+
+elements : Model -> Element Msg
+elements model =
+    E.none

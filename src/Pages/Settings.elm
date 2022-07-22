@@ -5,6 +5,7 @@ import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.ErrorList
 import Effect exposing (Effect)
+import Element as E exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, placeholder, type_, value)
 import Html.Events as Events
@@ -144,75 +145,81 @@ subscriptions _ =
 view : User -> Model -> View Msg
 view user model =
     { title = "Settings"
-    , body =
-        [ div [ class "settings-page" ]
-            [ div [ class "container page" ]
-                [ div [ class "row" ]
-                    [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
-                        [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
-                        , br [] []
-                        , Components.ErrorList.view model.errors
-                        , Utils.Maybe.view model.message <|
-                            \message ->
-                                p [ class "text-success" ] [ text message ]
-                        , form [ Events.onSubmit (SubmittedForm user) ]
-                            [ fieldset []
-                                [ fieldset [ class "form-group" ]
-                                    [ input
-                                        [ class "form-control"
-                                        , placeholder "URL of profile picture"
-                                        , type_ "text"
-                                        , value model.image
-                                        , Events.onInput (Updated Image)
-                                        ]
-                                        []
-                                    ]
-                                , fieldset [ class "form-group" ]
-                                    [ input
-                                        [ class "form-control form-control-lg"
-                                        , placeholder "Your Username"
-                                        , type_ "text"
-                                        , value model.username
-                                        , Events.onInput (Updated Username)
-                                        ]
-                                        []
-                                    ]
-                                , fieldset [ class "form-group" ]
-                                    [ textarea
-                                        [ class "form-control form-control-lg"
-                                        , placeholder "Short bio about you"
-                                        , attribute "rows" "8"
-                                        , value model.bio
-                                        , Events.onInput (Updated Bio)
-                                        ]
-                                        []
-                                    ]
-                                , fieldset [ class "form-group" ]
-                                    [ input
-                                        [ class "form-control form-control-lg"
-                                        , placeholder "Email"
-                                        , type_ "text"
-                                        , value model.email
-                                        , Events.onInput (Updated Email)
-                                        ]
-                                        []
-                                    ]
-                                , fieldset [ class "form-group" ]
-                                    [ input
-                                        [ class "form-control form-control-lg"
-                                        , placeholder "Password"
-                                        , type_ "password"
-                                        , value (Maybe.withDefault "" model.password)
-                                        , Events.onInput (Updated Password)
-                                        ]
-                                        []
-                                    ]
-                                , button [ class "btn btn-lg btn-primary pull-xs-right" ] [ text "Update Settings" ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
+    , body = [ elements model ]
+
+    --[ div [ class "settings-page" ]
+    --    [ div [ class "container page" ]
+    --        [ div [ class "row" ]
+    --            [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
+    --                [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
+    --                , br [] []
+    --                , Components.ErrorList.view model.errors
+    --                , Utils.Maybe.view model.message <|
+    --                    \message ->
+    --                        p [ class "text-success" ] [ text message ]
+    --                , form [ Events.onSubmit (SubmittedForm user) ]
+    --                    [ fieldset []
+    --                        [ fieldset [ class "form-group" ]
+    --                            [ input
+    --                                [ class "form-control"
+    --                                , placeholder "URL of profile picture"
+    --                                , type_ "text"
+    --                                , value model.image
+    --                                , Events.onInput (Updated Image)
+    --                                ]
+    --                                []
+    --                            ]
+    --                        , fieldset [ class "form-group" ]
+    --                            [ input
+    --                                [ class "form-control form-control-lg"
+    --                                , placeholder "Your Username"
+    --                                , type_ "text"
+    --                                , value model.username
+    --                                , Events.onInput (Updated Username)
+    --                                ]
+    --                                []
+    --                            ]
+    --                        , fieldset [ class "form-group" ]
+    --                            [ textarea
+    --                                [ class "form-control form-control-lg"
+    --                                , placeholder "Short bio about you"
+    --                                , attribute "rows" "8"
+    --                                , value model.bio
+    --                                , Events.onInput (Updated Bio)
+    --                                ]
+    --                                []
+    --                            ]
+    --                        , fieldset [ class "form-group" ]
+    --                            [ input
+    --                                [ class "form-control form-control-lg"
+    --                                , placeholder "Email"
+    --                                , type_ "text"
+    --                                , value model.email
+    --                                , Events.onInput (Updated Email)
+    --                                ]
+    --                                []
+    --                            ]
+    --                        , fieldset [ class "form-group" ]
+    --                            [ input
+    --                                [ class "form-control form-control-lg"
+    --                                , placeholder "Password"
+    --                                , type_ "password"
+    --                                , value (Maybe.withDefault "" model.password)
+    --                                , Events.onInput (Updated Password)
+    --                                ]
+    --                                []
+    --                            ]
+    --                        , button [ class "btn btn-lg btn-primary pull-xs-right" ] [ text "Update Settings" ]
+    --                        ]
+    --                    ]
+    --                ]
+    --            ]
+    --        ]
+    --    ]
+    --]
     }
+
+
+elements : Model -> Element Msg
+elements model =
+    E.text "Settings"

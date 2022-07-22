@@ -225,7 +225,7 @@ view : User -> Model -> View Msg
 view _ model =
     { title = "Study Your Cards"
     , body =
-        [ layout [] <| viewElements model
+        [ viewElements model
         ]
     }
 

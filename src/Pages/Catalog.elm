@@ -136,7 +136,7 @@ view : User -> Model -> View Msg
 view _ model =
     { title = "Your Card Catalog"
     , body =
-        [ layout [] <| viewElements model
+        [ viewElements model
         ]
     }
 

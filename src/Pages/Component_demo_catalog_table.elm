@@ -140,7 +140,7 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Component Demo: Catalog Table"
-    , body = [ layout [] <| viewElements model ]
+    , body = [ viewElements model ]
     }
 
 

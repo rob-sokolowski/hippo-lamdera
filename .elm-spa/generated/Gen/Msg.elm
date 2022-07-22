@@ -28,6 +28,7 @@ type Msg
     | Component_demo_catalog_table Pages.Component_demo_catalog_table.Msg
     | Home_ Pages.Home_.Msg
     | Login Pages.Login.Msg
+    | NotFound Pages.NotFound.Msg
     | Register Pages.Register.Msg
     | Settings Pages.Settings.Msg
     | Study Pages.Study.Msg
