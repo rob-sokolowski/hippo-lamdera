@@ -4,10 +4,13 @@ import Api.Data exposing (Data)
 import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.Styling as Styling
-import Components.UserForm
 import Effect exposing (Effect)
 import Element as E exposing (..)
+import Element.Background as Background
 import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
+import Element.Input as Input
 import Gen.Route as Route
 import Page
 import Request exposing (Request)
@@ -121,37 +124,41 @@ view : Model -> View Msg
 view model =
     { title = "Sign in"
     , body = [ elements model ]
-
-    --[ Components.UserForm.view
-    --    { user = model.user
-    --    , label = "Sign in"
-    --    , onFormSubmit = AttemptedSignIn
-    --    , alternateLink = { label = "Need an account?", route = Route.Register }
-    --    , fields =
-    --        [ { label = "Email"
-    --          , type_ = "email"
-    --          , value = model.email
-    --          , onInput = Updated Email
-    --          }
-    --        , { label = "Password"
-    --          , type_ = "password"
-    --          , value = model.password
-    --          , onInput = Updated Password
-    --          }
-    --        ]
-    --    }
-    --]
     }
 
 
 elements : Model -> Element Msg
 elements model =
-    el
-        [ width fill
+    column
+        [ width (fill |> maximum 800)
         , height fill
-        , Border.color Styling.black
-        , Border.width 1
         , centerX
-        , centerY
+        , Border.color Styling.black
+        , spacing 10
+
+        --, centerY
         ]
-        (E.text "Login")
+        [ Input.username []
+            { onChange = Updated Email
+            , text = model.email
+            , placeholder = Nothing
+            , label = Input.labelLeft [] <| text "Email:"
+            }
+        , Input.currentPassword []
+            { onChange = Updated Password
+            , text = model.password
+            , placeholder = Nothing
+            , show = False
+            , label = Input.labelLeft [] <| text "Password:"
+            }
+        , Input.button
+            [ alignRight
+            , Border.width 1
+            , Border.rounded 3
+            , Border.color Styling.black
+            , padding 4
+            ]
+            { onPress = Just AttemptedSignIn
+            , label = el [ centerX ] <| text "Sign In"
+            }
+        ]

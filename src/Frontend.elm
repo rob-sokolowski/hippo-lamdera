@@ -3,8 +3,10 @@ module Frontend exposing (..)
 import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
+import Components.Styling as Styling
 import Effect
 import Element as E exposing (..)
+import Element.Border as Border
 import Gen.Model
 import Gen.Pages as Pages
 import Gen.Route as Route
@@ -145,6 +147,14 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document Msg
 view model =
+    { title = "TODO: pageElements.title"
+    , body =
+        [ layout [] (elements model) ]
+    }
+
+
+elements : Model -> Element Msg
+elements model =
     let
         pageElements =
             Shared.sharedView (Request.create () model.url model.key)
@@ -164,15 +174,15 @@ view model =
                 Just e ->
                     e
     in
-    { title = pageElements.title
-    , body =
-        [ layout
-            [ height fill
-            , width fill
-            ]
-            firstElement
+    E.column
+        [ width (fill |> maximum 1400)
+        , height fill
+        , padding 3
+        , centerX
+        , Border.width 1
+        , Border.color Styling.dimGrey
         ]
-    }
+        [ firstElement ]
 
 
 

@@ -115,6 +115,7 @@ elements req { page, toMsg } model =
     column
         [ width fill
         , height fill
+        , centerX
         ]
         [ navBar
         , column

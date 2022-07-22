@@ -108,7 +108,7 @@ view shared model =
 elements : Model -> Element msg
 elements model =
     column
-        [ width (fill |> maximum 800)
+        [ width fill
 
         --, height (fill |> maximum 600)
         --, height fill
@@ -117,9 +117,6 @@ elements model =
 
         --, centerY
         , centerX
-        , Border.width 2
-        , Border.rounded 5
-        , Border.color Styling.black
         ]
         [ el
             [ Font.size 36
