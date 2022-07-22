@@ -1,18 +1,18 @@
 module View exposing (View, map, none, placeholder, toBrowserDocument)
 
-import Html exposing (Html)
+import Element as E exposing (..)
 
 
 type alias View msg =
     { title : String
-    , body : List (Html msg)
+    , body : List (Element msg)
     }
 
 
 placeholder : String -> View msg
 placeholder str =
     { title = str
-    , body = [ Html.text str ]
+    , body = [ E.text str ]
     }
 
 
@@ -24,7 +24,7 @@ none =
 map : (a -> b) -> View a -> View b
 map fn view =
     { title = view.title
-    , body = List.map (Html.map fn) view.body
+    , body = List.map (E.map fn) view.body
     }
 
 

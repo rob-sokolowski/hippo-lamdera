@@ -1,6 +1,11 @@
 module Components.Navbar exposing (view)
 
 import Api.User exposing (User)
+import Element as E exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
 import Gen.Route as Route exposing (Route)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href)
@@ -12,49 +17,6 @@ view :
     , currentRoute : Route
     , onSignOut : msg
     }
-    -> Html msg
+    -> Element msg
 view options =
-    nav [ class "navbar navbar-light" ]
-        [ div [ class "container" ]
-            [ a [ class "navbar-brand", href (Route.toHref Route.Home_) ] [ text "hippo" ]
-            , ul [ class "nav navbar-nav pull-xs-right" ] <|
-                case options.user of
-                    Just _ ->
-                        List.concat
-                            [ List.map (viewLink options.currentRoute) <|
-                                [ ( "Home", Route.Home_ )
-                                , ( "Settings", Route.Settings )
-                                , ( "Study", Route.Study )
-                                , ( "Cards", Route.Cards )
-                                , ( "Catalog", Route.Catalog )
-                                ]
-                            , [ li [ class "nav-item" ]
-                                    [ a
-                                        [ class "nav-link"
-                                        , Events.onClick options.onSignOut
-                                        ]
-                                        [ text "Sign out" ]
-                                    ]
-                              ]
-                            ]
-
-                    Nothing ->
-                        List.map (viewLink options.currentRoute) <|
-                            [ ( "Home", Route.Home_ )
-                            , ( "Sign in", Route.Login )
-                            , ( "Sign up", Route.Register )
-                            ]
-            ]
-        ]
-
-
-viewLink : Route -> ( String, Route ) -> Html msg
-viewLink currentRoute ( label, route ) =
-    li [ class "nav-item" ]
-        [ a
-            [ class "nav-link"
-            , classList [ ( "active", currentRoute == route ) ]
-            , href (Route.toHref route)
-            ]
-            [ text label ]
-        ]
+    E.text "NAV!!!"

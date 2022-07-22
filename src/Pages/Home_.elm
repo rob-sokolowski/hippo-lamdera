@@ -3,6 +3,12 @@ module Pages.Home_ exposing (Model, Msg(..), page)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
 import Bridge exposing (..)
+import Components.Styling as Styling
+import Element as E exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
 import Html.Events as Events
@@ -74,19 +80,66 @@ subscriptions _ =
 
 
 -- VIEW
+--view : Shared.Model -> Model -> View Msg
+--view shared model =
+--    { title = ""
+--    , body =
+--        [ div [ class "home-page" ]
+--            [ div [ class "banner" ]
+--                [ div [ class "container" ]
+--                    [ h1 [ class "logo-font" ] [ text "hippo" ]
+--                    , p [] [ text "flash cards" ]
+--                    ]
+--                ]
+--            ]
+--        ]
+--    }
 
 
 view : Shared.Model -> Model -> View Msg
 view shared model =
-    { title = ""
+    { title = "Homepage"
     , body =
-        [ div [ class "home-page" ]
-            [ div [ class "banner" ]
-                [ div [ class "container" ]
-                    [ h1 [ class "logo-font" ] [ text "hippo" ]
-                    , p [] [ text "flash cards" ]
-                    ]
-                ]
+        [ layout
+            [ Font.size 16
+            , width fill
+            , height fill
             ]
+            (elements model)
         ]
     }
+
+
+elements : Model -> Element msg
+elements model =
+    column
+        [ width (fill |> maximum 800)
+
+        --, height (fill |> maximum 600)
+        , height fill
+        , padding 10
+        , spacing 10
+        , centerY
+        , centerX
+        , Border.width 2
+        , Border.rounded 5
+        , Border.color Styling.black
+        ]
+        [ el
+            [ Font.size 36
+            , centerX
+            ]
+            (E.text "Hippo")
+        , el
+            [ width fill
+            , height <| px 1
+            , Background.color Styling.dimGrey
+            , centerX
+            ]
+            (E.text " ")
+        , el
+            [ Font.size 14
+            , centerX
+            ]
+            (E.text "Simple MarkDown flashcards with spaced-repetition study sessions")
+        ]
