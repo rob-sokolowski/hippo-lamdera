@@ -23,6 +23,15 @@ services:
     volumes:
       - .:/root/code
     command: lamdera live
+
+  check:
+    image: hippo-lamdera:dev
+    networks:
+      - hippo-lamdera-network
+    working_dir: /root/code
+    volumes:
+      - .:/root/code
+    command: lamdera check
   
   generate_test_data:
     image: dev-kit:latest
