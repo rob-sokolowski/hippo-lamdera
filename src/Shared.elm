@@ -112,7 +112,14 @@ elements req { page, toMsg } model =
                 , onSignOut = toMsg ClickedSignOut
                 }
     in
-    column []
+    column
+        [ width fill
+        , height fill
+        ]
         [ navBar
-        , column [] page.body
+        , column
+            [ width fill
+            , height fill
+            ]
+            page.body
         ]

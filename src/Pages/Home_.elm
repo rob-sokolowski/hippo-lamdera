@@ -111,10 +111,11 @@ elements model =
         [ width (fill |> maximum 800)
 
         --, height (fill |> maximum 600)
-        , height fill
+        --, height fill
         , padding 10
         , spacing 10
-        , centerY
+
+        --, centerY
         , centerX
         , Border.width 2
         , Border.rounded 5

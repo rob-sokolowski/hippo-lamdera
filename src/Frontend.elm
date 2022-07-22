@@ -165,7 +165,13 @@ view model =
                     e
     in
     { title = pageElements.title
-    , body = [ layout [] firstElement ]
+    , body =
+        [ layout
+            [ height fill
+            , width fill
+            ]
+            firstElement
+        ]
     }
 
 

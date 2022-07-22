@@ -3,10 +3,13 @@ module Components.UserForm exposing (Field, view)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
 import Components.ErrorList
+import Element as E exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
+import Element.Input as Input
 import Gen.Route as Route exposing (Route)
-import Html exposing (..)
-import Html.Attributes exposing (class, href, placeholder, type_, value)
-import Html.Events as Events
 
 
 type alias Field msg =
@@ -24,7 +27,7 @@ view :
     , alternateLink : { label : String, route : Route }
     , fields : List (Field msg)
     }
-    -> Html msg
+    -> Element msg
 view options =
     div [ class "auth-page" ]
         [ div [ class "container page" ]
@@ -52,9 +55,13 @@ view options =
         ]
 
 
-viewField : Field msg -> Html msg
+viewField : Field msg -> Element msg
 viewField options =
-    fieldset [ class "form-group" ]
+    row []
+        [ Input.text
+        ]
+        fieldset
+        [ class "form-group" ]
         [ input
             [ class "form-control form-control-lg"
             , placeholder options.label

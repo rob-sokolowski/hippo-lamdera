@@ -158,4 +158,16 @@ view model =
 
 elements : Model -> Element Msg
 elements model =
-    E.text "Register"
+    column
+        [ width fill
+        , height fill
+
+        --, centerX
+        --, centerY
+        ]
+        [ el
+            [ centerX
+            ]
+          <|
+            E.text "Register"
+        ]

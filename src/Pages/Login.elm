@@ -3,9 +3,11 @@ module Pages.Login exposing (Model, Msg(..), page)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
 import Bridge exposing (..)
+import Components.Styling as Styling
 import Components.UserForm
 import Effect exposing (Effect)
 import Element as E exposing (..)
+import Element.Border as Border
 import Gen.Route as Route
 import Page
 import Request exposing (Request)
@@ -144,4 +146,12 @@ view model =
 
 elements : Model -> Element Msg
 elements model =
-    E.text "Login"
+    el
+        [ width fill
+        , height fill
+        , Border.color Styling.black
+        , Border.width 1
+        , centerX
+        , centerY
+        ]
+        (E.text "Login")
