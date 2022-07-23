@@ -4,13 +4,13 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data as Data exposing (..)
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..), sendToBackend)
-import Components.Styling as S exposing (..)
+import Components.Styling as Styling
 import Dict
 import Effect exposing (Effect)
-import Element exposing (..)
+import Element as E exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events exposing (..)
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Gen.Params.Study exposing (Params)
@@ -232,38 +232,93 @@ view _ model =
 
 viewElements : Model -> Element Msg
 viewElements model =
-    Element.row
-        [ padding 20
-        , spacing 10
-        ]
-        [ Element.column []
-            [ viewStudySessionSummary model.sessionSummary
-            , viewGradeSumbissionPanel model
-            ]
-        , Element.column []
-            [ viewPrompt model
-            ]
-        ]
-
-
-viewGradeSumbissionPanel : Model -> Element Msg
-viewGradeSumbissionPanel model =
     let
-        elements =
+        viewGradeSubmissionPanel : Element Msg
+        viewGradeSubmissionPanel =
             case model.gradeSubmit of
                 NotAsked ->
-                    Element.none
+                    E.none
 
                 Loading ->
-                    Element.text "Awaiting grade from server.."
+                    E.text "Awaiting grade from server.."
 
                 Failure errs ->
-                    Element.column [] <| List.map (\e -> Element.text e) errs
+                    E.column [] <| List.map (\e -> E.text e) errs
 
                 Success cardId ->
-                    el [ Font.size 14, paddingEach { top = 10, right = 0, left = 0, bottom = 10 } ] <| Element.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
+                    el [ Font.size 14, paddingEach { top = 10, right = 0, left = 0, bottom = 10 } ] <| E.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
+
+        viewPrompt : Element Msg
+        viewPrompt =
+            case model.cardDataFetch of
+                NotAsked ->
+                    E.column
+                        [ centerX
+                        , height fill
+                        ]
+                        [ el [ centerY ] <| text "Click to start today's session"
+                        , Input.button
+                            [ Background.color colors.darkCharcoal
+                            , Font.color colors.lightBlue
+                            , Border.color colors.lightGrey
+                            , paddingXY 32 16
+                            , centerY
+                            , Border.rounded 3
+                            , E.width fill
+                            ]
+                            { onPress = Just UserStartStudySession
+                            , label = E.text "Start session."
+                            }
+                        ]
+
+                Loading ->
+                    E.text "Loading.."
+
+                Failure errs ->
+                    E.column [] <| List.map (\e -> E.text e) errs
+
+                Success cards ->
+                    let
+                        card =
+                            List.head cards
+                    in
+                    case card of
+                        Just env ->
+                            case env.card of
+                                PlainText card_ ->
+                                    viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
+
+                                Markdown card_ ->
+                                    viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
+
+                        Nothing ->
+                            E.text "You have studied all your cards!"
     in
-    elements
+    E.row
+        [ padding 0
+        , spacing 10
+        , width fill
+        , height fill
+        , Border.width 1
+        , Border.color Styling.red
+        ]
+        [ E.column
+            [ width <| fillPortion 2
+            , height fill
+            , alignTop
+            , alignRight
+            ]
+            [ viewStudySessionSummary model.sessionSummary
+            , viewGradeSubmissionPanel
+            ]
+        , E.column
+            [ width <| fillPortion 8
+            , height fill
+            , alignTop
+            ]
+            [ viewPrompt
+            ]
+        ]
 
 
 viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
@@ -272,103 +327,105 @@ viewMarkdownFlashcardPrompt card cid ps =
         elements =
             case ps of
                 Idle ->
-                    Element.none
+                    E.none
 
                 QuestionPrompted ->
-                    Element.column
+                    E.column
                         [ Border.width 1
-                        , Border.color S.black
-                        , Background.color S.softGrey
+                        , Border.color Styling.black
+                        , Background.color Styling.softGrey
                         , padding 10
                         , spacing 10
+                        , centerX
                         ]
                         [ el
-                            [ Background.color S.white
+                            [ Background.color Styling.white
                             , Border.rounded 10
                             , padding 10
-                            , Element.width <| Element.minimum 800 fill
-                            , Element.height <| Element.minimum 400 fill
+                            , E.width <| E.minimum 800 fill
+                            , E.height <| E.minimum 400 fill
                             ]
                           <|
                             viewRenderedQuestion card
                         , el
-                            [ Element.width <| px 800
-                            , Element.height <| Element.minimum 400 fill
+                            [ E.width <| px 800
+                            , E.height <| E.minimum 400 fill
                             ]
                           <|
                             Input.button
-                                [ Background.color S.medGrey
-                                , Font.color S.black
+                                [ Background.color Styling.medGrey
+                                , Font.color Styling.black
                                 , Font.bold
-                                , Border.color S.dimGrey
+                                , Border.color Styling.dimGrey
                                 , Border.width 5
                                 , paddingXY 32 16
                                 , Border.rounded 10
-                                , Element.width fill
-                                , Element.height fill
+                                , E.width fill
+                                , E.height fill
                                 , centerX
                                 ]
                                 { onPress = Just UserClickedReveal
-                                , label = el [ centerX ] <| Element.text "Reveal"
+                                , label = el [ centerX ] <| E.text "Reveal"
                                 }
                         ]
 
                 AnswerRevealed ->
-                    Element.column
+                    E.column
                         [ Border.width 5
                         , Border.color colors.darkCharcoal
-                        , Background.color S.softGrey
-                        , padding 10
-                        , spacing 10
+                        , Background.color Styling.softGrey
+                        , spacing 5
+                        , height fill
+                        , centerX
                         ]
                         [ el
-                            [ Background.color S.white
+                            [ Background.color Styling.white
                             , Border.rounded 10
                             , padding 10
-                            , Element.width <| px 800
-                            , Element.height <| Element.minimum 400 fill
+                            , E.width <| E.minimum 600 fill
+                            , E.height <| E.minimum 250 fill
                             ]
                           <|
                             viewRenderedQuestion card
-                        , Element.column [ spacing 5 ]
+                        , E.column [ spacing 5 ]
                             [ el
-                                [ Background.color S.white
+                                [ Background.color Styling.white
                                 , Border.rounded 10
                                 , padding 10
-                                , Element.width <| px 800
-                                , Element.height <| Element.minimum 400 fill
+                                , E.width <| E.minimum 600 fill
+                                , E.height <| E.minimum 300 fill
                                 ]
                               <|
                                 viewRenderedAnswer card
-                            , Element.row
+                            , E.row
                                 [ spacing 10
-                                , Element.width fill
-                                , Element.height <| Element.minimum 60 fill
+                                , E.width fill
+                                , E.height <| E.minimum 60 <| E.maximum 100 fill
                                 , Font.size 36
                                 ]
                                 [ Input.button
-                                    [ Background.color S.medGrey
-                                    , Font.color S.black
+                                    [ Background.color Styling.medGrey
+                                    , Font.color Styling.black
                                     , Font.bold
-                                    , Border.color S.black
+                                    , Border.color Styling.black
                                     , Border.rounded 5
-                                    , Element.width fill
-                                    , Element.height fill
+                                    , E.width fill
+                                    , E.height fill
                                     ]
                                     { onPress = Just <| UserSelfGrade cid Incorrect
-                                    , label = el [ centerX ] <| Element.text "X"
+                                    , label = el [ centerX ] <| E.text "X"
                                     }
                                 , Input.button
-                                    [ Background.color S.medGrey
-                                    , Font.color S.black
+                                    [ Background.color Styling.medGrey
+                                    , Font.color Styling.black
                                     , Border.color colors.lightGrey
                                     , Border.rounded 10
                                     , Border.rounded 5
-                                    , Element.width fill
-                                    , Element.height fill
+                                    , E.width fill
+                                    , E.height fill
                                     ]
                                     { onPress = Just <| UserSelfGrade cid Correct
-                                    , label = el [ centerX ] <| Element.text "✔"
+                                    , label = el [ centerX ] <| E.text "✔"
                                     }
                                 ]
                             ]
@@ -379,13 +436,13 @@ viewMarkdownFlashcardPrompt card cid ps =
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
 viewRenderedQuestion card =
-    Element.html
+    E.html
         (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
 
 
 viewRenderedAnswer : MarkdownCard -> Element Msg
 viewRenderedAnswer card =
-    Element.html
+    E.html
         (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
 
 
@@ -395,50 +452,49 @@ viewPlainTextFlashcardPrompt card cid ps =
         elements =
             case ps of
                 Idle ->
-                    Element.none
+                    E.none
 
                 QuestionPrompted ->
-                    Element.column
+                    E.column
                         [ Border.width 2
                         , Border.color colors.darkCharcoal
                         , padding 10
                         , spacing 20
+                        , centerX
                         ]
-                        [ Element.text card.question
-                        , Element.row [ spacing 10 ]
+                        [ E.text card.question
+                        , E.row [ spacing 10 ]
                             [ Input.button
                                 [ Background.color colors.darkCharcoal
                                 , Font.color colors.lightBlue
                                 , Border.color colors.lightGrey
                                 , paddingXY 32 16
                                 , Border.rounded 3
-                                , Element.width fill
+                                , E.width fill
                                 ]
                                 { onPress = Just UserClickedReveal
-                                , label = Element.text "Reveal"
+                                , label = E.text "Reveal"
                                 }
                             ]
                         ]
 
                 AnswerRevealed ->
-                    Element.column
-                        [ Border.width 5
-                        , Border.color S.red
-                        , padding 10
+                    E.column
+                        [ padding 10
                         ]
-                        [ Element.text card.question
-                        , Element.text card.answer
-                        , Element.row [ spacing 10 ]
+                        [ E.text card.question
+                        , E.text card.answer
+                        , E.row [ spacing 10 ]
                             [ Input.button
                                 [ Background.color colors.darkCharcoal
                                 , Font.color colors.lightBlue
                                 , Border.color colors.lightGrey
                                 , paddingXY 32 16
                                 , Border.rounded 3
-                                , Element.width fill
+                                , E.width fill
                                 ]
                                 { onPress = Just <| UserSelfGrade cid Incorrect
-                                , label = Element.text "X"
+                                , label = E.text "X"
                                 }
                             , Input.button
                                 [ Background.color colors.darkCharcoal
@@ -446,10 +502,10 @@ viewPlainTextFlashcardPrompt card cid ps =
                                 , Border.color colors.lightGrey
                                 , paddingXY 32 16
                                 , Border.rounded 3
-                                , Element.width fill
+                                , E.width fill
                                 ]
                                 { onPress = Just <| UserSelfGrade cid Correct
-                                , label = Element.text "✔"
+                                , label = E.text "✔"
                                 }
                             ]
                         ]
@@ -463,74 +519,26 @@ viewStudySessionSummary summary =
         elements =
             case summary of
                 NotAsked ->
-                    Element.text "not asked"
+                    E.text "not asked"
 
                 Loading ->
-                    Element.text "loading"
+                    E.text "loading"
 
                 Success s ->
-                    Element.column [ Font.size 14 ]
-                        [ Element.text <| "Summary:"
-                        , Element.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
-                        , Element.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
+                    E.column [ Font.size 14 ]
+                        [ E.text <| "Summary:"
+                        , E.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
+                        , E.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
                         ]
 
                 Failure errs ->
-                    Element.column [] <| List.map (\e -> Element.text e) errs
+                    E.column [] <| List.map (\e -> E.text e) errs
     in
     elements
 
 
-viewPrompt : Model -> Element Msg
-viewPrompt model =
-    let
-        elements =
-            case model.cardDataFetch of
-                NotAsked ->
-                    Element.column []
-                        [ Element.text <| "Click to start today's session"
-                        , Input.button
-                            [ Background.color colors.darkCharcoal
-                            , Font.color colors.lightBlue
-                            , Border.color colors.lightGrey
-                            , paddingXY 32 16
-                            , Border.rounded 3
-                            , Element.width fill
-                            ]
-                            { onPress = Just UserStartStudySession
-                            , label = Element.text "Start session."
-                            }
-                        ]
 
-                Loading ->
-                    Element.text "Loading.."
-
-                Failure errs ->
-                    Element.column [] <| List.map (\e -> Element.text e) errs
-
-                Success cards ->
-                    let
-                        card =
-                            List.head cards
-
-                        els =
-                            case card of
-                                Just env ->
-                                    case env.card of
-                                        PlainText card_ ->
-                                            viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
-
-                                        Markdown card_ ->
-                                            viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
-
-                                Nothing ->
-                                    Element.text "You have studied all your cards!"
-                    in
-                    Element.column []
-                        [ els
-                        ]
-    in
-    elements
+--elements
 
 
 type PromptStatus

@@ -4,14 +4,14 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
-import Components.Styling as S
+import Components.Styling as Styling
 import Effect exposing (Effect)
-import Element exposing (..)
-import Element.Background as Background exposing (..)
-import Element.Border as Border exposing (..)
-import Element.Font as Font exposing (..)
-import Element.Input as Input exposing (..)
-import Element.Region as Region exposing (..)
+import Element as E exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
+import Element.Region as Region
 import Gen.Params.Cards exposing (Params)
 import Html exposing (Html)
 import Lamdera
@@ -210,27 +210,33 @@ view _ model =
 
 viewElements : Model -> Element Msg
 viewElements model =
-    Element.row
-        [ padding 20
-
-        -- , height fill
+    E.row
+        [ padding 10
+        , height fill
+        , width fill
         , Font.size 16
+        , Border.width 1
+        , Border.color Styling.red
         ]
-        [ Element.column
-            [ Background.color S.softGrey
-            , Element.width <| px 200
+        [ E.column
+            [ Background.color Styling.softGrey
+            , E.width <| px 200
             , padding 10
             , spacing 10
+            , height fill
+            , alignTop
+            , centerX
             ]
             [ viewCardTypeSelector model
             , viewCardSubmission model.editorForm model.user
             , viewCardSubmitStatus model
             ]
-        , Element.column
+        , E.column
             [ padding 10
             , Border.width 2
-            , Border.color S.blue
-            , Element.width <| Element.minimum 600 fill
+            , Border.color Styling.blue
+            , E.width <| E.minimum 600 fill
+            , height fill
             ]
             [ viewCardForm model.editorForm model.user
             ]
@@ -249,20 +255,20 @@ viewCardSubmission form user =
                     Just <| Submitted (Markdown card) user.id
     in
     el
-        [ Element.width fill
+        [ E.width fill
         ]
     <|
         Input.button
-            [ Background.color S.grey
+            [ Background.color Styling.grey
             , Font.bold
-            , Border.color S.darkBlue
+            , Border.color Styling.darkBlue
             , Border.width 1
             , padding 10
             , Border.rounded 5
-            , Element.width fill
+            , E.width fill
             ]
             { onPress = onPress_
-            , label = Element.text "Submit"
+            , label = E.text "Submit"
             }
 
 
@@ -274,9 +280,8 @@ viewCardForm form user =
 
         MarkdownForm markdownCard ->
             el
-                [ Element.width fill
-
-                -- , Element.height fill
+                [ E.width fill
+                , E.height fill
                 ]
                 (viewMarkdownEditor markdownCard)
 
@@ -285,34 +290,37 @@ viewCardSubmitStatus : Model -> Element Msg
 viewCardSubmitStatus model =
     case model.cardSubmitStatus of
         NotAsked ->
-            Element.none
+            E.none
 
         Loading ->
-            Element.text "Loading.."
+            E.text "Loading.."
 
         Failure errs ->
-            Element.column [] <| List.map (\e -> Element.text e) errs
+            E.column [] <| List.map (\e -> E.text e) errs
 
         Success cardId ->
-            Element.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
+            E.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
 
 
 viewCardTypeSelector : Model -> Element Msg
 viewCardTypeSelector model =
-    Element.column
+    E.column
         [ padding 10
+        , height fill
+        , alignTop
         ]
         [ Input.radio
             [ spacing 10
             , padding 10
-            , Background.color S.grey
+            , Background.color Styling.grey
+            , alignTop
             ]
             { selected = Just model.selectedOption
             , onChange = ToggledOption
-            , label = Input.labelAbove [ paddingXY 0 12 ] (Element.text "What type of flash card?")
+            , label = Input.labelAbove [ paddingXY 0 12 ] (E.text "What type of flash card?")
             , options =
-                [ Input.option MarkdownRadioOption (Element.text "Markdown")
-                , Input.option PlainTextRadioOption (Element.text "Plain text")
+                [ Input.option MarkdownRadioOption (E.text "Markdown")
+                , Input.option PlainTextRadioOption (E.text "Plain text")
                 ]
             }
         ]
@@ -320,77 +328,83 @@ viewCardTypeSelector model =
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
 viewRenderedQuestion card =
-    Element.html
+    E.html
         (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
 
 
 viewRenderedAnswer : MarkdownCard -> Element Msg
 viewRenderedAnswer card =
-    Element.html
+    E.html
         (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
 
 
 markdownQuestionPlaceholder =
-    Just <| Input.placeholder [] <| Element.text """
+    Just <| Input.placeholder [] <| E.text """
     Enter Markdown here!
     """
 
 
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
-    Element.column
+    E.column
         [ padding 10
         , spacing 10
+        , height fill
+        , width fill
         ]
-        [ Element.row
+        [ E.row
             [ padding 10
             , spacing 10
-            , Background.color S.softGrey
+            , Background.color Styling.softGrey
+            , height <| fillPortion 5
+            , width fill
             ]
             [ Input.multiline
                 [ padding 5
                 , Border.rounded 10
-                , Element.width <| px 400
-                , Element.height <| Element.minimum 200 fill
+                , E.width <| E.minimum 400 fill
+                , E.height <| E.minimum 200 fill
                 ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Question text
                 , text = card.question
                 , placeholder = markdownQuestionPlaceholder
-                , label = Input.labelAbove [] <| Element.text "Prompt side:"
+                , label = Input.labelAbove [] <| E.text "Prompt side:"
                 , spellcheck = True
                 }
             , el
                 [ padding 10
-                , Element.width <| Element.px 400
-                , Element.height fill
+                , E.width <| E.minimum 400 fill
+                , E.height fill
                 , Border.rounded 10
-                , Background.color S.white
+                , Background.color Styling.white
                 ]
               <|
                 viewRenderedQuestion card
             ]
-        , Element.row
+        , E.row
             [ padding 5
             , spacing 10
-            , Background.color S.softGrey
+            , Background.color Styling.softGrey
+            , height <| fillPortion 5
+            , width fill
             ]
             [ Input.multiline
                 [ padding 5
-                , Element.width <| px 400
-                , Element.height <| Element.minimum 200 fill
+                , E.width <| E.minimum 400 fill
+                , E.height <| E.minimum 200 fill
                 ]
                 { onChange = \text -> Updated (MarkdownForm card) Markdown_Answer text
                 , text = card.answer
-                , placeholder = Just <| Input.placeholder [] (Element.text "Enter Markdown here!")
-                , label = Input.labelAbove [] <| Element.text "Answer side:"
+                , placeholder = Just <| Input.placeholder [] (E.text "Enter Markdown here!")
+                , label = Input.labelAbove [] <| E.text "Answer side:"
                 , spellcheck = True
                 }
             , el
                 [ padding 10
-                , Element.width <| px 400
-                , Element.height <| Element.minimum 200 fill
+                , E.width <| E.minimum 400 fill
+                , E.height <| E.minimum 200 fill
                 , Border.rounded 10
-                , Background.color S.white
+                , Background.color Styling.white
                 ]
               <|
                 viewRenderedAnswer card
@@ -405,27 +419,27 @@ viewPlainTextEditor card userId =
         update_ updatedInput =
             { card | question = updatedInput }
     in
-    Element.column
-        [ Element.width (px 800)
+    E.column
+        [ E.width (px 800)
         , height shrink
         , spacing 36
         , padding 10
         ]
         [ el
             [ Region.heading 1
-            , Element.alignLeft
+            , E.alignLeft
             , Font.size 36
             ]
-            (Element.text "Add a new flash card:")
+            (E.text "Add a new flash card:")
         , Input.multiline
             [ height shrink
             , spacing 12
             , padding 6
             ]
             { text = card.question
-            , placeholder = Just <| Input.placeholder [] (Element.text "Question goes here..")
+            , placeholder = Just <| Input.placeholder [] (E.text "Question goes here..")
             , onChange = \text -> Updated (PlainTextForm card) PlainText_Question text
-            , label = Input.labelAbove [ Font.size 14 ] (Element.text "Flash card prompt")
+            , label = Input.labelAbove [ Font.size 14 ] (E.text "Flash card prompt")
             , spellcheck = True
             }
         , Input.multiline
@@ -434,9 +448,9 @@ viewPlainTextEditor card userId =
             , padding 6
             ]
             { text = card.answer
-            , placeholder = Just <| Input.placeholder [] (Element.text "Input answer here")
+            , placeholder = Just <| Input.placeholder [] (E.text "Input answer here")
             , onChange = \text -> Updated (PlainTextForm card) PlainText_Answer text
-            , label = Input.labelAbove [ Font.size 14 ] (Element.text "Answer prompt:")
+            , label = Input.labelAbove [ Font.size 14 ] (E.text "Answer prompt:")
             , spellcheck = True
             }
         ]
@@ -445,6 +459,6 @@ viewPlainTextEditor card userId =
 
 -- viewCard : CardEnvelope -> Element Msg
 -- viewCard card =
---     Element.column [] [
+--     E.column [] [
 --     ]
 -- color defs
