@@ -2,7 +2,6 @@ module Gen.Model exposing (Model(..))
 
 import Gen.Params.Cards
 import Gen.Params.Catalog
-import Gen.Params.Component_demo_catalog_table
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
@@ -12,7 +11,6 @@ import Gen.Params.Study
 import Gen.Params.Profile.Username_
 import Pages.Cards
 import Pages.Catalog
-import Pages.Component_demo_catalog_table
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
@@ -26,7 +24,6 @@ type Model
     = Redirecting_
     | Cards Gen.Params.Cards.Params Pages.Cards.Model
     | Catalog Gen.Params.Catalog.Params Pages.Catalog.Model
-    | Component_demo_catalog_table Gen.Params.Component_demo_catalog_table.Params Pages.Component_demo_catalog_table.Model
     | Home_ Gen.Params.Home_.Params Pages.Home_.Model
     | Login Gen.Params.Login.Params Pages.Login.Model
     | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
