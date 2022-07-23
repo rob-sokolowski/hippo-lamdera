@@ -232,24 +232,9 @@ view _ model =
 
 viewElements : Model -> Element Msg
 viewElements model =
-    E.row
-        [ padding 20
-        , spacing 10
-        ]
-        [ E.column []
-            [ viewStudySessionSummary model.sessionSummary
-            , viewGradeSumbissionPanel model
-            ]
-        , E.column []
-            [ viewPrompt model
-            ]
-        ]
-
-
-viewGradeSumbissionPanel : Model -> Element Msg
-viewGradeSumbissionPanel model =
     let
-        elements =
+        viewGradeSubmissionPanel : Element Msg
+        viewGradeSubmissionPanel =
             case model.gradeSubmit of
                 NotAsked ->
                     E.none
@@ -262,8 +247,78 @@ viewGradeSumbissionPanel model =
 
                 Success cardId ->
                     el [ Font.size 14, paddingEach { top = 10, right = 0, left = 0, bottom = 10 } ] <| E.text <| "card " ++ String.fromInt cardId ++ " was successfully graded"
+
+        viewPrompt : Element Msg
+        viewPrompt =
+            case model.cardDataFetch of
+                NotAsked ->
+                    E.column
+                        [ centerX
+                        , height fill
+                        ]
+                        [ el [ centerY ] <| text "Click to start today's session"
+                        , Input.button
+                            [ Background.color colors.darkCharcoal
+                            , Font.color colors.lightBlue
+                            , Border.color colors.lightGrey
+                            , paddingXY 32 16
+                            , centerY
+                            , Border.rounded 3
+                            , E.width fill
+                            ]
+                            { onPress = Just UserStartStudySession
+                            , label = E.text "Start session."
+                            }
+                        ]
+
+                Loading ->
+                    E.text "Loading.."
+
+                Failure errs ->
+                    E.column [] <| List.map (\e -> E.text e) errs
+
+                Success cards ->
+                    let
+                        card =
+                            List.head cards
+                    in
+                    case card of
+                        Just env ->
+                            case env.card of
+                                PlainText card_ ->
+                                    viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
+
+                                Markdown card_ ->
+                                    viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
+
+                        Nothing ->
+                            E.text "You have studied all your cards!"
     in
-    elements
+    E.row
+        [ padding 0
+        , spacing 10
+        , width fill
+        , height fill
+        , Border.width 1
+        , Border.color Styling.red
+        ]
+        [ E.column
+            [ width <| fillPortion 2
+            , height fill
+            , alignTop
+            , alignRight
+            ]
+            [ viewStudySessionSummary model.sessionSummary
+            , viewGradeSubmissionPanel
+            ]
+        , E.column
+            [ width <| fillPortion 8
+            , height fill
+            , alignTop
+            ]
+            [ viewPrompt
+            ]
+        ]
 
 
 viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
@@ -281,6 +336,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                         , Background.color Styling.softGrey
                         , padding 10
                         , spacing 10
+                        , centerX
                         ]
                         [ el
                             [ Background.color Styling.white
@@ -318,15 +374,16 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Border.width 5
                         , Border.color colors.darkCharcoal
                         , Background.color Styling.softGrey
-                        , padding 10
-                        , spacing 10
+                        , spacing 5
+                        , height fill
+                        , centerX
                         ]
                         [ el
                             [ Background.color Styling.white
                             , Border.rounded 10
                             , padding 10
-                            , E.width <| px 800
-                            , E.height <| E.minimum 400 fill
+                            , E.width <| E.minimum 600 fill
+                            , E.height <| E.minimum 250 fill
                             ]
                           <|
                             viewRenderedQuestion card
@@ -335,15 +392,15 @@ viewMarkdownFlashcardPrompt card cid ps =
                                 [ Background.color Styling.white
                                 , Border.rounded 10
                                 , padding 10
-                                , E.width <| px 800
-                                , E.height <| E.minimum 400 fill
+                                , E.width <| E.minimum 600 fill
+                                , E.height <| E.minimum 300 fill
                                 ]
                               <|
                                 viewRenderedAnswer card
                             , E.row
                                 [ spacing 10
                                 , E.width fill
-                                , E.height <| E.minimum 60 fill
+                                , E.height <| E.minimum 60 <| E.maximum 100 fill
                                 , Font.size 36
                                 ]
                                 [ Input.button
@@ -403,6 +460,7 @@ viewPlainTextFlashcardPrompt card cid ps =
                         , Border.color colors.darkCharcoal
                         , padding 10
                         , spacing 20
+                        , centerX
                         ]
                         [ E.text card.question
                         , E.row [ spacing 10 ]
@@ -422,9 +480,7 @@ viewPlainTextFlashcardPrompt card cid ps =
 
                 AnswerRevealed ->
                     E.column
-                        [ Border.width 5
-                        , Border.color Styling.red
-                        , padding 10
+                        [ padding 10
                         ]
                         [ E.text card.question
                         , E.text card.answer
@@ -479,70 +535,6 @@ viewStudySessionSummary summary =
                     E.column [] <| List.map (\e -> E.text e) errs
     in
     elements
-
-
-viewPrompt : Model -> Element Msg
-viewPrompt model =
-    let
-        elements =
-            case model.cardDataFetch of
-                NotAsked ->
-                    E.column []
-                        [ E.text <| "Click to start today's session"
-                        , Input.button
-                            [ Background.color colors.darkCharcoal
-                            , Font.color colors.lightBlue
-                            , Border.color colors.lightGrey
-                            , paddingXY 32 16
-                            , Border.rounded 3
-                            , E.width fill
-                            ]
-                            { onPress = Just UserStartStudySession
-                            , label = E.text "Start session."
-                            }
-                        ]
-
-                Loading ->
-                    E.text "Loading.."
-
-                Failure errs ->
-                    E.column [] <| List.map (\e -> E.text e) errs
-
-                Success cards ->
-                    let
-                        card =
-                            List.head cards
-
-                        els =
-                            case card of
-                                Just env ->
-                                    case env.card of
-                                        PlainText card_ ->
-                                            viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
-
-                                        Markdown card_ ->
-                                            viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
-
-                                Nothing ->
-                                    E.text "You have studied all your cards!"
-                    in
-                    E.column []
-                        [ els
-                        ]
-    in
-    row
-        [ height fill
-        , Border.color Styling.black
-        ]
-        [ column
-            [ width <| fillPortion 2
-            ]
-            []
-        , column
-            [ width <| fillPortion 8
-            ]
-            []
-        ]
 
 
 
