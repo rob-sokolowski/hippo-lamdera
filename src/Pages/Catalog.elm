@@ -43,6 +43,7 @@ type alias Model =
     , zone : Time.Zone
     , wiredCards : Data (List CardEnvelope)
     , selectedEnv : Maybe CardEnvelope
+    , hoveredOnEnv : Maybe CardEnvelope
     }
 
 
@@ -70,6 +71,7 @@ init shared =
             , wiredCards = wiredCatalogInit
             , zone = shared.zone
             , selectedEnv = Nothing
+            , hoveredOnEnv = Nothing
             }
     in
     ( model
@@ -86,6 +88,7 @@ type Msg
     | GotUserCatalog (Data (List CardEnvelope))
     | UserSelectedCard CardEnvelope
     | UserMousesOver CardEnvelope
+    | ClearTableHover
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -105,7 +108,10 @@ update msg model =
             ( { model | selectedEnv = Just cardEnv }, Effect.none )
 
         UserMousesOver cardEnv ->
-            ( model, Effect.none )
+            ( { model | hoveredOnEnv = Just cardEnv }, Effect.none )
+
+        ClearTableHover ->
+            ( { model | hoveredOnEnv = Nothing }, Effect.none )
 
 
 fetchUsersCatalog : Maybe User -> Cmd Msg
@@ -161,6 +167,19 @@ viewElements model =
 
                         PlainText ptCard ->
                             E.text "plain text"
+
+                applyHighlightEffect : CardEnvelope -> Attribute Msg
+                applyHighlightEffect cardEnv =
+                    case model.hoveredOnEnv of
+                        Nothing ->
+                            Background.color Styling.white
+
+                        Just v ->
+                            if v.id == cardEnv.id then
+                                Background.color Styling.softGrey
+
+                            else
+                                Background.color Styling.white
             in
             table
                 [ width shrink
@@ -172,26 +191,70 @@ viewElements model =
                 , columns =
                     [ { header = el headerAttrs <| el [ centerX ] <| E.text "card_id"
                       , width = fillPortion 1
-                      , view = .id >> String.fromInt >> E.text >> el [ centerY ]
+                      , view =
+                            \cardEnv ->
+                                el
+                                    [ Events.onClick <| UserSelectedCard cardEnv
+                                    , Events.onMouseEnter <| UserMousesOver cardEnv
+                                    , Events.onMouseLeave <| ClearTableHover
+                                    , applyHighlightEffect cardEnv
+                                    , centerX
+                                    ]
+                                <|
+                                    el [ centerX ] <|
+                                        E.text (String.fromInt cardEnv.id)
                       }
                     , { header = el headerAttrs <| el [ centerX ] <| E.text "card_type"
                       , width = fillPortion 1
-                      , view = \cardEnv -> viewType cardEnv.card
-                      }
-                    , { header = el headerAttrs <| el [ centerX ] <| E.text "user_id"
-                      , width = fillPortion 1
-                      , view = .userId >> String.fromInt >> E.text >> el [ centerY ]
+                      , view =
+                            \cardEnv ->
+                                el
+                                    [ Events.onClick <| UserSelectedCard cardEnv
+                                    , Events.onMouseEnter <| UserMousesOver cardEnv
+                                    , Events.onMouseLeave <| ClearTableHover
+                                    , centerX
+                                    , applyHighlightEffect cardEnv
+                                    ]
+                                <|
+                                    el [ centerX ] <|
+                                        viewType cardEnv.card
                       }
                     , { header = el headerAttrs <| el [ centerX ] <| E.text "next_prompt"
                       , width = fillPortion 1
-                      , view = .nextPromptSchedFor >> posixToTime model.zone >> E.text >> el [ centerY ]
+                      , view =
+                            \cardEnv ->
+                                el
+                                    [ Events.onClick <| UserSelectedCard cardEnv
+                                    , Events.onMouseEnter <| UserMousesOver cardEnv
+                                    , Events.onMouseLeave <| ClearTableHover
+                                    , centerX
+                                    , applyHighlightEffect cardEnv
+                                    ]
+                                <|
+                                    el [ centerX ] <|
+                                        text (posixToTime model.zone cardEnv.nextPromptSchedFor)
                       }
                     ]
                 }
 
         preview : Element Msg
         preview =
-            E.text "Hello!"
+            case model.selectedEnv of
+                Nothing ->
+                    el [ centerX, centerY ] <|
+                        column
+                            [ spacing 10
+                            , Font.size 24
+                            ]
+                            [ el [ centerX ] <| text "You may browse, edit, or delete cards in your catalog."
+                            , el [ centerX ] <| text "Select a row from the left panel to get started."
+                            , el [ centerX ] <| text "Please note: Editing a card resets its prompt frequency."
+                            , el [ centerX ] <| text " " -- HACK: "push up" text a bit above center
+                            , el [ centerX ] <| text " " -- HACK: "push up" text a bit above center
+                            ]
+
+                Just env ->
+                    el [ centerX, centerY ] <| text ("You selected card " ++ String.fromInt env.id)
 
         tableElements =
             case model.wiredCards of
@@ -213,13 +276,13 @@ viewElements model =
         , clipY
         ]
         [ el
-            [ width <| fillPortion 4
+            [ width <| fillPortion 3
             , height fill
             , scrollbarY
             ]
             tableElements
         , el
-            [ width <| fillPortion 6
+            [ width <| fillPortion 7
             , height fill
             , Background.color Styling.softGrey
             ]
