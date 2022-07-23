@@ -4,13 +4,12 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data exposing (Data(..))
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..))
-import Components.Styling as S exposing (..)
-import Dev.ComponentDemoData exposing (catalogTableDemoData)
+import Components.Styling as Styling exposing (..)
 import Effect exposing (Effect)
-import Element exposing (..)
+import Element as E exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events exposing (..)
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Gen.Params.Catalog exposing (Params)
@@ -149,74 +148,83 @@ viewElements model =
             let
                 headerAttrs =
                     [ Font.bold
-                    , Font.color S.black
-                    , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
-                    , Border.color S.dimGrey
-                    , Border.width 1
+                    , Font.color Styling.black
+                    , Border.widthEach { bottom = 1, top = 0, left = 1, right = 1 }
+                    , Border.color Styling.black
+                    , paddingEach { top = 0, left = 2, right = 2, bottom = 2 }
                     ]
 
                 viewType card =
                     case card of
                         Markdown mkCard ->
-                            Element.text "Markdown card"
+                            E.text "Markdown"
 
                         PlainText ptCard ->
-                            Element.text "plain text card"
-
-                viewHoverArea cardEnv =
-                    case cardEnv of
-                        _ ->
-                            el
-                                [ onClick (UserSelectedCard cardEnv)
-                                ]
-                            <|
-                                Element.text "hover"
+                            E.text "plain text"
             in
             table
                 [ width shrink
-                , spacing 10
+                , spacing 0
                 , padding 20
+                , centerX
                 ]
                 { data = cardEnvs
                 , columns =
-                    [ { header = el headerAttrs <| Element.text "card_id"
-                      , width = fillPortion 2
-                      , view = .id >> String.fromInt >> Element.text >> el [ centerY ]
+                    [ { header = el headerAttrs <| el [ centerX ] <| E.text "card_id"
+                      , width = fillPortion 1
+                      , view = .id >> String.fromInt >> E.text >> el [ centerY ]
                       }
-                    , { header = el headerAttrs <| Element.text "card_type"
+                    , { header = el headerAttrs <| el [ centerX ] <| E.text "card_type"
                       , width = fillPortion 1
                       , view = \cardEnv -> viewType cardEnv.card
                       }
-                    , { header = el headerAttrs <| Element.text "user_id"
+                    , { header = el headerAttrs <| el [ centerX ] <| E.text "user_id"
                       , width = fillPortion 1
-                      , view = .userId >> String.fromInt >> Element.text >> el [ centerY ]
+                      , view = .userId >> String.fromInt >> E.text >> el [ centerY ]
                       }
-                    , { header = el headerAttrs <| Element.text "next_prompt"
+                    , { header = el headerAttrs <| el [ centerX ] <| E.text "next_prompt"
                       , width = fillPortion 1
-                      , view = .nextPromptSchedFor >> posixToTime model.zone >> Element.text >> el [ centerY ]
-                      }
-                    , { header = el headerAttrs <| Element.text "hover"
-                      , width = fillPortion 1
-                      , view = \cardEnv -> viewHoverArea cardEnv
+                      , view = .nextPromptSchedFor >> posixToTime model.zone >> E.text >> el [ centerY ]
                       }
                     ]
                 }
 
-        elements =
+        preview : Element Msg
+        preview =
+            E.text "Hello!"
+
+        tableElements =
             case model.wiredCards of
                 NotAsked ->
-                    Element.text "Catalog not asked for"
+                    E.text "Catalog not asked for"
 
                 Loading ->
-                    Element.text "Catalog is laoding"
+                    E.text "Catalog is loading"
 
                 Success catalog ->
                     viewCatalogTable catalog
 
                 Failure errs ->
-                    Element.column [] <| List.map (\e -> Element.text e) errs
+                    E.column [] <| List.map (\e -> E.text e) errs
     in
-    elements
+    row
+        [ width fill
+        , height fill
+        , clipY
+        ]
+        [ el
+            [ width <| fillPortion 4
+            , height fill
+            , scrollbarY
+            ]
+            tableElements
+        , el
+            [ width <| fillPortion 6
+            , height fill
+            , Background.color Styling.softGrey
+            ]
+            preview
+        ]
 
 
 
