@@ -13,7 +13,10 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Gen.Params.Catalog exposing (Params)
+import Html
 import Lamdera exposing (sendToBackend)
+import Markdown.Option exposing (MarkdownOption(..))
+import Markdown.Render
 import Page
 import Request
 import Shared
@@ -94,6 +97,7 @@ type Msg
     | UserClickedDelete CardId UserId
     | UserMousesOver CardEnvelope
     | ClearTableHover
+    | MarkdownMsg Markdown.Render.MarkdownMsg
     | Noop
 
 
@@ -101,6 +105,9 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         Noop ->
+            ( model, Effect.none )
+
+        MarkdownMsg _ ->
             ( model, Effect.none )
 
         GotUserCatalog catalog ->
@@ -173,6 +180,12 @@ view _ model =
         [ viewElements model
         ]
     }
+
+
+viewRenderedQuestion : MarkdownCard -> Element Msg
+viewRenderedQuestion card =
+    E.html
+        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
 
 
 viewElements : Model -> Element Msg
@@ -291,13 +304,31 @@ viewElements model =
 
                                 Just user_ ->
                                     Just <| UserClickedDelete env.id user_.id
+
+                        renderedQuestion : Element Msg
+                        renderedQuestion =
+                            case env.card of
+                                PlainText card ->
+                                    E.text card.question
+
+                                Markdown card ->
+                                    el
+                                        [ width fill
+                                        , height fill
+                                        , Background.color Styling.white
+                                        , Border.rounded 10
+                                        ]
+                                        (viewRenderedQuestion card)
                     in
                     column
                         [ centerX
                         , centerY
                         , spacing 10
+                        , width <| maximum 600 fill
+                        , height <| maximum 300 fill
                         ]
-                        [ el [ centerX, centerY ] <| text ("You selected card " ++ String.fromInt env.id)
+                        [ el [ centerX, centerY ] <| text ("card " ++ String.fromInt env.id)
+                        , renderedQuestion
                         , Input.button
                             [ Background.color Styling.dimGrey
                             , padding 5

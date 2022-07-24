@@ -319,6 +319,15 @@ viewElements model =
                         nCards =
                             List.length cards
 
+                        currentCardText : String
+                        currentCardText =
+                            case List.head cards of
+                                Nothing ->
+                                    " "
+
+                                Just card ->
+                                    "DEBUG: Selected cardId=" ++ String.fromInt card.id
+
                         cardCopy =
                             if nCards == 1 then
                                 "card"
@@ -326,7 +335,7 @@ viewElements model =
                             else
                                 "cards"
                     in
-                    "You have " ++ String.fromInt nCards ++ " " ++ cardCopy ++ " due for study."
+                    "You have " ++ String.fromInt nCards ++ " " ++ cardCopy ++ " due for study.     " ++ currentCardText
     in
     column
         [ width fill
@@ -339,7 +348,7 @@ viewElements model =
             , Background.color Styling.softGrey
             , height <| px 50
             ]
-            (el [ centerY ] <| text summaryText)
+            (el [ centerY, alignLeft ] <| text summaryText)
         , el
             [ width fill
             , height fill
