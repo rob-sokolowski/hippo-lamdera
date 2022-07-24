@@ -223,6 +223,30 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( model, send_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotUserCatalog <| Success asList))) )
 
+        DeleteCard_Catalog cardId userId ->
+            let
+                targetCard : Maybe CardEnvelope
+                targetCard =
+                    Dict.get cardId model.cards
+
+                newCards : Dict.Dict CardId CardEnvelope
+                newCards =
+                    case targetCard of
+                        Nothing ->
+                            -- if cardId isn't found, don't delete
+                            model.cards
+
+                        Just cardEnv ->
+                            if cardEnv.userId == userId then
+                                -- TODO: user feedback on this.. though it's an edge case so not sure I care..
+                                -- if cardId isn't owned by our user, don't delete
+                                Dict.remove cardId model.cards
+
+                            else
+                                model.cards
+            in
+            ( { model | cards = newCards }, send_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotDeleteCardResponse cardId))) )
+
         UserSubmitGrade_Study cardId grade_ ->
             -- We've received a msg to apply this grade to the specified cardId
             let

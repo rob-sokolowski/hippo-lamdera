@@ -29,3 +29,4 @@ type ToBackend
     | FetchUsersStudySummary_Study User
     | UserSubmitGrade_Study CardId Grade
     | FetchUsersCatalog_Catalog User
+    | DeleteCard_Catalog CardId UserId
