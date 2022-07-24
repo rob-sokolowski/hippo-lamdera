@@ -286,183 +286,212 @@ viewElements model =
                         Just env ->
                             case env.card of
                                 PlainText card_ ->
-                                    viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
+                                    el
+                                        []
+                                        (viewPlainTextFlashcardPrompt card_ env.id model.promptStatus)
 
                                 Markdown card_ ->
-                                    viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
+                                    el
+                                        [ width fill
+                                        , height <| E.maximum 600 <| E.minimum 400 fill
+                                        , centerY
+                                        , centerX
+                                        ]
+                                        (viewMarkdownFlashcardPrompt card_ env.id model.promptStatus)
 
                         Nothing ->
                             E.text "You have studied all your cards!"
+
+        summaryText : String
+        summaryText =
+            case model.cardDataFetch of
+                NotAsked ->
+                    " "
+
+                Loading ->
+                    " "
+
+                Failure errs ->
+                    " "
+
+                Success cards ->
+                    let
+                        nCards =
+                            List.length cards
+
+                        cardCopy =
+                            if nCards == 1 then
+                                "card"
+
+                            else
+                                "cards"
+                    in
+                    "You have " ++ String.fromInt nCards ++ " " ++ cardCopy ++ " due for study."
     in
     column
         [ width fill
         , height fill
+        , spacing 15
+        , padding 10
         ]
         [ el
             [ width fill
+            , Background.color Styling.softGrey
             , height <| px 50
-            , Border.color Styling.red
-            , Border.width 1
-            , padding 10
             ]
-            (el
-                [ Background.color Styling.softGrey
-                , padding 5
-                , width fill
-                , height fill
-                , centerY
-                , centerX
-                ]
-             <|
-                text "summary bar"
-            )
+            (el [ centerY ] <| text summaryText)
         , el
             [ width fill
             , height fill
-            , Border.color Styling.red
-            , Border.width 1
+            , Background.color Styling.softGrey
             ]
-            (text "card prompt region")
+            viewPrompt
         ]
-
-
-
---E.row
---    [ padding 0
---    , spacing 10
---    , width fill
---    , height fill
---    ]
---    [ E.column
---        [ width <| fillPortion 2
---        , height fill
---        , alignTop
---        , alignRight
---        ]
---        [ viewStudySessionSummary model.sessionSummary
---        , viewGradeSubmissionPanel
---        ]
---    , E.column
---        [ width <| fillPortion 8
---        , height fill
---        , alignTop
---        ]
---        [ viewPrompt
---        ]
---    ]
 
 
 viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
 viewMarkdownFlashcardPrompt card cid ps =
-    let
-        elements =
-            case ps of
-                Idle ->
-                    E.none
+    case ps of
+        Idle ->
+            E.none
 
-                QuestionPrompted ->
-                    E.column
-                        [ Border.width 1
-                        , Border.color Styling.black
-                        , Background.color Styling.softGrey
+        QuestionPrompted ->
+            E.row
+                [ Background.color Styling.softGrey
+                , spacing 5
+                , height fill
+                , centerX
+                ]
+                [ E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
                         , padding 10
-                        , spacing 10
-                        , centerX
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
                         ]
-                        [ el
-                            [ Background.color Styling.white
+                      <|
+                        viewRenderedQuestion card
+                    , el
+                        [ E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        ]
+                        E.none
+                    ]
+                , E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
+                        ]
+                      <|
+                        Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Font.bold
+                            , Border.color Styling.dimGrey
+                            , Border.width 5
+                            , paddingXY 32 16
                             , Border.rounded 10
-                            , padding 10
-                            , E.width <| E.minimum 800 fill
-                            , E.height <| E.minimum 400 fill
+                            , E.width fill
+                            , E.height fill
+                            , centerX
                             ]
-                          <|
-                            viewRenderedQuestion card
-                        , el
-                            [ E.width <| px 800
-                            , E.height <| E.minimum 400 fill
-                            ]
-                          <|
-                            Input.button
-                                [ Background.color Styling.medGrey
-                                , Font.color Styling.black
-                                , Font.bold
-                                , Border.color Styling.dimGrey
-                                , Border.width 5
-                                , paddingXY 32 16
-                                , Border.rounded 10
-                                , E.width fill
-                                , E.height fill
-                                , centerX
-                                ]
-                                { onPress = Just UserClickedReveal
-                                , label = el [ centerX ] <| E.text "Reveal"
-                                }
+                            { onPress = Just UserClickedReveal
+                            , label = el [ centerX ] <| E.text "Reveal"
+                            }
+                    , E.el
+                        [ spacing 10
+                        , E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        , Font.size 36
                         ]
+                        E.none
+                    ]
+                ]
 
-                AnswerRevealed ->
-                    E.column
-                        [ Border.width 5
-                        , Border.color Styling.darkCharcoal
-                        , Background.color Styling.softGrey
-                        , spacing 5
-                        , height fill
-                        , centerX
+        AnswerRevealed ->
+            E.row
+                [ Border.width 0
+                , Border.color Styling.darkCharcoal
+                , Background.color Styling.softGrey
+                , spacing 5
+                , height fill
+                , centerX
+                ]
+                [ E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
                         ]
-                        [ el
-                            [ Background.color Styling.white
+                      <|
+                        viewRenderedQuestion card
+                    , el
+                        [ E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        ]
+                        E.none
+                    ]
+                , E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
+                        ]
+                      <|
+                        viewRenderedAnswer card
+                    , E.row
+                        [ spacing 10
+                        , E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        , Font.size 36
+                        ]
+                        [ Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Font.bold
+                            , Border.color Styling.black
+                            , Border.rounded 5
+                            , E.width fill
+                            , E.height fill
+                            ]
+                            { onPress = Just <| UserSelfGrade cid Incorrect
+                            , label = el [ centerX ] <| E.text "X"
+                            }
+                        , Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Border.color Styling.lightGrey
                             , Border.rounded 10
-                            , padding 10
-                            , E.width <| E.minimum 600 fill
-                            , E.height <| E.minimum 250 fill
+                            , Border.rounded 5
+                            , E.width fill
+                            , E.height fill
                             ]
-                          <|
-                            viewRenderedQuestion card
-                        , E.column [ spacing 5 ]
-                            [ el
-                                [ Background.color Styling.white
-                                , Border.rounded 10
-                                , padding 10
-                                , E.width <| E.minimum 600 fill
-                                , E.height <| E.minimum 300 fill
-                                ]
-                              <|
-                                viewRenderedAnswer card
-                            , E.row
-                                [ spacing 10
-                                , E.width fill
-                                , E.height <| E.minimum 60 <| E.maximum 100 fill
-                                , Font.size 36
-                                ]
-                                [ Input.button
-                                    [ Background.color Styling.medGrey
-                                    , Font.color Styling.black
-                                    , Font.bold
-                                    , Border.color Styling.black
-                                    , Border.rounded 5
-                                    , E.width fill
-                                    , E.height fill
-                                    ]
-                                    { onPress = Just <| UserSelfGrade cid Incorrect
-                                    , label = el [ centerX ] <| E.text "X"
-                                    }
-                                , Input.button
-                                    [ Background.color Styling.medGrey
-                                    , Font.color Styling.black
-                                    , Border.color Styling.lightGrey
-                                    , Border.rounded 10
-                                    , Border.rounded 5
-                                    , E.width fill
-                                    , E.height fill
-                                    ]
-                                    { onPress = Just <| UserSelfGrade cid Correct
-                                    , label = el [ centerX ] <| E.text "✔"
-                                    }
-                                ]
-                            ]
+                            { onPress = Just <| UserSelfGrade cid Correct
+                            , label = el [ centerX ] <| E.text "✔"
+                            }
                         ]
-    in
-    elements
+                    ]
+                ]
 
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
@@ -485,9 +514,7 @@ viewPlainTextFlashcardPrompt card cid ps =
 
         QuestionPrompted ->
             E.column
-                [ Border.width 2
-                , Border.color Styling.darkCharcoal
-                , padding 10
+                [ padding 10
                 , spacing 20
                 , centerX
                 ]
@@ -558,10 +585,6 @@ viewStudySessionSummary summary =
 
         Failure errs ->
             E.column [] <| List.map (\e -> E.text e) errs
-
-
-
---elements
 
 
 type PromptStatus
