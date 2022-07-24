@@ -114,8 +114,7 @@ elements model =
         --, height fill
         , padding 10
         , spacing 10
-
-        --, centerY
+        , centerY
         , centerX
         ]
         [ el
@@ -135,4 +134,7 @@ elements model =
             , centerX
             ]
             (E.text "Simple MarkDown flashcards with spaced-repetition study sessions")
+        , E.text " " -- HACK: "push up" centerY
+        , E.text " " -- HACK: "push up" centerY
+        , E.text " " -- HACK: "push up" centerY
         ]
