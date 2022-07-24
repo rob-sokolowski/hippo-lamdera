@@ -258,9 +258,9 @@ viewElements model =
                         ]
                         [ el [ centerY ] <| text "Click to start today's session"
                         , Input.button
-                            [ Background.color colors.darkCharcoal
-                            , Font.color colors.lightBlue
-                            , Border.color colors.lightGrey
+                            [ Background.color Styling.darkCharcoal
+                            , Font.color Styling.lightBlue
+                            , Border.color Styling.lightGrey
                             , paddingXY 32 16
                             , centerY
                             , Border.rounded 3
@@ -286,150 +286,212 @@ viewElements model =
                         Just env ->
                             case env.card of
                                 PlainText card_ ->
-                                    viewPlainTextFlashcardPrompt card_ env.id model.promptStatus
+                                    el
+                                        []
+                                        (viewPlainTextFlashcardPrompt card_ env.id model.promptStatus)
 
                                 Markdown card_ ->
-                                    viewMarkdownFlashcardPrompt card_ env.id model.promptStatus
+                                    el
+                                        [ width fill
+                                        , height <| E.maximum 600 <| E.minimum 400 fill
+                                        , centerY
+                                        , centerX
+                                        ]
+                                        (viewMarkdownFlashcardPrompt card_ env.id model.promptStatus)
 
                         Nothing ->
                             E.text "You have studied all your cards!"
+
+        summaryText : String
+        summaryText =
+            case model.cardDataFetch of
+                NotAsked ->
+                    " "
+
+                Loading ->
+                    " "
+
+                Failure errs ->
+                    " "
+
+                Success cards ->
+                    let
+                        nCards =
+                            List.length cards
+
+                        cardCopy =
+                            if nCards == 1 then
+                                "card"
+
+                            else
+                                "cards"
+                    in
+                    "You have " ++ String.fromInt nCards ++ " " ++ cardCopy ++ " due for study."
     in
-    E.row
-        [ padding 0
-        , spacing 10
-        , width fill
+    column
+        [ width fill
         , height fill
+        , spacing 15
+        , padding 10
         ]
-        [ E.column
-            [ width <| fillPortion 2
+        [ el
+            [ width fill
+            , Background.color Styling.softGrey
+            , height <| px 50
+            ]
+            (el [ centerY ] <| text summaryText)
+        , el
+            [ width fill
             , height fill
-            , alignTop
-            , alignRight
+            , Background.color Styling.softGrey
             ]
-            [ viewStudySessionSummary model.sessionSummary
-            , viewGradeSubmissionPanel
-            ]
-        , E.column
-            [ width <| fillPortion 8
-            , height fill
-            , alignTop
-            ]
-            [ viewPrompt
-            ]
+            viewPrompt
         ]
 
 
 viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
 viewMarkdownFlashcardPrompt card cid ps =
-    let
-        elements =
-            case ps of
-                Idle ->
-                    E.none
+    case ps of
+        Idle ->
+            E.none
 
-                QuestionPrompted ->
-                    E.column
-                        [ Border.width 1
-                        , Border.color Styling.black
-                        , Background.color Styling.softGrey
+        QuestionPrompted ->
+            E.row
+                [ Background.color Styling.softGrey
+                , spacing 5
+                , height fill
+                , centerX
+                ]
+                [ E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
                         , padding 10
-                        , spacing 10
-                        , centerX
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
                         ]
-                        [ el
-                            [ Background.color Styling.white
+                      <|
+                        viewRenderedQuestion card
+                    , el
+                        [ E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        ]
+                        E.none
+                    ]
+                , E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
+                        ]
+                      <|
+                        Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Font.bold
+                            , Border.color Styling.dimGrey
+                            , Border.width 5
+                            , paddingXY 32 16
                             , Border.rounded 10
-                            , padding 10
-                            , E.width <| E.minimum 800 fill
-                            , E.height <| E.minimum 400 fill
+                            , E.width fill
+                            , E.height fill
+                            , centerX
                             ]
-                          <|
-                            viewRenderedQuestion card
-                        , el
-                            [ E.width <| px 800
-                            , E.height <| E.minimum 400 fill
-                            ]
-                          <|
-                            Input.button
-                                [ Background.color Styling.medGrey
-                                , Font.color Styling.black
-                                , Font.bold
-                                , Border.color Styling.dimGrey
-                                , Border.width 5
-                                , paddingXY 32 16
-                                , Border.rounded 10
-                                , E.width fill
-                                , E.height fill
-                                , centerX
-                                ]
-                                { onPress = Just UserClickedReveal
-                                , label = el [ centerX ] <| E.text "Reveal"
-                                }
+                            { onPress = Just UserClickedReveal
+                            , label = el [ centerX ] <| E.text "Reveal"
+                            }
+                    , E.el
+                        [ spacing 10
+                        , E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        , Font.size 36
                         ]
+                        E.none
+                    ]
+                ]
 
-                AnswerRevealed ->
-                    E.column
-                        [ Border.width 5
-                        , Border.color colors.darkCharcoal
-                        , Background.color Styling.softGrey
-                        , spacing 5
-                        , height fill
-                        , centerX
+        AnswerRevealed ->
+            E.row
+                [ Border.width 0
+                , Border.color Styling.darkCharcoal
+                , Background.color Styling.softGrey
+                , spacing 5
+                , height fill
+                , centerX
+                ]
+                [ E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
                         ]
-                        [ el
-                            [ Background.color Styling.white
+                      <|
+                        viewRenderedQuestion card
+                    , el
+                        [ E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        ]
+                        E.none
+                    ]
+                , E.column
+                    [ spacing 5
+                    , height fill
+                    ]
+                    [ el
+                        [ Background.color Styling.white
+                        , Border.rounded 10
+                        , padding 10
+                        , E.width <| E.minimum 600 fill
+                        , E.height <| E.minimum 300 fill
+                        ]
+                      <|
+                        viewRenderedAnswer card
+                    , E.row
+                        [ spacing 10
+                        , E.width fill
+                        , E.height <| E.minimum 60 <| E.maximum 100 fill
+                        , Font.size 36
+                        ]
+                        [ Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Font.bold
+                            , Border.color Styling.black
+                            , Border.rounded 5
+                            , E.width fill
+                            , E.height fill
+                            ]
+                            { onPress = Just <| UserSelfGrade cid Incorrect
+                            , label = el [ centerX ] <| E.text "X"
+                            }
+                        , Input.button
+                            [ Background.color Styling.medGrey
+                            , Font.color Styling.black
+                            , Border.color Styling.lightGrey
                             , Border.rounded 10
-                            , padding 10
-                            , E.width <| E.minimum 600 fill
-                            , E.height <| E.minimum 250 fill
+                            , Border.rounded 5
+                            , E.width fill
+                            , E.height fill
                             ]
-                          <|
-                            viewRenderedQuestion card
-                        , E.column [ spacing 5 ]
-                            [ el
-                                [ Background.color Styling.white
-                                , Border.rounded 10
-                                , padding 10
-                                , E.width <| E.minimum 600 fill
-                                , E.height <| E.minimum 300 fill
-                                ]
-                              <|
-                                viewRenderedAnswer card
-                            , E.row
-                                [ spacing 10
-                                , E.width fill
-                                , E.height <| E.minimum 60 <| E.maximum 100 fill
-                                , Font.size 36
-                                ]
-                                [ Input.button
-                                    [ Background.color Styling.medGrey
-                                    , Font.color Styling.black
-                                    , Font.bold
-                                    , Border.color Styling.black
-                                    , Border.rounded 5
-                                    , E.width fill
-                                    , E.height fill
-                                    ]
-                                    { onPress = Just <| UserSelfGrade cid Incorrect
-                                    , label = el [ centerX ] <| E.text "X"
-                                    }
-                                , Input.button
-                                    [ Background.color Styling.medGrey
-                                    , Font.color Styling.black
-                                    , Border.color colors.lightGrey
-                                    , Border.rounded 10
-                                    , Border.rounded 5
-                                    , E.width fill
-                                    , E.height fill
-                                    ]
-                                    { onPress = Just <| UserSelfGrade cid Correct
-                                    , label = el [ centerX ] <| E.text "✔"
-                                    }
-                                ]
-                            ]
+                            { onPress = Just <| UserSelfGrade cid Correct
+                            , label = el [ centerX ] <| E.text "✔"
+                            }
                         ]
-    in
-    elements
+                    ]
+                ]
 
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
@@ -446,109 +508,86 @@ viewRenderedAnswer card =
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
 viewPlainTextFlashcardPrompt card cid ps =
-    let
-        elements =
-            case ps of
-                Idle ->
-                    E.none
+    case ps of
+        Idle ->
+            E.none
 
-                QuestionPrompted ->
-                    E.column
-                        [ Border.width 2
-                        , Border.color colors.darkCharcoal
-                        , padding 10
-                        , spacing 20
-                        , centerX
+        QuestionPrompted ->
+            E.column
+                [ padding 10
+                , spacing 20
+                , centerX
+                ]
+                [ E.text card.question
+                , E.row [ spacing 10 ]
+                    [ Input.button
+                        [ Background.color Styling.darkCharcoal
+                        , Font.color Styling.lightBlue
+                        , Border.color Styling.lightGrey
+                        , paddingXY 32 16
+                        , Border.rounded 3
+                        , E.width fill
                         ]
-                        [ E.text card.question
-                        , E.row [ spacing 10 ]
-                            [ Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
-                                , paddingXY 32 16
-                                , Border.rounded 3
-                                , E.width fill
-                                ]
-                                { onPress = Just UserClickedReveal
-                                , label = E.text "Reveal"
-                                }
-                            ]
-                        ]
+                        { onPress = Just UserClickedReveal
+                        , label = E.text "Reveal"
+                        }
+                    ]
+                ]
 
-                AnswerRevealed ->
-                    E.column
-                        [ padding 10
+        AnswerRevealed ->
+            E.column
+                [ padding 10
+                ]
+                [ E.text card.question
+                , E.text card.answer
+                , E.row [ spacing 10 ]
+                    [ Input.button
+                        [ Background.color Styling.darkCharcoal
+                        , Font.color Styling.lightBlue
+                        , Border.color Styling.lightGrey
+                        , paddingXY 32 16
+                        , Border.rounded 3
+                        , E.width fill
                         ]
-                        [ E.text card.question
-                        , E.text card.answer
-                        , E.row [ spacing 10 ]
-                            [ Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
-                                , paddingXY 32 16
-                                , Border.rounded 3
-                                , E.width fill
-                                ]
-                                { onPress = Just <| UserSelfGrade cid Incorrect
-                                , label = E.text "X"
-                                }
-                            , Input.button
-                                [ Background.color colors.darkCharcoal
-                                , Font.color colors.lightBlue
-                                , Border.color colors.lightGrey
-                                , paddingXY 32 16
-                                , Border.rounded 3
-                                , E.width fill
-                                ]
-                                { onPress = Just <| UserSelfGrade cid Correct
-                                , label = E.text "✔"
-                                }
-                            ]
+                        { onPress = Just <| UserSelfGrade cid Incorrect
+                        , label = E.text "X"
+                        }
+                    , Input.button
+                        [ Background.color Styling.darkCharcoal
+                        , Font.color Styling.lightBlue
+                        , Border.color Styling.lightGrey
+                        , paddingXY 32 16
+                        , Border.rounded 3
+                        , E.width fill
                         ]
-    in
-    elements
+                        { onPress = Just <| UserSelfGrade cid Correct
+                        , label = E.text "✔"
+                        }
+                    ]
+                ]
 
 
 viewStudySessionSummary : Data StudySessionSummary -> Element Msg
 viewStudySessionSummary summary =
-    let
-        elements =
-            case summary of
-                NotAsked ->
-                    E.text "not asked"
+    case summary of
+        NotAsked ->
+            E.text "not asked"
 
-                Loading ->
-                    E.text "loading"
+        Loading ->
+            E.text "loading"
 
-                Success s ->
-                    E.column [ Font.size 14 ]
-                        [ E.text <| "Summary:"
-                        , E.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
-                        , E.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
-                        ]
+        Success s ->
+            E.column [ Font.size 14 ]
+                [ E.text <| "Summary:"
+                , E.text <| "\tcards to study today: " ++ String.fromInt s.cardsToStudy
+                , E.text <| "\tyour total card count: " ++ String.fromInt s.usersTotalCardCount
+                ]
 
-                Failure errs ->
-                    E.column [] <| List.map (\e -> E.text e) errs
-    in
-    elements
-
-
-
---elements
+        Failure errs ->
+            E.column [] <| List.map (\e -> E.text e) errs
 
 
 type PromptStatus
     = Idle
     | QuestionPrompted
     | AnswerRevealed
-
-
-colors =
-    { blue = rgb255 0x72 0x9F 0xCF
-    , darkCharcoal = rgb255 0x2E 0x34 0x36
-    , lightBlue = rgb255 0xC5 0xE8 0xF7
-    , lightGrey = rgb255 0xE0 0xE0 0xE0
-    , white = rgb255 0xFF 0xFF 0xFF
-    }

@@ -222,4 +222,4 @@ view user model =
 
 elements : Model -> Element Msg
 elements model =
-    E.text "Settings"
+    E.text "TODO: Do I want a Settings page? What for?"

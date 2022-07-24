@@ -1,39 +1,51 @@
 module Components.Styling exposing (..)
 
-import Element
-
-
-white =
-    Element.rgb 1 1 1
+import Element as E exposing (rgb, rgb255)
 
 
 grey =
-    Element.rgb 0.9 0.9 0.9
-
-
-blue =
-    Element.rgb 0 0.4 0.7
+    rgb 0.9 0.9 0.9
 
 
 red =
-    Element.rgb 0.8 0 0
+    rgb 0.8 0 0
 
 
 black =
-    Element.rgb 0 0 0
+    rgb 0 0 0
 
 
 darkBlue =
-    Element.rgb 0 0 0.8
+    rgb 0 0 0.8
 
 
 softGrey =
-    Element.rgb255 211 211 211
+    rgb255 211 211 211
 
 
 medGrey =
-    Element.rgb255 177 177 177
+    rgb255 177 177 177
 
 
 dimGrey =
-    Element.rgb255 105 105 105
+    rgb255 105 105 105
+
+
+blue =
+    rgb255 0x72 0x9F 0xCF
+
+
+darkCharcoal =
+    rgb255 0x2E 0x34 0x36
+
+
+lightBlue =
+    rgb255 0xC5 0xE8 0xF7
+
+
+lightGrey =
+    rgb255 0xE0 0xE0 0xE0
+
+
+white =
+    rgb255 0xFF 0xFF 0xFF
