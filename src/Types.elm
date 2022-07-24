@@ -1,8 +1,8 @@
 module Types exposing (..)
 
+import Api.Card exposing (CardEnvelope, CardId, FlashCard)
 import Api.User exposing (User, UserFull, UserId)
 import Bridge
-import Api.Card exposing (FlashCard, CardId, CardEnvelope)
 import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
@@ -32,11 +32,13 @@ type FrontendMsg
     | Page Pages.Msg
     | Noop
 
+
 type alias BackendModel =
     { sessions : Dict SessionId Session
     , users : Dict Int UserFull
     , cards : Dict CardId CardEnvelope
     , now : Time.Posix
+    , nextCardId : Int
     }
 
 
@@ -49,6 +51,7 @@ type BackendMsg
     | RenewSession UserId SessionId ClientId Time.Posix
     | NoOpBackendMsg
     | Tick Time.Posix
+    | IncrementCardId
 
 
 type ToFrontend
