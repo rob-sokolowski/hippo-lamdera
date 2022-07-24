@@ -299,8 +299,6 @@ viewElements model =
         , spacing 10
         , width fill
         , height fill
-        , Border.width 1
-        , Border.color Styling.red
         ]
         [ E.column
             [ width <| fillPortion 2

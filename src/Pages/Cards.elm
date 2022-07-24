@@ -211,18 +211,15 @@ view _ model =
 viewElements : Model -> Element Msg
 viewElements model =
     E.row
-        [ padding 10
+        [ padding 0
+        , spacing 5
         , height fill
         , width fill
         , Font.size 16
-        , Border.width 1
-        , Border.color Styling.red
         ]
         [ E.column
             [ Background.color Styling.softGrey
             , E.width <| px 200
-            , padding 10
-            , spacing 10
             , height fill
             , alignTop
             , centerX
@@ -232,10 +229,7 @@ viewElements model =
             , viewCardSubmitStatus model
             ]
         , E.column
-            [ padding 10
-            , Border.width 2
-            , Border.color Styling.blue
-            , E.width <| E.minimum 600 fill
+            [ E.width <| E.minimum 600 fill
             , height fill
             ]
             [ viewCardForm model.editorForm model.user
@@ -347,8 +341,8 @@ markdownQuestionPlaceholder =
 viewMarkdownEditor : MarkdownCard -> Element Msg
 viewMarkdownEditor card =
     E.column
-        [ padding 10
-        , spacing 10
+        [ padding 0
+        , spacing 5
         , height fill
         , width fill
         ]
