@@ -2,7 +2,7 @@ module Pages.Catalog exposing (Model, Msg(..), page)
 
 import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, PlainTextCard, StudySessionSummary)
 import Api.Data exposing (Data(..))
-import Api.User exposing (User)
+import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
 import Components.Styling as Styling exposing (..)
 import Effect exposing (Effect)
@@ -19,6 +19,7 @@ import Request
 import Shared
 import Time exposing (toHour, toMinute, toSecond, utc)
 import Time.Extra
+import Utils.Task exposing (send)
 import View exposing (View)
 
 
@@ -44,6 +45,7 @@ type alias Model =
     , wiredCards : Data (List CardEnvelope)
     , selectedEnv : Maybe CardEnvelope
     , hoveredOnEnv : Maybe CardEnvelope
+    , deletedCardId : Maybe CardId
     }
 
 
@@ -72,6 +74,7 @@ init shared =
             , zone = shared.zone
             , selectedEnv = Nothing
             , hoveredOnEnv = Nothing
+            , deletedCardId = Nothing
             }
     in
     ( model
@@ -86,16 +89,39 @@ init shared =
 type Msg
     = FetchUserCatalog User
     | GotUserCatalog (Data (List CardEnvelope))
+    | GotDeleteCardResponse CardId
     | UserSelectedCard CardEnvelope
+    | UserClickedDelete CardId UserId
     | UserMousesOver CardEnvelope
     | ClearTableHover
+    | Noop
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        Noop ->
+            ( model, Effect.none )
+
         GotUserCatalog catalog ->
             ( { model | wiredCards = catalog }, Effect.none )
+
+        GotDeleteCardResponse cardId ->
+            let
+                cmd =
+                    case model.user of
+                        Nothing ->
+                            Noop
+
+                        Just user_ ->
+                            FetchUserCatalog user_
+            in
+            ( { model
+                | deletedCardId = Just cardId
+                , selectedEnv = Nothing
+              }
+            , Effect.fromCmd <| send cmd
+            )
 
         FetchUserCatalog user ->
             ( { model
@@ -103,6 +129,9 @@ update msg model =
               }
             , Effect.fromCmd <| fetchUsersCatalog (Just user)
             )
+
+        UserClickedDelete cardId userId ->
+            ( model, Effect.fromCmd (DeleteCard_Catalog cardId userId |> Lamdera.sendToBackend) )
 
         UserSelectedCard cardEnv ->
             ( { model | selectedEnv = Just cardEnv }, Effect.none )
@@ -254,7 +283,33 @@ viewElements model =
                             ]
 
                 Just env ->
-                    el [ centerX, centerY ] <| text ("You selected card " ++ String.fromInt env.id)
+                    let
+                        buttonMsg =
+                            case model.user of
+                                Nothing ->
+                                    Nothing
+
+                                Just user_ ->
+                                    Just <| UserClickedDelete env.id user_.id
+                    in
+                    column
+                        [ centerX
+                        , centerY
+                        , spacing 10
+                        ]
+                        [ el [ centerX, centerY ] <| text ("You selected card " ++ String.fromInt env.id)
+                        , Input.button
+                            [ Background.color Styling.dimGrey
+                            , padding 5
+                            , Border.width 1
+                            , Border.color Styling.black
+                            , Border.rounded 5
+                            , alignRight
+                            ]
+                            { onPress = buttonMsg
+                            , label = el [] <| text "Delete"
+                            }
+                        ]
 
         tableElements =
             case model.wiredCards of
