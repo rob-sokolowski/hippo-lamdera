@@ -1,6 +1,6 @@
 module Pages.Login exposing (Model, Msg(..), page)
 
-import Api.Data exposing (Data)
+import Api.Data exposing (Data(..))
 import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.Styling as Styling
@@ -95,18 +95,28 @@ update req msg model =
                     }
             )
 
-        GotUser user ->
-            case Api.Data.toMaybe user of
-                Just user_ ->
-                    ( { model | user = user }
+        GotUser data ->
+            case data of
+                Success user ->
+                    ( { model | user = data }
                     , Effect.batch
                         [ Effect.fromCmd (Utils.Route.navigate req.key Route.Home_)
-                        , Effect.fromShared (Shared.SignedInUser user_)
+                        , Effect.fromShared (Shared.SignedInUser user)
                         ]
                     )
 
-                Nothing ->
-                    ( { model | user = user }
+                Failure err ->
+                    ( { model | user = data }
+                    , Effect.none
+                    )
+
+                NotAsked ->
+                    ( { model | user = data }
+                    , Effect.none
+                    )
+
+                Loading ->
+                    ( { model | user = data }
                     , Effect.none
                     )
 
@@ -129,6 +139,22 @@ view model =
 
 elements : Model -> Element Msg
 elements model =
+    let
+        statusMessage : String
+        statusMessage =
+            case model.user of
+                NotAsked ->
+                    ""
+
+                Loading ->
+                    ""
+
+                Failure err ->
+                    List.foldl (\e a -> e ++ a) "" err
+
+                Success user ->
+                    "You are signed in as " ++ user.email
+    in
     column
         [ width (fill |> maximum 800)
         , height fill
@@ -138,7 +164,8 @@ elements model =
 
         --, centerY
         ]
-        [ Input.username []
+        [ text "Enter your email and password to log in."
+        , Input.username []
             { onChange = Updated Email
             , text = model.email
             , placeholder = Nothing
@@ -161,4 +188,5 @@ elements model =
             { onPress = Just AttemptedSignIn
             , label = el [ centerX ] <| text "Sign In"
             }
+        , text statusMessage
         ]

@@ -18,7 +18,6 @@ import Lamdera
 import Markdown.Option exposing (..)
 import Markdown.Render
 import Page
-import Pages.Settings exposing (Msg(..))
 import Request exposing (Request)
 import Shared
 import View exposing (View)

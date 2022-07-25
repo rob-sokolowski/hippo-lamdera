@@ -50,10 +50,6 @@ view options =
                         , label = text "Catalog"
                         }
                     , link [ Font.color Styling.blue ]
-                        { url = Route.toHref Route.Settings
-                        , label = text "Settings"
-                        }
-                    , link [ Font.color Styling.blue ]
                         { url = Route.toHref Route.Study
                         , label = text "Study"
                         }
