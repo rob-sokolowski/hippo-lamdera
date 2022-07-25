@@ -1,5 +1,7 @@
 module Frontend exposing (..)
 
+import Auth.Common
+import AuthImplementation
 import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
@@ -48,7 +50,11 @@ init url key =
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
     in
-    ( FrontendModel url key shared page
+    ( { url = url
+      , key = key
+      , shared = shared
+      , page = page
+      }
     , Cmd.batch
         [ Cmd.map Shared sharedCmd
         , Effect.toCmd ( Shared, Page ) effect

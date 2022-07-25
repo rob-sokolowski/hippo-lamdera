@@ -13,7 +13,7 @@ import Env
 import Gen.Msg
 import Lamdera
 import Pages.Login
-import Pages.Login.Provider_.Callback
+import Pages.Login.GoogleOauth.Callback
 import Task
 import Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
@@ -27,7 +27,7 @@ config =
     , sendToFrontend = Lamdera.sendToFrontend
     , sendToBackend = Lamdera.sendToBackend
     , methods =
-        [ Auth.Method.OAuthGithub.configuration Config.githubOAuthClientId Config.githubOAuthClientSecret
+        [ Auth.Method.OAuthGithub.configuration Config.googleOAuthClientId Config.googleOAuthClientSecret
         ]
     , renewSession = renewSession
     , logout = logout
@@ -85,7 +85,7 @@ handleAuthSuccess backendModel sessionId clientId userInfo authToken now =
         in
         ( backendModel
         , Cmd.batch
-            [ Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__Provider___Callback (Pages.Login.Provider_.Callback.GotUser response)))
+            [ Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__GoogleOauth__Callback (Pages.Login.GoogleOauth.Callback.GotUser response)))
             , cmd
             ]
         )
@@ -108,7 +108,7 @@ handleAuthSuccess backendModel sessionId clientId userInfo authToken now =
         ( { backendModel | users = backendModel.users |> Dict.insert user_.id user_ }
         , Cmd.batch
             [ renewSession_ user_.id sessionId clientId
-            , Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__Provider___Callback (Pages.Login.Provider_.Callback.GotUser response)))
+            , Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__GoogleOauth__Callback (Pages.Login.GoogleOauth.Callback.GotUser response)))
             ]
         )
 

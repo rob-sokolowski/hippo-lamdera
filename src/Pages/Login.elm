@@ -2,6 +2,8 @@ module Pages.Login exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data(..))
 import Api.User exposing (User)
+import Auth.Common
+import Auth.Flow
 import Bridge exposing (..)
 import Components.Styling as Styling
 import Effect exposing (Effect)
@@ -15,6 +17,7 @@ import Gen.Route as Route
 import Page
 import Request exposing (Request)
 import Shared
+import Url exposing (Url)
 import Utils.Route
 import View exposing (View)
 
@@ -22,7 +25,7 @@ import View exposing (View)
 page : Shared.Model -> Request -> Page.With Model Msg
 page shared req =
     Page.advanced
-        { init = init shared
+        { init = init shared req
         , update = update req
         , subscriptions = subscriptions
         , view = view
@@ -34,24 +37,24 @@ page shared req =
 
 
 type alias Model =
-    { user : Data User
-    , email : String
+    { email : String
     , password : String
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     }
 
 
-init : Shared.Model -> ( Model, Effect Msg )
-init shared =
-    ( Model
-        (case shared.user of
-            Just user ->
-                Api.Data.Success user
-
-            Nothing ->
-                Api.Data.NotAsked
-        )
-        ""
-        ""
+init : Shared.Model -> Request -> ( Model, Effect Msg )
+init shared req =
+    let
+        url =
+            req.url
+    in
+    ( { email = ""
+      , password = ""
+      , authFlow = Auth.Common.Idle
+      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+      }
     , Effect.none
     )
 
@@ -63,6 +66,7 @@ init shared =
 type Msg
     = Updated Field String
     | AttemptedSignIn
+    | GoogleOAuthSignInRequested
     | GotUser (Data User)
 
 
@@ -74,6 +78,10 @@ type Field
 update : Request -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
+        GoogleOAuthSignInRequested ->
+            Auth.Flow.signInRequested "OAuthGithub" model Nothing
+                |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
+
         Updated Email email ->
             ( { model | email = email }
             , Effect.none
@@ -98,7 +106,9 @@ update req msg model =
         GotUser data ->
             case data of
                 Success user ->
-                    ( { model | user = data }
+                    -- TODO: Should this belong in the model?
+                    --( { model | user = data }
+                    ( model
                     , Effect.batch
                         [ Effect.fromCmd (Utils.Route.navigate req.key Route.Home_)
                         , Effect.fromShared (Shared.SignedInUser user)
@@ -106,17 +116,20 @@ update req msg model =
                     )
 
                 Failure err ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
                 NotAsked ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
                 Loading ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
@@ -142,18 +155,20 @@ elements model =
     let
         statusMessage : String
         statusMessage =
-            case model.user of
-                NotAsked ->
-                    ""
+            "foo baby!"
 
-                Loading ->
-                    ""
-
-                Failure err ->
-                    List.foldl (\e a -> e ++ a) "" err
-
-                Success user ->
-                    "You are signed in as " ++ user.email
+        --case model.user of
+        --    NotAsked ->
+        --        ""
+        --
+        --    Loading ->
+        --        ""
+        --
+        --    Failure err ->
+        --        List.foldl (\e a -> e ++ a) "" err
+        --
+        --    Success user ->
+        --        "You are signed in as " ++ user.email
     in
     column
         [ width (fill |> maximum 800)

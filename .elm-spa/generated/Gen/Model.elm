@@ -7,6 +7,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Register
 import Gen.Params.Study
+import Gen.Params.Login.GoogleOauth.Callback
 import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
@@ -14,6 +15,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Register
 import Pages.Study
+import Pages.Login.GoogleOauth.Callback
 
 
 type Model
@@ -25,4 +27,5 @@ type Model
     | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
     | Register Gen.Params.Register.Params Pages.Register.Model
     | Study Gen.Params.Study.Params Pages.Study.Model
+    | Login__GoogleOauth__Callback Gen.Params.Login.GoogleOauth.Callback.Params Pages.Login.GoogleOauth.Callback.Model
 

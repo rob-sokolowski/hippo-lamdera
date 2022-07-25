@@ -11,6 +11,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Register
 import Gen.Params.Study
+import Gen.Params.Login.GoogleOauth.Callback
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -23,6 +24,7 @@ type Route
     | NotFound
     | Register
     | Study
+    | Login__GoogleOauth__Callback
 
 
 fromUrl : Url -> Route
@@ -39,6 +41,7 @@ routes =
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Register Gen.Params.Register.parser
     , Parser.map Study Gen.Params.Study.parser
+    , Parser.map Login__GoogleOauth__Callback Gen.Params.Login.GoogleOauth.Callback.parser
     ]
 
 
@@ -70,4 +73,7 @@ toHref route =
     
         Study ->
             joinAsHref [ "study" ]
+    
+        Login__GoogleOauth__Callback ->
+            joinAsHref [ "login", "google-oauth", "callback" ]
 
