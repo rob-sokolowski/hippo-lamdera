@@ -4,5 +4,11 @@ module Env exposing (..)
 -- See https://dashboard.lamdera.app/docs/environment for more info.
 
 
-dummyConfigItem =
-  ""
+googleOAuthClientId =
+    -- true value saved in Lamdera admin panel
+    ""
+
+
+googleOAuthClientSecret =
+    -- true value saved in Lamdera admin panel
+    ""

@@ -19,3 +19,15 @@ Study session prompt, with answer shown:
 ![img](./assets/screenshot3.png)
 
 
+### dev notes
+
+Port 8000 is usually busy doing something else on my machine, so I've moved all lamdera things to port `8080`
+
+This changes local dev:
+```bash
+lamdera live --port 8080
+```
+
+And for OAuth, local callbacks must be configured to use `http://localhost:8080/login/OAuthGoogle/callback`
+
+Secrets are stored in Project Fir's GCP [secrets manager](https://console.cloud.google.com/security/secret-manager?project=fir-sandbox-326008)
