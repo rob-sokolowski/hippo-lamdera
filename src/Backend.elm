@@ -24,6 +24,7 @@ import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
+import Utils.Task as Utils
 
 
 type alias Model =
@@ -58,6 +59,7 @@ init =
       , users = Dict.empty
       , cards = Dict.empty
       , now = Time.millisToPosix 0 -- Setting this to 0 here is a bit of a hack, but the server's init basically never runs after launch, so this'll do
+      , nextCardId = 1000 -- setting to a high number incase I've deleted some. A one-time evergreen related thing
       }
     , Cmd.none
     )
@@ -79,6 +81,9 @@ update msg model =
 
         Tick time ->
             ( { model | now = time }, Cmd.none )
+
+        IncrementCardId ->
+            ( { model | nextCardId = model.nextCardId + 1 }, Cmd.none )
 
         NoOpBackendMsg ->
             ( model, Cmd.none )
@@ -173,7 +178,7 @@ updateFromFrontend sessionId clientId msg model =
         CreateCard_Cards flashCard userId ->
             let
                 cardId =
-                    Dict.size model.cards + 1
+                    model.nextCardId
 
                 envelope =
                     { id = cardId
@@ -188,7 +193,12 @@ updateFromFrontend sessionId clientId msg model =
                 cards_ =
                     Dict.insert cardId envelope model.cards
             in
-            ( { model | cards = cards_ }, send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId))) )
+            ( { model | cards = cards_ }
+            , Cmd.batch
+                [ Utils.send IncrementCardId
+                , send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId)))
+                ]
+            )
 
         FetchUsersStudyCards_Study user ->
             -- Fetches cards for the case of starting a study session. criteria:

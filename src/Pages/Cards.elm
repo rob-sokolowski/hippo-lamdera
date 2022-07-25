@@ -225,8 +225,8 @@ viewElements model =
             , centerX
             ]
             [ viewCardTypeSelector model
-            , viewCardSubmission model.editorForm model.user
             , viewCardSubmitStatus model
+            , viewCardSubmission model.editorForm model.user
             ]
         , E.column
             [ E.width <| E.minimum 600 fill
@@ -293,7 +293,7 @@ viewCardSubmitStatus model =
             E.column [] <| List.map (\e -> E.text e) errs
 
         Success cardId ->
-            E.text <| "Success, there are " ++ String.fromInt cardId ++ " cards"
+            E.text <| "Success"
 
 
 viewCardTypeSelector : Model -> Element Msg
