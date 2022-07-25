@@ -65,7 +65,5 @@ view options =
         , height (px 50)
         , alignRight
         , spacing 20
-
-        --, centerX
         ]
         links

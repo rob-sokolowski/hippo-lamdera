@@ -16,7 +16,6 @@ import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
 import Pages.Login
-import Pages.Profile.Username_
 import Pages.Register
 import Pages.Study
 import Task exposing (Task)
@@ -100,15 +99,6 @@ updateFromFrontend sessionId clientId msg model =
     case msg of
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
-
-        ProfileGet_Profile__Username_ { username } ->
-            let
-                res =
-                    profileByUsername username model
-                        |> Maybe.map Success
-                        |> Maybe.withDefault (Failure [ "user not found" ])
-            in
-            send <| PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res))
 
         UserAuthentication_Login { params } ->
             let

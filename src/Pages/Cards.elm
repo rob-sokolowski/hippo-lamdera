@@ -447,11 +447,3 @@ viewPlainTextEditor card userId =
             , spellcheck = True
             }
         ]
-
-
-
--- viewCard : CardEnvelope -> Element Msg
--- viewCard card =
---     E.column [] [
---     ]
--- color defs
