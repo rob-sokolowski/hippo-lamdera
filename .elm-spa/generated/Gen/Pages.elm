@@ -9,7 +9,6 @@ import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Register
-import Gen.Params.Settings
 import Gen.Params.Study
 import Gen.Params.Profile.Username_
 import Gen.Model as Model
@@ -22,7 +21,6 @@ import Pages.Home_
 import Pages.Login
 import Pages.NotFound
 import Pages.Register
-import Pages.Settings
 import Pages.Study
 import Pages.Profile.Username_
 import Request exposing (Request)
@@ -61,9 +59,6 @@ init route =
         Route.Register ->
             pages.register.init ()
     
-        Route.Settings ->
-            pages.settings.init ()
-    
         Route.Study ->
             pages.study.init ()
     
@@ -91,9 +86,6 @@ update msg_ model_ =
     
         ( Msg.Register msg, Model.Register params model ) ->
             pages.register.update params msg model
-    
-        ( Msg.Settings msg, Model.Settings params model ) ->
-            pages.settings.update params msg model
     
         ( Msg.Study msg, Model.Study params model ) ->
             pages.study.update params msg model
@@ -129,9 +121,6 @@ view model_ =
         Model.Register params model ->
             pages.register.view params model
     
-        Model.Settings params model ->
-            pages.settings.view params model
-    
         Model.Study params model ->
             pages.study.view params model
     
@@ -163,9 +152,6 @@ subscriptions model_ =
         Model.Register params model ->
             pages.register.subscriptions params model
     
-        Model.Settings params model ->
-            pages.settings.subscriptions params model
-    
         Model.Study params model ->
             pages.study.subscriptions params model
     
@@ -184,7 +170,6 @@ pages :
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
-    , settings : Bundle Gen.Params.Settings.Params Pages.Settings.Model Pages.Settings.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
     , profile__username_ : Bundle Gen.Params.Profile.Username_.Params Pages.Profile.Username_.Model Pages.Profile.Username_.Msg
     }
@@ -195,7 +180,6 @@ pages =
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , register = bundle Pages.Register.page Model.Register Msg.Register
-    , settings = bundle Pages.Settings.page Model.Settings Msg.Settings
     , study = bundle Pages.Study.page Model.Study Msg.Study
     , profile__username_ = bundle Pages.Profile.Username_.page Model.Profile__Username_ Msg.Profile__Username_
     }

@@ -18,7 +18,6 @@ import Pages.Home_
 import Pages.Login
 import Pages.Profile.Username_
 import Pages.Register
-import Pages.Settings
 import Pages.Study
 import Task exposing (Task)
 import Time
@@ -151,29 +150,6 @@ updateFromFrontend sessionId clientId msg model =
                         )
             in
             ( model_, Cmd.batch [ cmd, send_ (PageMsg (Gen.Msg.Register (Pages.Register.GotUser res))) ] )
-
-        UserUpdate_Settings { params } ->
-            let
-                ( model_, res ) =
-                    case model |> getSessionUser sessionId of
-                        Just user ->
-                            let
-                                user_ =
-                                    { user
-                                        | username = params.username
-
-                                        -- , email = params.email
-                                        , password = params.password |> Maybe.withDefault user.password
-                                        , image = params.image
-                                        , bio = Just params.bio
-                                    }
-                            in
-                            ( model |> updateUser user_, Success (Api.User.toUser user_) )
-
-                        Nothing ->
-                            ( model, Failure [ "you do not have permission for this user" ] )
-            in
-            ( model_, send_ (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser res))) )
 
         CreateCard_Cards flashCard userId ->
             let

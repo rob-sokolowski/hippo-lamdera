@@ -1,14 +1,12 @@
 module Pages.Register exposing (Model, Msg(..), page)
 
-import Api.Data exposing (Data)
+import Api.Data exposing (Data(..))
 import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.Styling as Styling
 import Effect exposing (Effect)
 import Element as E exposing (..)
-import Element.Background as Background
 import Element.Border as Border
-import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Gen.Route as Route
@@ -35,9 +33,10 @@ page shared req =
 
 type alias Model =
     { user : Data User
-    , displayName : String
     , email : String
     , password : String
+    , passwordConfirmed : String
+    , formState : FormState
     }
 
 
@@ -54,6 +53,7 @@ init shared =
         ""
         ""
         ""
+        Incomplete
     , Effect.none
     )
 
@@ -69,26 +69,50 @@ type Msg
 
 
 type Field
-    = Username
-    | Email
+    = Email
     | Password
+    | PasswordConfirmation
 
 
 update : Request -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
-    case msg of
-        Updated Username username ->
-            ( { model | displayName = username }
-            , Effect.none
-            )
+    let
+        computeFormState : String -> String -> String -> FormState
+        computeFormState email_ password_ pwdConfirm =
+            if email_ == "" || password_ == "" then
+                Incomplete
 
+            else if password_ /= "" && (password_ /= pwdConfirm) then
+                PasswordMismatch
+
+            else if password_ /= "" && (password_ == pwdConfirm) then
+                Complete
+
+            else
+                Incomplete
+    in
+    case msg of
         Updated Email email ->
-            ( { model | email = email }
+            ( { model
+                | email = email
+                , formState = computeFormState email model.password model.passwordConfirmed
+              }
             , Effect.none
             )
 
         Updated Password password ->
-            ( { model | password = password }
+            ( { model
+                | password = password
+                , formState = computeFormState model.email password model.passwordConfirmed
+              }
+            , Effect.none
+            )
+
+        Updated PasswordConfirmation confirm ->
+            ( { model
+                | passwordConfirmed = confirm
+                , formState = computeFormState model.email model.password confirm
+              }
             , Effect.none
             )
 
@@ -97,25 +121,35 @@ update req msg model =
             , (Effect.fromCmd << sendToBackend) <|
                 UserRegistration_Register
                     { params =
-                        { username = model.displayName
+                        { username = "" -- TODO: I'm isolating this front-end change to avoid backend evergreen stuff, some cleanup required
                         , email = model.email
                         , password = model.password
                         }
                     }
             )
 
-        GotUser user ->
-            case Api.Data.toMaybe user of
-                Just user_ ->
-                    ( { model | user = user }
+        GotUser data ->
+            case data of
+                Success user ->
+                    ( { model | user = data }
                     , Effect.batch
                         [ Effect.fromCmd (Utils.Route.navigate req.key Route.Home_)
-                        , Effect.fromShared (Shared.SignedInUser user_)
+                        , Effect.fromShared (Shared.SignedInUser user)
                         ]
                     )
 
-                Nothing ->
-                    ( { model | user = user }
+                Failure err ->
+                    ( { model | user = data }
+                    , Effect.none
+                    )
+
+                NotAsked ->
+                    ( { model | user = data }
+                    , Effect.none
+                    )
+
+                Loading ->
+                    ( { model | user = data }
                     , Effect.none
                     )
 
@@ -136,23 +170,75 @@ view model =
     }
 
 
+type FormState
+    = Incomplete
+    | PasswordMismatch
+    | Complete
+
+
 elements : Model -> Element Msg
 elements model =
+    let
+        statusText : String
+        statusText =
+            case model.formState of
+                Incomplete ->
+                    "Please enter an email and password"
+
+                PasswordMismatch ->
+                    "Password do not match!"
+
+                Complete ->
+                    " "
+
+        buttonAttrs : List (Attribute Msg)
+        buttonAttrs =
+            let
+                color =
+                    case model.formState of
+                        Complete ->
+                            Styling.black
+
+                        _ ->
+                            Styling.softGrey
+            in
+            [ Border.color color
+            , Font.color color
+            ]
+
+        buttonCmd =
+            case model.formState of
+                Complete ->
+                    Just AttemptedSignUp
+
+                _ ->
+                    Nothing
+
+        responseStatusText : String
+        responseStatusText =
+            case model.user of
+                NotAsked ->
+                    ""
+
+                Loading ->
+                    ""
+
+                Failure err ->
+                    List.foldl (\e a -> e ++ a) "" err
+
+                Success user ->
+                    "You are signed in as " ++ user.email
+    in
     column
         [ width (fill |> maximum 800)
         , height fill
         , centerX
         , padding 5
-        , spacing 5
+        , spacing 7
 
         --, centerY
         ]
-        [ Input.text []
-            { onChange = Updated Username
-            , text = model.displayName
-            , placeholder = Nothing
-            , label = Input.labelLeft [] <| text "Display name:"
-            }
+        [ el [ Font.size 14 ] <| text "No tracking of any kind is implemented, and you will never be emailed by this app."
         , Input.username []
             { onChange = Updated Email
             , text = model.email
@@ -166,14 +252,29 @@ elements model =
             , show = False
             , label = Input.labelLeft [] <| text "Password:"
             }
-        , Input.button
-            [ alignRight
-            , Border.width 1
-            , Border.rounded 3
-            , Border.color Styling.black
-            , padding 4
-            ]
-            { onPress = Just AttemptedSignUp
-            , label = el [ centerX ] <| text "sign up"
+        , Input.currentPassword
+            []
+            { onChange = Updated PasswordConfirmation
+            , text = model.passwordConfirmed
+            , placeholder = Nothing
+            , show = False
+            , label = Input.labelLeft [] <| text "Confirm Password:"
             }
+        , row
+            [ width fill ]
+            [ el [ alignLeft ] <| text statusText
+            , Input.button
+                ([ alignRight
+                 , Border.width 1
+                 , Border.rounded 3
+                 , padding 4
+                 , alignRight
+                 ]
+                    ++ buttonAttrs
+                )
+                { onPress = buttonCmd
+                , label = el [ centerX ] <| text "Sign Up"
+                }
+            ]
+        , el [] <| text responseStatusText
         ]
