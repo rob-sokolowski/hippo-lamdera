@@ -10,7 +10,6 @@ module Shared exposing
 
 import Api.User exposing (User)
 import Bridge exposing (..)
-import Components.Footer
 import Components.Navbar
 import Element as E exposing (..)
 import Element.Background as Background

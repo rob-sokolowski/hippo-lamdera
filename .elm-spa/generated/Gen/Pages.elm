@@ -10,7 +10,6 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Register
 import Gen.Params.Study
-import Gen.Params.Profile.Username_
 import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
@@ -22,7 +21,6 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Register
 import Pages.Study
-import Pages.Profile.Username_
 import Request exposing (Request)
 import Shared
 import Task
@@ -61,9 +59,6 @@ init route =
     
         Route.Study ->
             pages.study.init ()
-    
-        Route.Profile__Username_ params ->
-            pages.profile__username_.init params
 
 
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
@@ -89,9 +84,6 @@ update msg_ model_ =
     
         ( Msg.Study msg, Model.Study params model ) ->
             pages.study.update params msg model
-    
-        ( Msg.Profile__Username_ msg, Model.Profile__Username_ params model ) ->
-            pages.profile__username_.update params msg model
 
         _ ->
             \_ _ _ -> ( model_, Effect.none )
@@ -123,9 +115,6 @@ view model_ =
     
         Model.Study params model ->
             pages.study.view params model
-    
-        Model.Profile__Username_ params model ->
-            pages.profile__username_.view params model
 
 
 subscriptions : Model -> Shared.Model -> Url -> Key -> Sub Msg
@@ -154,9 +143,6 @@ subscriptions model_ =
     
         Model.Study params model ->
             pages.study.subscriptions params model
-    
-        Model.Profile__Username_ params model ->
-            pages.profile__username_.subscriptions params model
 
 
 
@@ -171,7 +157,6 @@ pages :
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
-    , profile__username_ : Bundle Gen.Params.Profile.Username_.Params Pages.Profile.Username_.Model Pages.Profile.Username_.Msg
     }
 pages =
     { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
@@ -181,7 +166,6 @@ pages =
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , register = bundle Pages.Register.page Model.Register Msg.Register
     , study = bundle Pages.Study.page Model.Study Msg.Study
-    , profile__username_ = bundle Pages.Profile.Username_.page Model.Profile__Username_ Msg.Profile__Username_
     }
 
 

@@ -7,7 +7,6 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Register
 import Gen.Params.Study
-import Gen.Params.Profile.Username_
 import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
@@ -15,7 +14,6 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Register
 import Pages.Study
-import Pages.Profile.Username_
 
 
 type Msg
@@ -26,5 +24,4 @@ type Msg
     | NotFound Pages.NotFound.Msg
     | Register Pages.Register.Msg
     | Study Pages.Study.Msg
-    | Profile__Username_ Pages.Profile.Username_.Msg
 
