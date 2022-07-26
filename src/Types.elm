@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Api.Card exposing (CardEnvelope, CardId, FlashCard)
 import Api.User exposing (User, UserFull, UserId)
+import Auth.Common
 import Bridge
 import Browser
 import Browser.Navigation exposing (Key)
@@ -18,6 +19,8 @@ type alias FrontendModel =
     , key : Key
     , shared : Shared.Model
     , page : Pages.Model
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     }
 
 
@@ -39,6 +42,7 @@ type alias BackendModel =
     , cards : Dict CardId CardEnvelope
     , now : Time.Posix
     , nextCardId : Int
+    , pendingAuths : Dict SessionId Auth.Common.PendingAuth
     }
 
 
@@ -47,7 +51,8 @@ type alias ToBackend =
 
 
 type BackendMsg
-    = CheckSession SessionId ClientId
+    = AuthBackendMsg Auth.Common.BackendMsg
+    | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | NoOpBackendMsg
     | Tick Time.Posix
@@ -55,6 +60,7 @@ type BackendMsg
 
 
 type ToFrontend
-    = ActiveSession User
+    = AuthToFrontend Auth.Common.ToFrontend
+    | ActiveSession User
     | PageMsg Pages.Msg
     | NoOpToFrontend

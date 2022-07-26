@@ -4,6 +4,8 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard, PromptFrequency(..), 
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
 import Api.User exposing (Email, User, UserFull, UserId)
+import Auth.Flow
+import AuthImplementation
 import Bridge exposing (ToBackend(..))
 import Debug
 import Dict
@@ -16,7 +18,6 @@ import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
 import Pages.Login
-import Pages.Register
 import Pages.Study
 import Task exposing (Task)
 import Time
@@ -58,6 +59,7 @@ init =
       , cards = Dict.empty
       , now = Time.millisToPosix 0 -- Setting this to 0 here is a bit of a hack, but the server's init basically never runs after launch, so this'll do
       , nextCardId = 1000 -- setting to a high number incase I've deleted some. A one-time evergreen related thing
+      , pendingAuths = Dict.empty
       }
     , Cmd.none
     )
@@ -66,9 +68,12 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
+        AuthBackendMsg authMsg ->
+            Auth.Flow.backendUpdate (AuthImplementation.backendConfig model) authMsg
+
         CheckSession sid cid ->
             model
-                |> getSessionUser sid
+                |> AuthImplementation.getSessionUser sid
                 |> Maybe.map (\user -> ( model, sendToFrontend cid (ActiveSession (Api.User.toUser user)) ))
                 |> Maybe.withDefault ( model, Cmd.none )
 
@@ -97,49 +102,11 @@ updateFromFrontend sessionId clientId msg model =
             sendToFrontend clientId v
     in
     case msg of
+        AuthToBackend authToBackend ->
+            Auth.Flow.updateFromFrontend (AuthImplementation.backendConfig model) clientId sessionId authToBackend model
+
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
-
-        UserAuthentication_Login { params } ->
-            let
-                ( response, cmd ) =
-                    model.users
-                        |> Dict.find (\k u -> u.email == params.email)
-                        |> Maybe.map
-                            (\( k, u ) ->
-                                if u.password == params.password then
-                                    ( Success (Api.User.toUser u), renewSession u.id sessionId clientId )
-
-                                else
-                                    ( Failure [ "email or password is invalid" ], Cmd.none )
-                            )
-                        |> Maybe.withDefault ( Failure [ "email or password is invalid" ], Cmd.none )
-            in
-            ( model, Cmd.batch [ send_ (PageMsg (Gen.Msg.Login (Pages.Login.GotUser response))), cmd ] )
-
-        UserRegistration_Register { params } ->
-            let
-                ( model_, cmd, res ) =
-                    if model.users |> Dict.any (\k u -> u.email == params.email) then
-                        ( model, Cmd.none, Failure [ "email address already taken" ] )
-
-                    else
-                        let
-                            user_ =
-                                { id = Dict.size model.users
-                                , email = params.email
-                                , username = params.username
-                                , bio = Nothing
-                                , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
-                                , password = params.password
-                                }
-                        in
-                        ( { model | users = model.users |> Dict.insert user_.id user_ }
-                        , renewSession user_.id sessionId clientId
-                        , Success (Api.User.toUser user_)
-                        )
-            in
-            ( model_, Cmd.batch [ cmd, send_ (PageMsg (Gen.Msg.Register (Pages.Register.GotUser res))) ] )
 
         CreateCard_Cards flashCard userId ->
             let
@@ -260,13 +227,6 @@ updateFromFrontend sessionId clientId msg model =
             ( model
             , send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
             )
-
-
-getSessionUser : SessionId -> Model -> Maybe UserFull
-getSessionUser sid model =
-    model.sessions
-        |> Dict.get sid
-        |> Maybe.andThen (\session -> model.users |> Dict.get session.userId)
 
 
 renewSession email sid cid =

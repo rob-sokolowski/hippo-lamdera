@@ -2,6 +2,8 @@ module Pages.Login exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data(..))
 import Api.User exposing (User)
+import Auth.Common exposing (Flow(..))
+import Auth.Flow
 import Bridge exposing (..)
 import Components.Styling as Styling
 import Effect exposing (Effect)
@@ -15,6 +17,7 @@ import Gen.Route as Route
 import Page
 import Request exposing (Request)
 import Shared
+import Url exposing (Url)
 import Utils.Route
 import View exposing (View)
 
@@ -22,7 +25,7 @@ import View exposing (View)
 page : Shared.Model -> Request -> Page.With Model Msg
 page shared req =
     Page.advanced
-        { init = init shared
+        { init = init shared req
         , update = update req
         , subscriptions = subscriptions
         , view = view
@@ -34,24 +37,24 @@ page shared req =
 
 
 type alias Model =
-    { user : Data User
-    , email : String
+    { email : String
     , password : String
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     }
 
 
-init : Shared.Model -> ( Model, Effect Msg )
-init shared =
-    ( Model
-        (case shared.user of
-            Just user ->
-                Api.Data.Success user
-
-            Nothing ->
-                Api.Data.NotAsked
-        )
-        ""
-        ""
+init : Shared.Model -> Request -> ( Model, Effect Msg )
+init shared req =
+    let
+        url =
+            req.url
+    in
+    ( { email = ""
+      , password = ""
+      , authFlow = Auth.Common.Idle
+      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+      }
     , Effect.none
     )
 
@@ -61,8 +64,7 @@ init shared =
 
 
 type Msg
-    = Updated Field String
-    | AttemptedSignIn
+    = GoogleOAuthSignInRequested
     | GotUser (Data User)
 
 
@@ -74,31 +76,17 @@ type Field
 update : Request -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
-        Updated Email email ->
-            ( { model | email = email }
-            , Effect.none
-            )
-
-        Updated Password password ->
-            ( { model | password = password }
-            , Effect.none
-            )
-
-        AttemptedSignIn ->
-            ( model
-            , (Effect.fromCmd << sendToBackend) <|
-                UserAuthentication_Login
-                    { params =
-                        { email = model.email
-                        , password = model.password
-                        }
-                    }
-            )
+        GoogleOAuthSignInRequested ->
+            -- NB: 'OAuthGoogle' is a special value that will be parsed by the elm-spa route /login/:provider/callback
+            Auth.Flow.signInRequested "OAuthGoogle" model Nothing
+                |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
 
         GotUser data ->
             case data of
                 Success user ->
-                    ( { model | user = data }
+                    -- TODO: Should this belong in the model?
+                    --( { model | user = data }
+                    ( model
                     , Effect.batch
                         [ Effect.fromCmd (Utils.Route.navigate req.key Route.Home_)
                         , Effect.fromShared (Shared.SignedInUser user)
@@ -106,17 +94,20 @@ update req msg model =
                     )
 
                 Failure err ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
                 NotAsked ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
                 Loading ->
-                    ( { model | user = data }
+                    ( model
+                      --( { model | user = data }
                     , Effect.none
                     )
 
@@ -140,53 +131,55 @@ view model =
 elements : Model -> Element Msg
 elements model =
     let
-        statusMessage : String
-        statusMessage =
-            case model.user of
-                NotAsked ->
-                    ""
+        statusString : String
+        statusString =
+            case model.authFlow of
+                Idle ->
+                    " "
 
-                Loading ->
-                    ""
+                Requested methodId ->
+                    "You will be redirected shortly to " ++ methodId ++ ".."
 
-                Failure err ->
-                    List.foldl (\e a -> e ++ a) "" err
+                Pending ->
+                    " "
 
-                Success user ->
-                    "You are signed in as " ++ user.email
+                Authorized authCode str ->
+                    " "
+
+                Authenticated token ->
+                    " "
+
+                Done userInfo ->
+                    " "
+
+                Errored err ->
+                    " "
     in
-    column
-        [ width (fill |> maximum 800)
-        , height fill
-        , centerX
-        , Border.color Styling.black
-        , spacing 10
-
-        --, centerY
+    el
+        [ height fill
+        , width fill
+        , Background.color Styling.softGrey
         ]
-        [ text "Enter your email and password to log in."
-        , Input.username []
-            { onChange = Updated Email
-            , text = model.email
-            , placeholder = Nothing
-            , label = Input.labelLeft [] <| text "Email:"
-            }
-        , Input.currentPassword []
-            { onChange = Updated Password
-            , text = model.password
-            , placeholder = Nothing
-            , show = False
-            , label = Input.labelLeft [] <| text "Password:"
-            }
-        , Input.button
-            [ alignRight
-            , Border.width 1
-            , Border.rounded 3
-            , Border.color Styling.black
-            , padding 4
+    <|
+        column
+            [ width (fill |> maximum 600)
+            , height (fill |> maximum 500)
+            , centerX
+            , centerY
+            , Background.color Styling.white
+            , spacing 10
+            , Border.rounded 5
             ]
-            { onPress = Just AttemptedSignIn
-            , label = el [ centerX ] <| text "Sign In"
-            }
-        , text statusMessage
-        ]
+            [ Input.button
+                [ Border.width 1
+                , Border.rounded 3
+                , Border.color Styling.black
+                , padding 4
+                , centerY
+                , centerX
+                ]
+                { onPress = Just GoogleOAuthSignInRequested
+                , label = el [ centerX ] <| text "Sign in with Google"
+                }
+            , el [ centerX, centerY ] <| E.text statusString
+            ]

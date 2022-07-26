@@ -1,5 +1,6 @@
 module Evergreen.V19.Bridge exposing (..)
 
+import Auth.Common
 import Evergreen.V19.Api.Card
 import Evergreen.V19.Api.User
 

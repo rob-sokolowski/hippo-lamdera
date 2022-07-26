@@ -30,10 +30,6 @@ view options =
                         { url = Route.toHref Route.Login
                         , label = text "Sign in"
                         }
-                    , link [ Font.color Styling.blue ]
-                        { url = Route.toHref Route.Register
-                        , label = text "Sign up"
-                        }
                     ]
 
                 Just user ->
