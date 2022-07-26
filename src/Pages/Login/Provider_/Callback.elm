@@ -50,9 +50,9 @@ init req =
         url =
             req.url
 
-        onFrontendCallbackInit model_ methodId origin navigationKey toBackendFn =
-            Debug.todo "onFrontendCallbackInit"
-
+        -- TODO: This is a todo from Mario's code
+        --onFrontendCallbackInit model_ methodId origin navigationKey toBackendFn =
+        --    Debug.todo "onFrontendCallbackInit"
         ( authM, authCmd ) =
             Auth.Flow.init model
                 req.params.provider
