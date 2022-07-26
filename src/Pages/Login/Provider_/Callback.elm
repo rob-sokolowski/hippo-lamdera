@@ -128,7 +128,7 @@ elements _ =
         ]
     <|
         E.row [ E.centerX, E.centerY ]
-            [ E.el [ Font.size 30 ] <| E.text "Verifying auth..."
+            [ E.el [ Font.size 24 ] <| E.text "Verifying auth..."
             , E.html circleHtml
             ]
 
