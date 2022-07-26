@@ -2,7 +2,7 @@ module Pages.Login exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data(..))
 import Api.User exposing (User)
-import Auth.Common
+import Auth.Common exposing (Flow(..))
 import Auth.Flow
 import Bridge exposing (..)
 import Components.Styling as Styling
@@ -64,9 +64,7 @@ init shared req =
 
 
 type Msg
-    = Updated Field String
-    | AttemptedSignIn
-    | GoogleOAuthSignInRequested
+    = GoogleOAuthSignInRequested
     | GotUser (Data User)
 
 
@@ -82,28 +80,6 @@ update req msg model =
             -- NB: 'OAuthGoogle' is a special value that will be parsed by the elm-spa route /login/:provider/callback
             Auth.Flow.signInRequested "OAuthGoogle" model Nothing
                 |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
-
-        Updated Email email ->
-            ( { model | email = email }
-            , Effect.none
-            )
-
-        Updated Password password ->
-            ( { model | password = password }
-            , Effect.none
-            )
-
-        AttemptedSignIn ->
-            ( model
-            , Effect.none
-              --(Effect.fromCmd << sendToBackend) <|
-              --    UserAuthentication_Login
-              --        { params =
-              --            { email = model.email
-              --            , password = model.password
-              --            }
-              --        }
-            )
 
         GotUser data ->
             case data of
@@ -155,65 +131,55 @@ view model =
 elements : Model -> Element Msg
 elements model =
     let
-        statusMessage : String
-        statusMessage =
-            "foo baby!"
+        statusString : String
+        statusString =
+            case model.authFlow of
+                Idle ->
+                    " "
 
-        --case model.user of
-        --    NotAsked ->
-        --        ""
-        --
-        --    Loading ->
-        --        ""
-        --
-        --    Failure err ->
-        --        List.foldl (\e a -> e ++ a) "" err
-        --
-        --    Success user ->
-        --        "You are signed in as " ++ user.email
+                Requested methodId ->
+                    "You will be redirected shortly to " ++ methodId ++ ".."
+
+                Pending ->
+                    " "
+
+                Authorized authCode str ->
+                    " "
+
+                Authenticated token ->
+                    " "
+
+                Done userInfo ->
+                    " "
+
+                Errored err ->
+                    " "
     in
-    column
-        [ width (fill |> maximum 800)
-        , height fill
-        , centerX
-        , Border.color Styling.black
-        , spacing 10
-
-        --, centerY
+    el
+        [ height fill
+        , width fill
+        , Background.color Styling.softGrey
         ]
-        [ text "Enter your email and password to log in."
-        , Input.button
-            [ alignRight
-            , Border.width 1
-            , Border.rounded 3
-            , Border.color Styling.black
-            , padding 4
+    <|
+        column
+            [ width (fill |> maximum 600)
+            , height (fill |> maximum 500)
+            , centerX
+            , centerY
+            , Background.color Styling.white
+            , spacing 10
+            , Border.rounded 5
             ]
-            { onPress = Just GoogleOAuthSignInRequested
-            , label = el [ centerX ] <| text "Sign in with Google"
-            }
-        , Input.username []
-            { onChange = Updated Email
-            , text = model.email
-            , placeholder = Nothing
-            , label = Input.labelLeft [] <| text "Email:"
-            }
-        , Input.currentPassword []
-            { onChange = Updated Password
-            , text = model.password
-            , placeholder = Nothing
-            , show = False
-            , label = Input.labelLeft [] <| text "Password:"
-            }
-        , Input.button
-            [ alignRight
-            , Border.width 1
-            , Border.rounded 3
-            , Border.color Styling.black
-            , padding 4
+            [ Input.button
+                [ Border.width 1
+                , Border.rounded 3
+                , Border.color Styling.black
+                , padding 4
+                , centerY
+                , centerX
+                ]
+                { onPress = Just GoogleOAuthSignInRequested
+                , label = el [ centerX ] <| text "Sign in with Google"
+                }
+            , el [ centerX, centerY ] <| E.text statusString
             ]
-            { onPress = Just AttemptedSignIn
-            , label = el [ centerX ] <| text "Sign In"
-            }
-        , text statusMessage
-        ]
