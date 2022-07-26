@@ -65,6 +65,7 @@ init shared req =
 
 type Msg
     = GoogleOAuthSignInRequested
+    | GitHubOAuthSignInRequested
     | GotUser (Data User)
 
 
@@ -77,8 +78,13 @@ update : Request -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
         GoogleOAuthSignInRequested ->
-            -- NB: 'OAuthGoogle' is a special value that will be parsed by the elm-spa route /login/:provider/callback
+            -- NB: 'OAuthGoogle' is a special String value that will be parsed by the elm-spa route /login/:provider/callback
             Auth.Flow.signInRequested "OAuthGoogle" model Nothing
+                |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
+
+        GitHubOAuthSignInRequested ->
+            -- NB: 'OAuthGithub' is a special String value that will be parsed by the elm-spa route /login/:provider/callback
+            Auth.Flow.signInRequested "OAuthGithub" model Nothing
                 |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
 
         GotUser data ->
@@ -133,6 +139,7 @@ elements model =
     let
         statusString : String
         statusString =
+            -- NB: The empty string with whitespace preserves centerY consistency over ""
             case model.authFlow of
                 Idle ->
                     " "
@@ -163,14 +170,16 @@ elements model =
     <|
         column
             [ width (fill |> maximum 600)
-            , height (fill |> maximum 500)
+            , height (fill |> maximum 400)
             , centerX
             , centerY
             , Background.color Styling.white
             , spacing 10
             , Border.rounded 5
             ]
-            [ Input.button
+            [ paragraph [ padding 5 ] [ text "Please select an auth provider below" ]
+            , paragraph [ padding 5, Font.size 12 ] [ text "No tracking of any kind is implemented, and you will never be emailed by this app." ]
+            , Input.button
                 [ Border.width 1
                 , Border.rounded 3
                 , Border.color Styling.black
@@ -180,6 +189,17 @@ elements model =
                 ]
                 { onPress = Just GoogleOAuthSignInRequested
                 , label = el [ centerX ] <| text "Sign in with Google"
+                }
+            , Input.button
+                [ Border.width 1
+                , Border.rounded 3
+                , Border.color Styling.black
+                , padding 4
+                , centerY
+                , centerX
+                ]
+                { onPress = Just GitHubOAuthSignInRequested
+                , label = el [ centerX ] <| text "Sign in with GitHub"
                 }
             , el [ centerX, centerY ] <| E.text statusString
             ]

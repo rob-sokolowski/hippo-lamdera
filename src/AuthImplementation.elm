@@ -4,6 +4,7 @@ import Api.Data exposing (..)
 import Api.User exposing (UserFull)
 import Auth.Common
 import Auth.Flow
+import Auth.Method.OAuthGithub
 import Auth.Method.OAuthGoogle
 import Bridge exposing (..)
 import Config
@@ -28,6 +29,7 @@ config =
     , sendToBackend = Lamdera.sendToBackend
     , methods =
         [ Auth.Method.OAuthGoogle.configuration Config.googleOAuthClientId Config.googleOAuthClientSecret
+        , Auth.Method.OAuthGithub.configuration Config.githubOAuthClientId Config.githubOAuthClientSecret
         ]
     , renewSession = renewSession
     , logout = logout

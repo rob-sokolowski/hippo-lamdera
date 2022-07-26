@@ -14,6 +14,16 @@ googleOAuthClientSecret =
     ""
 
 
+githubOAuthClientId =
+    -- true value saved in Lamdera admin panel
+    ""
+
+
+githubOAuthClientSecret =
+    -- true value saved in Lamdera admin panel
+    ""
+
+
 
 --isDev : Bool
 --isDev =
