@@ -4,7 +4,7 @@ import Api.Data exposing (..)
 import Api.User exposing (UserFull)
 import Auth.Common
 import Auth.Flow
-import Auth.Method.OAuthGithub
+import Auth.Method.OAuthGoogle
 import Bridge exposing (..)
 import Config
 import Dict
@@ -13,7 +13,7 @@ import Env
 import Gen.Msg
 import Lamdera
 import Pages.Login
-import Pages.Login.GoogleOauth.Callback
+import Pages.Login.Provider_.Callback
 import Task
 import Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
@@ -27,7 +27,7 @@ config =
     , sendToFrontend = Lamdera.sendToFrontend
     , sendToBackend = Lamdera.sendToBackend
     , methods =
-        [ Auth.Method.OAuthGithub.configuration Config.googleOAuthClientId Config.googleOAuthClientSecret
+        [ Auth.Method.OAuthGoogle.configuration Config.googleOAuthClientId Config.googleOAuthClientSecret
         ]
     , renewSession = renewSession
     , logout = logout
@@ -85,21 +85,20 @@ handleAuthSuccess backendModel sessionId clientId userInfo authToken now =
         in
         ( backendModel
         , Cmd.batch
-            [ Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__GoogleOauth__Callback (Pages.Login.GoogleOauth.Callback.GotUser response)))
+            [ Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__Provider___Callback (Pages.Login.Provider_.Callback.GotUser response)))
             , cmd
             ]
         )
 
     else
         let
+            user_ : UserFull
             user_ =
                 { id = Dict.size backendModel.users
                 , email = userInfo.email
                 , username = userInfo.username |> Maybe.withDefault "anonymous"
                 , bio = Nothing
                 , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
-                , favorites = []
-                , following = []
                 }
 
             response =
@@ -108,7 +107,7 @@ handleAuthSuccess backendModel sessionId clientId userInfo authToken now =
         ( { backendModel | users = backendModel.users |> Dict.insert user_.id user_ }
         , Cmd.batch
             [ renewSession_ user_.id sessionId clientId
-            , Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__GoogleOauth__Callback (Pages.Login.GoogleOauth.Callback.GotUser response)))
+            , Lamdera.sendToFrontend clientId (PageMsg (Gen.Msg.Login__Provider___Callback (Pages.Login.Provider_.Callback.GotUser response)))
             ]
         )
 

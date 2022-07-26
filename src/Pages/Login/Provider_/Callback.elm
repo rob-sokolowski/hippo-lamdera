@@ -1,4 +1,4 @@
-module Pages.Login.GoogleOauth.Callback exposing (Model, Msg(..), page)
+module Pages.Login.Provider_.Callback exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data)
 import Api.User exposing (User)
@@ -7,11 +7,9 @@ import Auth.Flow
 import Bridge exposing (..)
 import Browser.Navigation as Nav exposing (Key)
 import Effect exposing (Effect)
-import Element as E exposing (Element)
-import Gen.Params.Login.GoogleOauth.Callback exposing (Params)
+import Element as E exposing (..)
+import Gen.Params.Login.Provider_.Callback exposing (Params)
 import Gen.Route as Route
-import Html exposing (..)
-import Html.Attributes exposing (class)
 import Lamdera
 import Page
 import Request
@@ -57,7 +55,7 @@ init req =
 
         ( authM, authCmd ) =
             Auth.Flow.init model
-                "googleOauth"
+                req.params.provider
                 url
                 req.key
                 (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
@@ -109,11 +107,18 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Google OAuth Callback"
-    , body = [ elements model ]
+    { title = "Callback"
+    , body =
+        [ elements model ]
     }
 
 
 elements : Model -> Element Msg
-elements model =
-    E.text "Callback route"
+elements _ =
+    el
+        [ height fill
+        , width fill
+        , centerX
+        , centerY
+        ]
+        (E.text "Callback")

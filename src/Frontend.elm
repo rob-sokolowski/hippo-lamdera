@@ -54,6 +54,8 @@ init url key =
       , key = key
       , shared = shared
       , page = page
+      , authFlow = Auth.Common.Idle
+      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
       }
     , Cmd.batch
         [ Cmd.map Shared sharedCmd
@@ -137,6 +139,9 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
+        AuthToFrontend authToFrontendMsg ->
+            AuthImplementation.updateFromBackend authToFrontendMsg model
+
         ActiveSession user ->
             update (Shared <| Shared.SignedInUser user) model
 

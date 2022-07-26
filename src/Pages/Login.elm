@@ -79,7 +79,8 @@ update : Request -> Msg -> Model -> ( Model, Effect Msg )
 update req msg model =
     case msg of
         GoogleOAuthSignInRequested ->
-            Auth.Flow.signInRequested "OAuthGithub" model Nothing
+            -- NB: 'OAuthGoogle' is a special value that will be parsed by the elm-spa route /login/:provider/callback
+            Auth.Flow.signInRequested "OAuthGoogle" model Nothing
                 |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
 
         Updated Email email ->
@@ -94,13 +95,14 @@ update req msg model =
 
         AttemptedSignIn ->
             ( model
-            , (Effect.fromCmd << sendToBackend) <|
-                UserAuthentication_Login
-                    { params =
-                        { email = model.email
-                        , password = model.password
-                        }
-                    }
+            , Effect.none
+              --(Effect.fromCmd << sendToBackend) <|
+              --    UserAuthentication_Login
+              --        { params =
+              --            { email = model.email
+              --            , password = model.password
+              --            }
+              --        }
             )
 
         GotUser data ->
@@ -180,6 +182,16 @@ elements model =
         --, centerY
         ]
         [ text "Enter your email and password to log in."
+        , Input.button
+            [ alignRight
+            , Border.width 1
+            , Border.rounded 3
+            , Border.color Styling.black
+            , padding 4
+            ]
+            { onPress = Just GoogleOAuthSignInRequested
+            , label = el [ centerX ] <| text "Sign in with Google"
+            }
         , Input.username []
             { onChange = Updated Email
             , text = model.email

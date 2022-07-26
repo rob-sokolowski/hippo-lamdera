@@ -24,7 +24,6 @@ type alias UserFull =
     , username : String
     , bio : Maybe String
     , image : String
-    , password : String
     }
 
 

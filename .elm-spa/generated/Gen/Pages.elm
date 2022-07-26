@@ -8,9 +8,8 @@ import Gen.Params.Catalog
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
-import Gen.Params.Register
 import Gen.Params.Study
-import Gen.Params.Login.GoogleOauth.Callback
+import Gen.Params.Login.Provider_.Callback
 import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
@@ -20,9 +19,8 @@ import Pages.Catalog
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
-import Pages.Register
 import Pages.Study
-import Pages.Login.GoogleOauth.Callback
+import Pages.Login.Provider_.Callback
 import Request exposing (Request)
 import Shared
 import Task
@@ -56,14 +54,11 @@ init route =
         Route.NotFound ->
             pages.notFound.init ()
     
-        Route.Register ->
-            pages.register.init ()
-    
         Route.Study ->
             pages.study.init ()
     
-        Route.Login__GoogleOauth__Callback ->
-            pages.login__googleOauth__callback.init ()
+        Route.Login__Provider___Callback params ->
+            pages.login__provider___callback.init params
 
 
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
@@ -84,14 +79,11 @@ update msg_ model_ =
         ( Msg.NotFound msg, Model.NotFound params model ) ->
             pages.notFound.update params msg model
     
-        ( Msg.Register msg, Model.Register params model ) ->
-            pages.register.update params msg model
-    
         ( Msg.Study msg, Model.Study params model ) ->
             pages.study.update params msg model
     
-        ( Msg.Login__GoogleOauth__Callback msg, Model.Login__GoogleOauth__Callback params model ) ->
-            pages.login__googleOauth__callback.update params msg model
+        ( Msg.Login__Provider___Callback msg, Model.Login__Provider___Callback params model ) ->
+            pages.login__provider___callback.update params msg model
 
         _ ->
             \_ _ _ -> ( model_, Effect.none )
@@ -118,14 +110,11 @@ view model_ =
         Model.NotFound params model ->
             pages.notFound.view params model
     
-        Model.Register params model ->
-            pages.register.view params model
-    
         Model.Study params model ->
             pages.study.view params model
     
-        Model.Login__GoogleOauth__Callback params model ->
-            pages.login__googleOauth__callback.view params model
+        Model.Login__Provider___Callback params model ->
+            pages.login__provider___callback.view params model
 
 
 subscriptions : Model -> Shared.Model -> Url -> Key -> Sub Msg
@@ -149,14 +138,11 @@ subscriptions model_ =
         Model.NotFound params model ->
             pages.notFound.subscriptions params model
     
-        Model.Register params model ->
-            pages.register.subscriptions params model
-    
         Model.Study params model ->
             pages.study.subscriptions params model
     
-        Model.Login__GoogleOauth__Callback params model ->
-            pages.login__googleOauth__callback.subscriptions params model
+        Model.Login__Provider___Callback params model ->
+            pages.login__provider___callback.subscriptions params model
 
 
 
@@ -169,9 +155,8 @@ pages :
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
-    , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
-    , login__googleOauth__callback : Bundle Gen.Params.Login.GoogleOauth.Callback.Params Pages.Login.GoogleOauth.Callback.Model Pages.Login.GoogleOauth.Callback.Msg
+    , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
     }
 pages =
     { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
@@ -179,9 +164,8 @@ pages =
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
-    , register = bundle Pages.Register.page Model.Register Msg.Register
     , study = bundle Pages.Study.page Model.Study Msg.Study
-    , login__googleOauth__callback = bundle Pages.Login.GoogleOauth.Callback.page Model.Login__GoogleOauth__Callback Msg.Login__GoogleOauth__Callback
+    , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
     }
 
 

@@ -12,3 +12,9 @@ googleOAuthClientId =
 googleOAuthClientSecret =
     -- true value saved in Lamdera admin panel
     ""
+
+
+
+--isDev : Bool
+--isDev =
+--    Env.mode == Env.Development

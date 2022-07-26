@@ -5,17 +5,15 @@ import Gen.Params.Catalog
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
-import Gen.Params.Register
 import Gen.Params.Study
-import Gen.Params.Login.GoogleOauth.Callback
+import Gen.Params.Login.Provider_.Callback
 import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
-import Pages.Register
 import Pages.Study
-import Pages.Login.GoogleOauth.Callback
+import Pages.Login.Provider_.Callback
 
 
 type Model
@@ -25,7 +23,6 @@ type Model
     | Home_ Gen.Params.Home_.Params Pages.Home_.Model
     | Login Gen.Params.Login.Params Pages.Login.Model
     | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
-    | Register Gen.Params.Register.Params Pages.Register.Model
     | Study Gen.Params.Study.Params Pages.Study.Model
-    | Login__GoogleOauth__Callback Gen.Params.Login.GoogleOauth.Callback.Params Pages.Login.GoogleOauth.Callback.Model
+    | Login__Provider___Callback Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model
 

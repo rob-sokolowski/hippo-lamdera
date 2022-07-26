@@ -9,9 +9,8 @@ import Gen.Params.Catalog
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
-import Gen.Params.Register
 import Gen.Params.Study
-import Gen.Params.Login.GoogleOauth.Callback
+import Gen.Params.Login.Provider_.Callback
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -22,9 +21,8 @@ type Route
     | Home_
     | Login
     | NotFound
-    | Register
     | Study
-    | Login__GoogleOauth__Callback
+    | Login__Provider___Callback { provider : String }
 
 
 fromUrl : Url -> Route
@@ -39,9 +37,8 @@ routes =
     , Parser.map Catalog Gen.Params.Catalog.parser
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
-    , Parser.map Register Gen.Params.Register.parser
     , Parser.map Study Gen.Params.Study.parser
-    , Parser.map Login__GoogleOauth__Callback Gen.Params.Login.GoogleOauth.Callback.parser
+    , Parser.map Login__Provider___Callback Gen.Params.Login.Provider_.Callback.parser
     ]
 
 
@@ -68,12 +65,9 @@ toHref route =
         NotFound ->
             joinAsHref [ "not-found" ]
     
-        Register ->
-            joinAsHref [ "register" ]
-    
         Study ->
             joinAsHref [ "study" ]
     
-        Login__GoogleOauth__Callback ->
-            joinAsHref [ "login", "google-oauth", "callback" ]
+        Login__Provider___Callback params ->
+            joinAsHref [ "login", params.provider, "callback" ]
 
