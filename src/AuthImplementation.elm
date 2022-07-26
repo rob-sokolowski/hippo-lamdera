@@ -56,7 +56,9 @@ updateFromBackend authToFrontendMsg model =
             Auth.Flow.setError model err
 
         Auth.Common.AuthSessionChallenge reason ->
-            Debug.todo "Auth.Common.AuthSessionChallenge"
+            -- TODO: I don't know what this is, but Mario's code had this todo statement, I'm putting a noop here in the meantime
+            --Debug.todo "Auth.Common.AuthSessionChallenge"
+            ( model, Cmd.none )
 
 
 handleAuthSuccess :
