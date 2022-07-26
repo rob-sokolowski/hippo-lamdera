@@ -26,7 +26,7 @@ view options =
                         { url = Route.toHref Route.Home_
                         , label = text "Home"
                         }
-                    , link [ Font.color Styling.blue ]
+                    , link [ alignRight, Font.color Styling.blue ]
                         { url = Route.toHref Route.Login
                         , label = text "Sign in"
                         }
@@ -50,7 +50,7 @@ view options =
                         , label = text "Study"
                         }
                     , Input.button
-                        [ alignRight ]
+                        [ alignRight, Font.color Styling.blue ]
                         { onPress = Just options.onSignOut
                         , label = text "Sign Out"
                         }
@@ -61,5 +61,7 @@ view options =
         , height (px 50)
         , alignRight
         , spacing 20
+        , paddingEach { right = 10, left = 10, top = 0, bottom = 5 }
+        , Font.size 26
         ]
         links

@@ -6,14 +6,21 @@ import Auth.Common
 import Auth.Flow
 import Bridge exposing (..)
 import Browser.Navigation as Nav exposing (Key)
+import Color
 import Effect exposing (Effect)
-import Element as E exposing (..)
+import Element as E exposing (Element)
+import Element.Font as Font
 import Gen.Params.Login.Provider_.Callback exposing (Params)
 import Gen.Route as Route
+import Html exposing (Html)
 import Lamdera
 import Page
 import Request
 import Shared
+import TypedSvg exposing (circle, svg)
+import TypedSvg.Attributes exposing (cx, cy, fill, r, stroke, strokeWidth, viewBox)
+import TypedSvg.Core exposing (Svg)
+import TypedSvg.Types exposing (Paint(..), px)
 import Url exposing (Url)
 import Utils.Route
 import View exposing (View)
@@ -115,10 +122,30 @@ view model =
 
 elements : Model -> Element Msg
 elements _ =
-    el
-        [ height fill
-        , width fill
-        , centerX
-        , centerY
+    E.el
+        [ E.height E.fill
+        , E.width E.fill
         ]
-        (E.text "Callback")
+    <|
+        E.row [ E.centerX, E.centerY ]
+            [ E.el [ Font.size 30 ] <| E.text "Verifying auth..."
+            , E.html circleHtml
+            ]
+
+
+circleHtml : Html msg
+circleHtml =
+    let
+        circle_ : Svg msg
+        circle_ =
+            circle
+                [ cx (px 100)
+                , cy (px 100)
+                , r (px 30)
+                , fill <| Paint Color.blue
+                , strokeWidth (px 2)
+                , stroke <| Paint <| Color.rgba 0.8 0 0 0.5
+                ]
+                []
+    in
+    svg [ viewBox 0 0 100 100 ] [ circle_ ]
