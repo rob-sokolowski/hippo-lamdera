@@ -11,6 +11,7 @@
         "direct": {
             "NoRedInk/elm-json-decode-pipeline": "1.0.1",
             "TSFoster/elm-sha1": "2.1.1",
+            "andrewMacmurray/elm-simple-animation": "2.3.0",
             "avh4/elm-color": "1.0.0",
             "chelovek0v/bbase64": "1.0.1",
             "elm/browser": "1.0.2",
@@ -24,6 +25,7 @@
             "elm/url": "1.0.0",
             "elm-community/dict-extra": "2.4.0",
             "elm-community/list-extra": "8.3.0",
+            "elm-community/typed-svg": "7.0.0",
             "elm-explorations/markdown": "1.0.0",
             "ianmackenzie/elm-units": "2.9.0",
             "justinmimbs/time-extra": "1.1.0",
