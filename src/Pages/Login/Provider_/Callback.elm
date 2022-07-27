@@ -9,7 +9,7 @@ import Browser.Navigation as Nav exposing (Key)
 import Color
 import Components.Styling as Styling
 import Effect exposing (Effect)
-import Element as E exposing (Element)
+import Element as E exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -20,11 +20,11 @@ import Lamdera
 import Page
 import Request
 import Shared
-import TypedSvg as S exposing (circle, svg)
-import TypedSvg.Attributes as SA exposing (cx, cy, fill, height, r, rx, ry, stroke, strokeWidth, viewBox, width, x, y)
-import TypedSvg.Core as SC exposing (Svg)
-import TypedSvg.Types as ST exposing (Paint(..), px)
+import Simple.Animation as Animation exposing (Animation)
+import Simple.Animation.Animated as Animated
+import Simple.Animation.Property as P
 import Url exposing (Url)
+import Utils exposing (animatedEl)
 import Utils.Route
 import View exposing (View)
 
@@ -132,57 +132,38 @@ elements _ =
         , E.width (E.maximum 400 E.fill)
         ]
         [ E.el [ Font.size 24, E.centerY ] <| E.text "Verifying auth..."
-        , svgElement { minX = 0, minY = 0, height = 50, width = 50 } spinner
+        , animatedEl rotationLoop [] spinner
         ]
 
 
-svgElement : SvgViewBox -> List (Svg Msg) -> Element Msg
-svgElement viewBox_ svgs =
-    E.el
-        [ E.width <| E.px (round viewBox_.width)
-        , E.height <| E.px (round viewBox_.height)
-
-        --, centerX
+rotationLoop : Animation
+rotationLoop =
+    Animation.steps
+        { startAt = [ P.rotate 0 ]
+        , options = [ Animation.loop ]
+        }
+        [ Animation.step 1000 [ P.rotate 360 ]
         ]
-    <|
-        E.html (svg [ SA.viewBox viewBox_.minX viewBox_.minY viewBox_.width viewBox_.height ] svgs)
 
 
-type alias SvgViewBox =
-    { minX : Float
-    , minY : Float
-    , width : Float
-    , height : Float
-    }
-
-
-spinner : List (Svg Msg)
+spinner : Element msg
 spinner =
-    [ circle
-        [ cx (px 20)
-        , cy (px 20)
-        , r (px 15)
-        , fill <| Paint <| Color.rgb255 0x1F 0xA3 0xE0
-        , strokeWidth (px 0)
-        , stroke <| Paint <| Color.rgb255 0x18 0x7F 0xAF
+    E.el
+        [ E.width (E.px 30)
+        , E.height (E.px 30)
+        , Background.color Styling.white
+        , Border.rounded 25
+        , Border.color Styling.blue
+        , Border.width 3
         ]
-        []
-    , circle
-        [ cx (px 20)
-        , cy (px 20)
-        , r (px (15 * 0.75))
-        , fill <| Paint <| Color.rgba 1.0 1.0 1.0 1.0
-        , strokeWidth (px 0)
-        , stroke <| Paint <| Color.rgb255 0x18 0x7F 0xAF
-        ]
-        []
-    , circle
-        [ cx (px 10)
-        , cy (px 10)
-        , r (px 7)
-        , fill <| Paint <| Color.rgb255 0x18 0x7F 0xAF
-        , strokeWidth (px 1)
-        , stroke <| Paint <| Color.rgb255 0x18 0x7F 0xAF
-        ]
-        []
-    ]
+        (E.el
+            [ E.width (E.px 10)
+            , E.height (E.px 10)
+            , Background.color Styling.blue
+            , Border.rounded 10
+            , Border.color Styling.blue
+            , Border.width 3
+            , E.moveUp 5
+            ]
+            E.none
+        )

@@ -17,7 +17,10 @@ import Gen.Route as Route
 import Page
 import Request exposing (Request)
 import Shared
+import Simple.Animation as Animation exposing (Animation)
+import Simple.Animation.Property as P
 import Url exposing (Url)
+import Utils exposing (animatedEl)
 import Utils.Route
 import View exposing (View)
 
@@ -137,30 +140,47 @@ view model =
 elements : Model -> Element Msg
 elements model =
     let
-        statusString : String
-        statusString =
-            -- NB: The empty string with whitespace preserves centerY consistency over ""
-            case model.authFlow of
-                Idle ->
-                    " "
+        statusBar : Element Msg
+        statusBar =
+            let
+                text =
+                    case model.authFlow of
+                        Idle ->
+                            ""
 
-                Requested methodId ->
-                    "You will be redirected shortly to " ++ methodId ++ ".."
+                        Requested methodId ->
+                            "Redirecting to " ++ methodId ++ ".."
 
-                Pending ->
-                    " "
+                        Pending ->
+                            ""
 
-                Authorized authCode str ->
-                    " "
+                        Authorized authCode str ->
+                            ""
 
-                Authenticated token ->
-                    " "
+                        Authenticated token ->
+                            ""
 
-                Done userInfo ->
-                    " "
+                        Done userInfo ->
+                            ""
 
-                Errored err ->
-                    " "
+                        Errored err ->
+                            ""
+
+                spinnerContainer : Element Msg
+                spinnerContainer =
+                    case model.authFlow of
+                        Requested _ ->
+                            animatedEl rotationLoop [] spinner
+
+                        _ ->
+                            none
+            in
+            row
+                [ centerX
+                ]
+                [ paragraph [ centerX, centerY, Font.size 14 ] [ E.text text ]
+                , spinnerContainer
+                ]
     in
     el
         [ height fill
@@ -179,12 +199,15 @@ elements model =
             ]
             [ paragraph [ padding 5 ] [ text "Please select an auth provider below" ]
             , paragraph [ padding 5, Font.size 12 ] [ text "No tracking of any kind is implemented, and you will never be emailed by this app." ]
+            , E.text " "
+            , E.text " "
             , Input.button
                 [ Border.width 1
                 , Border.rounded 3
                 , Border.color Styling.black
                 , padding 4
-                , centerY
+
+                --, centerY
                 , centerX
                 ]
                 { onPress = Just GoogleOAuthSignInRequested
@@ -195,11 +218,45 @@ elements model =
                 , Border.rounded 3
                 , Border.color Styling.black
                 , padding 4
-                , centerY
+
+                --, centerY
                 , centerX
                 ]
                 { onPress = Just GitHubOAuthSignInRequested
                 , label = el [ centerX ] <| text "Sign in with GitHub"
                 }
-            , el [ centerX, centerY ] <| E.text statusString
+            , statusBar
             ]
+
+
+rotationLoop : Animation
+rotationLoop =
+    Animation.steps
+        { startAt = [ P.rotate 0 ]
+        , options = [ Animation.loop ]
+        }
+        [ Animation.step 1000 [ P.rotate 360 ]
+        ]
+
+
+spinner : Element msg
+spinner =
+    E.el
+        [ E.width (E.px 30)
+        , E.height (E.px 30)
+        , Background.color Styling.white
+        , Border.rounded 25
+        , Border.color Styling.blue
+        , Border.width 3
+        ]
+        (E.el
+            [ E.width (E.px 10)
+            , E.height (E.px 10)
+            , Background.color Styling.blue
+            , Border.rounded 10
+            , Border.color Styling.blue
+            , Border.width 3
+            , E.moveUp 5
+            ]
+            E.none
+        )
