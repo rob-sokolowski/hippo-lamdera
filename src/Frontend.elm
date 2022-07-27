@@ -5,7 +5,6 @@ import AuthImplementation
 import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
-import Components.Styling as Styling
 import Effect
 import Element as E exposing (..)
 import Element.Border as Border
@@ -13,6 +12,7 @@ import Gen.Model
 import Gen.Pages as Pages
 import Gen.Route as Route
 import Lamdera
+import Palette
 import Request
 import Shared
 import Task
@@ -158,7 +158,7 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "TODO: pageElements.title"
+    { title = "Hippo"
     , body =
         [ layout [] (elements model) ]
     }
@@ -191,7 +191,7 @@ elements model =
         , padding 3
         , centerX
         , Border.width 1
-        , Border.color Styling.dimGrey
+        , Border.color Palette.dimGrey
         ]
         [ firstElement ]
 

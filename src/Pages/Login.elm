@@ -5,7 +5,6 @@ import Api.User exposing (User)
 import Auth.Common exposing (Flow(..))
 import Auth.Flow
 import Bridge exposing (..)
-import Components.Styling as Styling
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -15,6 +14,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Gen.Route as Route
 import Page
+import Palette
 import Request exposing (Request)
 import Shared
 import Simple.Animation as Animation exposing (Animation)
@@ -185,7 +185,7 @@ elements model =
     el
         [ height fill
         , width fill
-        , Background.color Styling.softGrey
+        , Background.color Palette.softGrey
         ]
     <|
         column
@@ -193,7 +193,7 @@ elements model =
             , height (fill |> maximum 400)
             , centerX
             , centerY
-            , Background.color Styling.white
+            , Background.color Palette.white
             , spacing 10
             , Border.rounded 5
             ]
@@ -204,7 +204,7 @@ elements model =
             , Input.button
                 [ Border.width 1
                 , Border.rounded 3
-                , Border.color Styling.black
+                , Border.color Palette.black
                 , padding 4
 
                 --, centerY
@@ -216,7 +216,7 @@ elements model =
             , Input.button
                 [ Border.width 1
                 , Border.rounded 3
-                , Border.color Styling.black
+                , Border.color Palette.black
                 , padding 4
 
                 --, centerY
@@ -244,17 +244,17 @@ spinner =
     E.el
         [ E.width (E.px 30)
         , E.height (E.px 30)
-        , Background.color Styling.white
+        , Background.color Palette.white
         , Border.rounded 25
-        , Border.color Styling.blue
+        , Border.color Palette.blue
         , Border.width 3
         ]
         (E.el
             [ E.width (E.px 10)
             , E.height (E.px 10)
-            , Background.color Styling.blue
+            , Background.color Palette.blue
             , Border.rounded 10
-            , Border.color Styling.blue
+            , Border.color Palette.blue
             , Border.width 3
             , E.moveUp 5
             ]

@@ -4,7 +4,6 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
-import Components.Styling as Styling
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -18,6 +17,7 @@ import Lamdera
 import Markdown.Option exposing (..)
 import Markdown.Render
 import Page
+import Palette
 import Request exposing (Request)
 import Shared
 import View exposing (View)
@@ -217,7 +217,7 @@ viewElements model =
         , Font.size 16
         ]
         [ E.column
-            [ Background.color Styling.softGrey
+            [ Background.color Palette.softGrey
             , E.width <| px 200
             , height fill
             , alignTop
@@ -252,9 +252,9 @@ viewCardSubmission form user =
         ]
     <|
         Input.button
-            [ Background.color Styling.grey
+            [ Background.color Palette.grey
             , Font.bold
-            , Border.color Styling.darkBlue
+            , Border.color Palette.darkBlue
             , Border.width 1
             , padding 10
             , Border.rounded 5
@@ -305,7 +305,7 @@ viewCardTypeSelector model =
         [ Input.radio
             [ spacing 10
             , padding 10
-            , Background.color Styling.grey
+            , Background.color Palette.grey
             , alignTop
             ]
             { selected = Just model.selectedOption
@@ -348,7 +348,7 @@ viewMarkdownEditor card =
         [ E.row
             [ padding 10
             , spacing 10
-            , Background.color Styling.softGrey
+            , Background.color Palette.softGrey
             , height <| fillPortion 5
             , width fill
             ]
@@ -369,7 +369,7 @@ viewMarkdownEditor card =
                 , E.width <| E.minimum 400 fill
                 , E.height fill
                 , Border.rounded 10
-                , Background.color Styling.white
+                , Background.color Palette.white
                 ]
               <|
                 viewRenderedQuestion card
@@ -377,7 +377,7 @@ viewMarkdownEditor card =
         , E.row
             [ padding 5
             , spacing 10
-            , Background.color Styling.softGrey
+            , Background.color Palette.softGrey
             , height <| fillPortion 5
             , width fill
             ]
@@ -397,7 +397,7 @@ viewMarkdownEditor card =
                 , E.width <| E.minimum 400 fill
                 , E.height <| E.minimum 200 fill
                 , Border.rounded 10
-                , Background.color Styling.white
+                , Background.color Palette.white
                 ]
               <|
                 viewRenderedAnswer card

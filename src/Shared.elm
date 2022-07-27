@@ -10,14 +10,12 @@ module Shared exposing
 
 import Api.User exposing (User)
 import Bridge exposing (..)
-import Components.Navbar
+import Components
 import Element as E exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (..)
 import Element.Font as Font
-import Html exposing (..)
-import Html.Attributes exposing (class, href, rel)
 import Request exposing (Request)
 import Task
 import Time
@@ -105,7 +103,7 @@ elements req { page, toMsg } model =
     let
         navBar : Element msg
         navBar =
-            Components.Navbar.view
+            Components.viewNavbar
                 { user = model.user
                 , currentRoute = Utils.Route.fromUrl req.url
                 , onSignOut = toMsg ClickedSignOut

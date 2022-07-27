@@ -1,18 +1,18 @@
 module Pages.NotFound exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
+import Element as E exposing (..)
 import Gen.Params.NotFound exposing (Params)
 import Page
 import Request
 import Shared
 import View exposing (View)
-import Page
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
 page shared req =
     Page.advanced
-        { init = init
+        { init = init ""
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -24,12 +24,16 @@ page shared req =
 
 
 type alias Model =
-    {}
+    { requestedRoute : String
+    }
 
 
-init : ( Model, Effect Msg )
-init =
-    ( {}, Effect.none )
+init : String -> ( Model, Effect Msg )
+init key =
+    ( { requestedRoute = key
+      }
+    , Effect.none
+    )
 
 
 
@@ -62,4 +66,17 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    View.placeholder "NotFound"
+    let
+        elements =
+            paragraph
+                [ width (maximum 400 fill)
+                , height fill
+                , centerX
+                , centerY
+                ]
+                [ text ("The requested route '" ++ model.requestedRoute ++ "' does not exist!")
+                ]
+    in
+    { title = "404"
+    , body = [ elements ]
+    }
