@@ -1,21 +1,12 @@
 module Pages.Home_ exposing (Model, Msg(..), page)
 
-import Api.Data exposing (Data)
-import Api.User exposing (User)
-import Bridge exposing (..)
-import Components.Styling as Styling
 import Element as E exposing (..)
 import Element.Background as Background
-import Element.Border as Border
-import Element.Events exposing (..)
 import Element.Font as Font
-import Html exposing (..)
-import Html.Attributes exposing (class, classList)
-import Html.Events as Events
 import Page
+import Palette
 import Request exposing (Request)
 import Shared
-import Utils.Maybe
 import View exposing (View)
 
 
@@ -125,7 +116,7 @@ elements model =
         , el
             [ width fill
             , height <| px 1
-            , Background.color Styling.dimGrey
+            , Background.color Palette.dimGrey
             , centerX
             ]
             (E.text " ")

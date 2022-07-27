@@ -5,9 +5,6 @@ import Api.User exposing (User)
 import Auth.Common
 import Auth.Flow
 import Bridge exposing (..)
-import Browser.Navigation as Nav exposing (Key)
-import Color
-import Components.Styling as Styling
 import Effect exposing (Effect)
 import Element as E exposing (Attribute, Element)
 import Element.Background as Background
@@ -15,13 +12,12 @@ import Element.Border as Border
 import Element.Font as Font
 import Gen.Params.Login.Provider_.Callback exposing (Params)
 import Gen.Route as Route
-import Html exposing (Html)
 import Lamdera
 import Page
+import Palette
 import Request
 import Shared
 import Simple.Animation as Animation exposing (Animation)
-import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
 import Url exposing (Url)
 import Utils exposing (animatedEl)
@@ -129,7 +125,6 @@ elements _ =
         [ E.centerX
         , E.centerY
         , E.height E.fill
-        , E.width (E.maximum 400 E.fill)
         ]
         [ E.paragraph [ Font.size 24, E.centerY, E.centerX ] [ E.text "Verifying auth..." ]
         , animatedEl rotationLoop [] spinner
@@ -151,17 +146,17 @@ spinner =
     E.el
         [ E.width (E.px 30)
         , E.height (E.px 30)
-        , Background.color Styling.white
+        , Background.color Palette.white
         , Border.rounded 25
-        , Border.color Styling.blue
+        , Border.color Palette.blue
         , Border.width 3
         ]
         (E.el
             [ E.width (E.px 10)
             , E.height (E.px 10)
-            , Background.color Styling.blue
+            , Background.color Palette.blue
             , Border.rounded 10
-            , Border.color Styling.blue
+            , Border.color Palette.blue
             , Border.width 3
             , E.moveUp 5
             ]

@@ -4,8 +4,6 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data as Data exposing (..)
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..), sendToBackend)
-import Components.Styling as Styling
-import Dict
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -20,6 +18,7 @@ import List exposing (..)
 import Markdown.Option exposing (..)
 import Markdown.Render
 import Page
+import Palette
 import Request
 import Shared
 import View exposing (View)
@@ -258,9 +257,9 @@ viewElements model =
                         ]
                         [ el [ centerY ] <| text "Click to start today's session"
                         , Input.button
-                            [ Background.color Styling.darkCharcoal
-                            , Font.color Styling.lightBlue
-                            , Border.color Styling.lightGrey
+                            [ Background.color Palette.darkCharcoal
+                            , Font.color Palette.lightBlue
+                            , Border.color Palette.lightGrey
                             , paddingXY 32 16
                             , centerY
                             , Border.rounded 3
@@ -345,14 +344,14 @@ viewElements model =
         ]
         [ el
             [ width fill
-            , Background.color Styling.softGrey
+            , Background.color Palette.softGrey
             , height <| px 50
             ]
             (el [ centerY, alignLeft ] <| text summaryText)
         , el
             [ width fill
             , height fill
-            , Background.color Styling.softGrey
+            , Background.color Palette.softGrey
             ]
             viewPrompt
         ]
@@ -366,7 +365,7 @@ viewMarkdownFlashcardPrompt card cid ps =
 
         QuestionPrompted ->
             E.row
-                [ Background.color Styling.softGrey
+                [ Background.color Palette.softGrey
                 , spacing 5
                 , height fill
                 , centerX
@@ -376,7 +375,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , height fill
                     ]
                     [ el
-                        [ Background.color Styling.white
+                        [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
                         , E.width <| E.minimum 600 fill
@@ -395,7 +394,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , height fill
                     ]
                     [ el
-                        [ Background.color Styling.white
+                        [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
                         , E.width <| E.minimum 600 fill
@@ -403,10 +402,10 @@ viewMarkdownFlashcardPrompt card cid ps =
                         ]
                       <|
                         Input.button
-                            [ Background.color Styling.medGrey
-                            , Font.color Styling.black
+                            [ Background.color Palette.medGrey
+                            , Font.color Palette.black
                             , Font.bold
-                            , Border.color Styling.dimGrey
+                            , Border.color Palette.dimGrey
                             , Border.width 5
                             , paddingXY 32 16
                             , Border.rounded 10
@@ -430,8 +429,8 @@ viewMarkdownFlashcardPrompt card cid ps =
         AnswerRevealed ->
             E.row
                 [ Border.width 0
-                , Border.color Styling.darkCharcoal
-                , Background.color Styling.softGrey
+                , Border.color Palette.darkCharcoal
+                , Background.color Palette.softGrey
                 , spacing 5
                 , height fill
                 , centerX
@@ -441,7 +440,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , height fill
                     ]
                     [ el
-                        [ Background.color Styling.white
+                        [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
                         , E.width <| E.minimum 600 fill
@@ -460,7 +459,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                     , height fill
                     ]
                     [ el
-                        [ Background.color Styling.white
+                        [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
                         , E.width <| E.minimum 600 fill
@@ -475,10 +474,10 @@ viewMarkdownFlashcardPrompt card cid ps =
                         , Font.size 36
                         ]
                         [ Input.button
-                            [ Background.color Styling.medGrey
-                            , Font.color Styling.black
+                            [ Background.color Palette.medGrey
+                            , Font.color Palette.black
                             , Font.bold
-                            , Border.color Styling.black
+                            , Border.color Palette.black
                             , Border.rounded 5
                             , E.width fill
                             , E.height fill
@@ -487,9 +486,9 @@ viewMarkdownFlashcardPrompt card cid ps =
                             , label = el [ centerX ] <| E.text "X"
                             }
                         , Input.button
-                            [ Background.color Styling.medGrey
-                            , Font.color Styling.black
-                            , Border.color Styling.lightGrey
+                            [ Background.color Palette.medGrey
+                            , Font.color Palette.black
+                            , Border.color Palette.lightGrey
                             , Border.rounded 10
                             , Border.rounded 5
                             , E.width fill
@@ -530,9 +529,9 @@ viewPlainTextFlashcardPrompt card cid ps =
                 [ E.text card.question
                 , E.row [ spacing 10 ]
                     [ Input.button
-                        [ Background.color Styling.darkCharcoal
-                        , Font.color Styling.lightBlue
-                        , Border.color Styling.lightGrey
+                        [ Background.color Palette.darkCharcoal
+                        , Font.color Palette.lightBlue
+                        , Border.color Palette.lightGrey
                         , paddingXY 32 16
                         , Border.rounded 3
                         , E.width fill
@@ -551,9 +550,9 @@ viewPlainTextFlashcardPrompt card cid ps =
                 , E.text card.answer
                 , E.row [ spacing 10 ]
                     [ Input.button
-                        [ Background.color Styling.darkCharcoal
-                        , Font.color Styling.lightBlue
-                        , Border.color Styling.lightGrey
+                        [ Background.color Palette.darkCharcoal
+                        , Font.color Palette.lightBlue
+                        , Border.color Palette.lightGrey
                         , paddingXY 32 16
                         , Border.rounded 3
                         , E.width fill
@@ -562,9 +561,9 @@ viewPlainTextFlashcardPrompt card cid ps =
                         , label = E.text "X"
                         }
                     , Input.button
-                        [ Background.color Styling.darkCharcoal
-                        , Font.color Styling.lightBlue
-                        , Border.color Styling.lightGrey
+                        [ Background.color Palette.darkCharcoal
+                        , Font.color Palette.lightBlue
+                        , Border.color Palette.lightGrey
                         , paddingXY 32 16
                         , Border.rounded 3
                         , E.width fill

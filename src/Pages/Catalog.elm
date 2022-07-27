@@ -4,7 +4,6 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), Markdo
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
-import Components.Styling as Styling exposing (..)
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -18,6 +17,7 @@ import Lamdera exposing (sendToBackend)
 import Markdown.Option exposing (MarkdownOption(..))
 import Markdown.Render
 import Page
+import Palette exposing (..)
 import Request
 import Shared
 import Time exposing (toHour, toMinute, toSecond, utc)
@@ -196,9 +196,9 @@ viewElements model =
             let
                 headerAttrs =
                     [ Font.bold
-                    , Font.color Styling.black
+                    , Font.color Palette.black
                     , Border.widthEach { bottom = 1, top = 0, left = 1, right = 1 }
-                    , Border.color Styling.black
+                    , Border.color Palette.black
                     , paddingEach { top = 0, left = 2, right = 2, bottom = 2 }
                     ]
 
@@ -214,14 +214,14 @@ viewElements model =
                 applyHighlightEffect cardEnv =
                     case model.hoveredOnEnv of
                         Nothing ->
-                            Background.color Styling.white
+                            Background.color Palette.white
 
                         Just v ->
                             if v.id == cardEnv.id then
-                                Background.color Styling.softGrey
+                                Background.color Palette.softGrey
 
                             else
-                                Background.color Styling.white
+                                Background.color Palette.white
             in
             table
                 [ width shrink
@@ -315,7 +315,7 @@ viewElements model =
                                     el
                                         [ width fill
                                         , height fill
-                                        , Background.color Styling.white
+                                        , Background.color Palette.white
                                         , Border.rounded 10
                                         ]
                                         (viewRenderedQuestion card)
@@ -330,10 +330,10 @@ viewElements model =
                         [ el [ centerX, centerY ] <| text ("card " ++ String.fromInt env.id)
                         , renderedQuestion
                         , Input.button
-                            [ Background.color Styling.dimGrey
+                            [ Background.color Palette.dimGrey
                             , padding 5
                             , Border.width 1
-                            , Border.color Styling.black
+                            , Border.color Palette.black
                             , Border.rounded 5
                             , alignRight
                             ]
@@ -370,7 +370,7 @@ viewElements model =
         , el
             [ width <| fillPortion 7
             , height fill
-            , Background.color Styling.softGrey
+            , Background.color Palette.softGrey
             ]
             preview
         ]
