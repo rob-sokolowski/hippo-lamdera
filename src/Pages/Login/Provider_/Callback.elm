@@ -131,7 +131,7 @@ elements _ =
         , E.height E.fill
         , E.width (E.maximum 400 E.fill)
         ]
-        [ E.el [ Font.size 24, E.centerY ] <| E.text "Verifying auth..."
+        [ E.paragraph [ Font.size 24, E.centerY, E.centerX ] [ E.text "Verifying auth..." ]
         , animatedEl rotationLoop [] spinner
         ]
 
