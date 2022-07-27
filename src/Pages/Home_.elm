@@ -133,7 +133,7 @@ elements model =
             [ Font.size 14
             , centerX
             ]
-            (E.text "Simple MarkDown flashcards with spaced-repetition study sessions")
+            (E.paragraph [] [ E.text "Simple MarkDown flashcards with spaced-repetition study sessions" ])
         , E.text " " -- HACK: "push up" centerY
         , E.text " " -- HACK: "push up" centerY
         , E.text " " -- HACK: "push up" centerY
