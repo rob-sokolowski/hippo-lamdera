@@ -378,8 +378,9 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.minimum 600 fill
+                        , E.width <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
+                        , clip
                         ]
                       <|
                         viewRenderedQuestion card
@@ -443,8 +444,9 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.minimum 600 fill
+                        , E.width <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
+                        , clip
                         ]
                       <|
                         viewRenderedQuestion card
@@ -462,8 +464,9 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.minimum 600 fill
+                        , E.width <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
+                        , clip
                         ]
                       <|
                         viewRenderedAnswer card
@@ -504,14 +507,28 @@ viewMarkdownFlashcardPrompt card cid ps =
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
 viewRenderedQuestion card =
-    E.html
-        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+    el
+        [ width fill
+        , height fill
+        , clipX
+        , scrollbarX
+        ]
+        (E.html
+            (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+        )
 
 
 viewRenderedAnswer : MarkdownCard -> Element Msg
 viewRenderedAnswer card =
-    E.html
-        (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
+    el
+        [ width fill
+        , height fill
+        , clipX
+        , scrollbarX
+        ]
+        (E.html
+            (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
+        )
 
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
