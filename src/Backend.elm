@@ -85,9 +85,6 @@ update msg model =
         Tick time ->
             ( { model | now = time }, Cmd.none )
 
-        IncrementCardId ->
-            ( { model | nextCardId = model.nextCardId + 1 }, Cmd.none )
-
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
@@ -126,10 +123,9 @@ updateFromFrontend sessionId clientId msg model =
                 cards_ =
                     Dict.insert cardId envelope model.cards
             in
-            ( { model | cards = cards_ }
+            ( { model | cards = cards_, nextCardId = model.nextCardId + 1 }
             , Cmd.batch
-                [ Utils.send IncrementCardId
-                , send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId)))
+                [ send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId)))
                 ]
             )
 
