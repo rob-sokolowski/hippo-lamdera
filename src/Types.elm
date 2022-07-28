@@ -56,7 +56,6 @@ type BackendMsg
     | RenewSession UserId SessionId ClientId Time.Posix
     | NoOpBackendMsg
     | Tick Time.Posix
-    | IncrementCardId
 
 
 type ToFrontend
