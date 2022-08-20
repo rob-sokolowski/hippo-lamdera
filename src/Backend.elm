@@ -7,17 +7,13 @@ import Api.User exposing (Email, User, UserFull, UserId)
 import Auth.Flow
 import AuthImplementation
 import Bridge exposing (ToBackend(..))
-import Debug
 import Dict
 import Dict.Extra as Dict
 import Duration exposing (Duration)
 import Gen.Msg
 import Lamdera exposing (..)
-import List.Extra as List
 import Pages.Cards
 import Pages.Catalog
-import Pages.Home_
-import Pages.Login
 import Pages.Study
 import Task exposing (Task)
 import Time

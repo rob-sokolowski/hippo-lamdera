@@ -1,8 +1,10 @@
+# NB: This image is intended for local dev only, so using root user is good enough
 FROM node:current-buster
 
 RUN apt-get update
 
-#  This is here bc I was getting the following upon `lamdera init`: error while loading shared libraries: libtinfo.so.5: cannot open shared object file: No such file or directory          
+#  This is here bc I was getting the following upon `lamdera init`:
+#     error while loading shared libraries: libtinfo.so.5: cannot open shared object file: No such file or directory
 RUN apt install -y \
     libtinfo5 
 

@@ -31,3 +31,15 @@ lamdera live --port 8081
 And for OAuth, local callbacks must be configured to use `http://localhost:8081/login/OAuthGoogle/callback`
 
 Secrets for OAuth are stored in the Lamdera admin dashboard for this project.
+
+
+##### Docker
+
+docker is useful for some dev-time things, like testing responsive layouts on a phone prior to merging / deploying
+
+```shell
+cd /to/this/directory
+./scripts/build.sh
+docker-compose up dev
+```
+
