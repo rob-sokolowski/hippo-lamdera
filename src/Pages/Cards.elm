@@ -181,7 +181,24 @@ update msg model =
                     ( { model | cardSubmitStatus = Failure errors }, Effect.none )
 
                 Success cardId ->
-                    ( { model | cardSubmitStatus = Success cardId }, Effect.none )
+                    ( { model
+                        | cardSubmitStatus = Success cardId
+                        , editorForm =
+                            case model.editorForm of
+                                MarkdownForm _ ->
+                                    MarkdownForm
+                                        { question = ""
+                                        , renderedQuestion = ""
+                                        , answer = ""
+                                        , renderedAnswer = ""
+                                        , tags = []
+                                        }
+
+                                PlainTextForm _ ->
+                                    PlainTextForm { question = "", answer = "" }
+                      }
+                    , Effect.none
+                    )
 
         MarkdownMsg _ ->
             ( model, Effect.none )
