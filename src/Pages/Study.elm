@@ -570,7 +570,7 @@ viewPlainTextFlashcardPrompt card cid ps =
                 , spacing 20
                 , centerX
                 ]
-                [ E.text card.question
+                [ E.text card.answer
                 , E.row [ spacing 10 ]
                     [ Input.button
                         [ Background.color Palette.darkCharcoal
