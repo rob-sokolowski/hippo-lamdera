@@ -301,47 +301,6 @@ viewCardSubmitStatus model =
             E.text <| "Success"
 
 
-outputDisplay_ : Model -> Element Msg
-outputDisplay_ model =
-    let
-        htmlId : String -> Attribute msg
-        htmlId str =
-            htmlAttribute (HA.id str)
-
-        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
-        settings counter =
-            { windowWidth = 500
-            , counter = counter
-            , selectedId = "--"
-            , selectedSlug = Nothing
-            , scale = 0.8
-            }
-
-        questionText : String
-        questionText =
-            case model.editorForm of
-                PlainTextForm card ->
-                    card.question
-
-                MarkdownForm markdownCard ->
-                    markdownCard.question
-    in
-    column
-        [ spacing 18
-        , Background.color (E.rgb 1.0 1.0 1.0)
-        , width (px 500)
-        , height (px 600)
-        , paddingXY 16 32
-        , scrollbarY
-        , htmlId "scripta-output"
-        ]
-        (Scripta.API.compile (settings model.count) XMarkdownLang questionText |> List.map (E.map Render))
-
-
-
---(Scripta.API.render (settings model.count) model.questionEditRecord |> List.map (E.map Render))
-
-
 viewCardTypeSelector : Model -> Element Msg
 viewCardTypeSelector model =
     E.column
@@ -366,13 +325,9 @@ viewCardTypeSelector model =
         ]
 
 
-viewRenderedQuestion : MarkdownCard -> Int -> Element Msg
-viewRenderedQuestion card count =
+viewRenderedCard : String -> Int -> Element Msg
+viewRenderedCard text count =
     let
-        htmlId : String -> Attribute msg
-        htmlId str =
-            htmlAttribute (HA.id str)
-
         settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
         settings counter =
             { windowWidth = 500
@@ -381,29 +336,10 @@ viewRenderedQuestion card count =
             , selectedSlug = Nothing
             , scale = 0.8
             }
-
-        questionText : String
-        questionText =
-            card.question
     in
     column
         []
-        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
-
-
-
---E.html
---    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
-
-
-viewRenderedAnswer : MarkdownCard -> Element Msg
-viewRenderedAnswer card =
-    E.none
-
-
-
---E.html
---    (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
+        (Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render))
 
 
 markdownQuestionPlaceholder =
@@ -447,7 +383,7 @@ viewMarkdownEditor card count =
                 , Background.color Palette.white
                 ]
               <|
-                viewRenderedQuestion card count
+                viewRenderedCard card.question count
             ]
         , E.row
             [ padding 5
@@ -475,7 +411,7 @@ viewMarkdownEditor card count =
                 , Background.color Palette.white
                 ]
               <|
-                viewRenderedAnswer card
+                viewRenderedCard card.answer count
             ]
         ]
 
