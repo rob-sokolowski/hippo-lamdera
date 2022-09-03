@@ -448,7 +448,7 @@ viewMarkdownFlashcardPrompt card cid ps count =
                         , clip
                         ]
                       <|
-                        viewRenderedQuestion card count
+                        viewRenderedCard card.question count
                     , el
                         [ E.width fill
                         , E.height <| E.minimum 60 <| E.maximum 100 fill
@@ -468,7 +468,7 @@ viewMarkdownFlashcardPrompt card cid ps count =
                         , clip
                         ]
                       <|
-                        viewRenderedAnswer card count
+                        viewRenderedCard card.answer count
                     , E.row
                         [ spacing 10
                         , E.width fill
@@ -525,14 +525,8 @@ viewRenderedQuestion card count =
         (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
 
 
-
---(E.html
---    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
---)
-
-
-viewRenderedAnswer : MarkdownCard -> Int -> Element Msg
-viewRenderedAnswer card count =
+viewRenderedCard : String -> Int -> Element Msg
+viewRenderedCard text count =
     let
         settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
         settings counter =
@@ -542,20 +536,10 @@ viewRenderedAnswer card count =
             , selectedSlug = Nothing
             , scale = 0.8
             }
-
-        questionText : String
-        questionText =
-            card.question
     in
     column
         []
-        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
-
-
-
---(E.html
---    (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
---)
+        (Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render))
 
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg

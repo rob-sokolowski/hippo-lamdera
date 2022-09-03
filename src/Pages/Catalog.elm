@@ -182,8 +182,8 @@ view _ model =
     }
 
 
-viewRenderedQuestion : MarkdownCard -> Int -> Element Msg
-viewRenderedQuestion card count =
+viewRenderedCard : String -> Int -> Element Msg
+viewRenderedCard text count =
     let
         settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
         settings counter =
@@ -193,19 +193,10 @@ viewRenderedQuestion card count =
             , selectedSlug = Nothing
             , scale = 0.8
             }
-
-        questionText : String
-        questionText =
-            card.question
     in
     column
         []
-        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
-
-
-
---E.html
---    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+        (Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render))
 
 
 viewElements : Model -> Element Msg
@@ -338,7 +329,7 @@ viewElements model =
                                         , Background.color Palette.white
                                         , Border.rounded 10
                                         ]
-                                        (viewRenderedQuestion card 0)
+                                        (viewRenderedCard card.question 0)
                     in
                     column
                         [ centerX
