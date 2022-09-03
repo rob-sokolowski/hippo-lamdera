@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Api.Admin exposing (AdminSummary)
 import Api.Card exposing (CardEnvelope, CardId, FlashCard, PromptFrequency(..), processGrade)
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
@@ -12,6 +13,7 @@ import Dict.Extra as Dict
 import Duration exposing (Duration)
 import Gen.Msg
 import Lamdera exposing (..)
+import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
 import Pages.Study
@@ -100,6 +102,29 @@ updateFromFrontend sessionId clientId msg model =
 
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
+
+        FetchAdminSummary user ->
+            case user.email of
+                "rpsoko@gmail.com" ->
+                    let
+                        emails : List Email
+                        emails =
+                            Dict.values <| Dict.map (\k v -> v.email) model.users
+
+                        fromEmail : Email -> AdminSummary
+                        fromEmail email =
+                            { email = email
+                            , cardCount = Dict.foldl (\_ em acc -> acc + 1) 0 model.cards
+                            }
+
+                        adminSummary : List AdminSummary
+                        adminSummary =
+                            List.map (\em -> fromEmail em) emails
+                    in
+                    ( model, send_ (PageMsg (Gen.Msg.Admin (Pages.Admin.GotAdminSummary adminSummary))) )
+
+                _ ->
+                    ( model, Cmd.none )
 
         CreateCard_Cards flashCard userId ->
             let

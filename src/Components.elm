@@ -51,7 +51,7 @@ viewNavbar options =
                         }
                     , link [ alignRight, Font.color Palette.blue ]
                         { url = Route.toHref Route.Admin
-                        , label = text "Admin"
+                        , label = text " "
                         }
                     , Input.button
                         [ alignRight, Font.color Palette.blue ]

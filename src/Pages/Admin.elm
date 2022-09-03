@@ -1,9 +1,12 @@
-module Pages.Admin exposing (Model, Msg, page)
+module Pages.Admin exposing (Model, Msg(..), page)
 
+import Api.Admin exposing (AdminSummary)
 import Api.User exposing (User)
+import Bridge exposing (ToBackend(..))
 import Effect exposing (Effect)
 import Element as E exposing (Element)
 import Gen.Params.Admin exposing (Params)
+import Lamdera
 import Page
 import Request
 import Shared
@@ -27,12 +30,16 @@ page shared req =
 
 
 type alias Model =
-    {}
+    { adminSummary : Maybe (List AdminSummary)
+    }
 
 
 init : User -> ( Model, Effect Msg )
-init _ =
-    ( {}, Effect.none )
+init user =
+    ( { adminSummary = Nothing
+      }
+    , Effect.fromCmd <| (FetchAdminSummary user |> Lamdera.sendToBackend)
+    )
 
 
 
@@ -40,14 +47,14 @@ init _ =
 
 
 type Msg
-    = ReplaceMe
+    = GotAdminSummary (List AdminSummary)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ReplaceMe ->
-            ( model, Effect.none )
+        GotAdminSummary adminSummary ->
+            ( { model | adminSummary = Just adminSummary }, Effect.none )
 
 
 
@@ -72,12 +79,22 @@ view user model =
 
 viewElements : Model -> User -> Element Msg
 viewElements model user =
+    let
+        viewAdminSummary : Element Msg
+        viewAdminSummary =
+            case model.adminSummary of
+                Nothing ->
+                    E.none
+
+                Just summary ->
+                    E.column [] (List.map (\sum -> E.text <| sum.email ++ ": " ++ String.fromInt sum.cardCount) summary)
+    in
     case user.email of
         "rpsoko@gmail.com" ->
-            E.text "Welcome, Admin."
+            E.column []
+                [ E.text "Welcome, Admin"
+                , viewAdminSummary
+                ]
 
         _ ->
             E.text "You are not authorized to view this page"
-
-
-viewAdminPanel model
