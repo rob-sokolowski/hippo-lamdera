@@ -4,6 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
+import Compiler.AbstractDifferentialParser exposing (EditRecord)
 import Dict
 import Effect exposing (Effect)
 import Element as E exposing (..)
@@ -84,8 +85,8 @@ init user =
       , editorForm = MarkdownForm defaultMarkdownCard
       , cardSubmitStatus = NotAsked
       , user = user
-      , questionEditRecord = Scripta.API.init Dict.empty XMarkdownLang ""
-      , answerEditRecord = Scripta.API.init Dict.empty XMarkdownLang ""
+      , questionEditRecord = Scripta.API.init Dict.empty XMarkdownLang "question"
+      , answerEditRecord = Scripta.API.init Dict.empty XMarkdownLang "answer"
       }
     , Effect.none
     )
