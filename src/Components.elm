@@ -49,6 +49,10 @@ viewNavbar options =
                         { url = Route.toHref Route.Study
                         , label = text "Study"
                         }
+                    , link [ alignRight, Font.color Palette.blue ]
+                        { url = Route.toHref Route.Admin
+                        , label = text " "
+                        }
                     , Input.button
                         [ alignRight, Font.color Palette.blue ]
                         { onPress = Just options.onSignOut

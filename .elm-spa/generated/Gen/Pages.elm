@@ -3,6 +3,7 @@ module Gen.Pages exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Navigation exposing (Key)
 import Effect exposing (Effect)
 import ElmSpa.Page
+import Gen.Params.Admin
 import Gen.Params.Cards
 import Gen.Params.Catalog
 import Gen.Params.Home_
@@ -14,6 +15,7 @@ import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
 import Page exposing (Page)
+import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
 import Pages.Home_
@@ -39,6 +41,9 @@ type alias Msg =
 init : Route -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
 init route =
     case route of
+        Route.Admin ->
+            pages.admin.init ()
+    
         Route.Cards ->
             pages.cards.init ()
     
@@ -64,6 +69,9 @@ init route =
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
 update msg_ model_ =
     case ( msg_, model_ ) of
+        ( Msg.Admin msg, Model.Admin params model ) ->
+            pages.admin.update params msg model
+    
         ( Msg.Cards msg, Model.Cards params model ) ->
             pages.cards.update params msg model
     
@@ -95,6 +103,9 @@ view model_ =
         Model.Redirecting_ ->
             \_ _ _ -> View.none
     
+        Model.Admin params model ->
+            pages.admin.view params model
+    
         Model.Cards params model ->
             pages.cards.view params model
     
@@ -123,6 +134,9 @@ subscriptions model_ =
         Model.Redirecting_ ->
             \_ _ _ -> Sub.none
     
+        Model.Admin params model ->
+            pages.admin.subscriptions params model
+    
         Model.Cards params model ->
             pages.cards.subscriptions params model
     
@@ -150,7 +164,8 @@ subscriptions model_ =
 
 
 pages :
-    { cards : Bundle Gen.Params.Cards.Params Pages.Cards.Model Pages.Cards.Msg
+    { admin : Bundle Gen.Params.Admin.Params Pages.Admin.Model Pages.Admin.Msg
+    , cards : Bundle Gen.Params.Cards.Params Pages.Cards.Model Pages.Cards.Msg
     , catalog : Bundle Gen.Params.Catalog.Params Pages.Catalog.Model Pages.Catalog.Msg
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
@@ -159,7 +174,8 @@ pages :
     , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
     }
 pages =
-    { cards = bundle Pages.Cards.page Model.Cards Msg.Cards
+    { admin = bundle Pages.Admin.page Model.Admin Msg.Admin
+    , cards = bundle Pages.Cards.page Model.Cards Msg.Cards
     , catalog = bundle Pages.Catalog.page Model.Catalog Msg.Catalog
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
