@@ -4,6 +4,7 @@ import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, Pla
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
+import Dict
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -13,12 +14,13 @@ import Element.Input as Input
 import Element.Region as Region
 import Gen.Params.Cards exposing (Params)
 import Html exposing (Html)
+import Html.Attributes as HA
 import Lamdera
-import Markdown.Option exposing (..)
-import Markdown.Render
 import Page
 import Palette
 import Request exposing (Request)
+import Scripta.API
+import Scripta.Language exposing (Language(..))
 import Shared
 import View exposing (View)
 
@@ -49,15 +51,17 @@ type alias Model =
     , editorForm : EditorForm
     , cardSubmitStatus : Data CardId
     , user : User
+    , questionEditRecord : Scripta.API.EditRecord
+    , answerEditRecord : Scripta.API.EditRecord
     }
 
 
 type Msg
-    = Updated EditorForm EditorField String
+    = FormUpdated EditorForm EditorField String
     | ToggledOption SelectedFormRadioOption
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
-    | MarkdownMsg Markdown.Render.MarkdownMsg
+    | Render Scripta.API.Msg
 
 
 type SelectedFormRadioOption
@@ -80,6 +84,8 @@ init user =
       , editorForm = MarkdownForm defaultMarkdownCard
       , cardSubmitStatus = NotAsked
       , user = user
+      , questionEditRecord = Scripta.API.init Dict.empty XMarkdownLang ""
+      , answerEditRecord = Scripta.API.init Dict.empty XMarkdownLang ""
       }
     , Effect.none
     )
@@ -90,59 +96,69 @@ defaultPlaintextCard =
 
 
 defaultMarkdownCard =
-    MarkdownCard "" (renderMarkdown "") "" (renderMarkdown "") []
+    MarkdownCard "" "" []
 
 
 
 -- UPDATE
 
 
-renderMarkdown : String -> String
-renderMarkdown str =
-    "Rendered: " ++ str
-
-
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Updated form_ field newVal ->
+        Render _ ->
+            ( model, Effect.none )
+
+        FormUpdated form field str ->
             let
-                newForm =
-                    case form_ of
+                ( newForm, newQEditRecord, newAEditRecord ) =
+                    case form of
                         PlainTextForm card ->
                             case field of
                                 PlainText_Question ->
-                                    PlainTextForm { card | question = newVal }
+                                    ( PlainTextForm { card | question = str }
+                                    , Scripta.API.update model.questionEditRecord str
+                                    , model.answerEditRecord
+                                    )
 
                                 PlainText_Answer ->
-                                    PlainTextForm { card | answer = newVal }
+                                    ( PlainTextForm { card | answer = str }
+                                    , model.questionEditRecord
+                                    , Scripta.API.update model.answerEditRecord str
+                                    )
 
                                 _ ->
                                     -- smell?
-                                    PlainTextForm defaultPlaintextCard
+                                    ( PlainTextForm { card | answer = str }
+                                    , model.questionEditRecord
+                                    , model.answerEditRecord
+                                    )
 
                         MarkdownForm card ->
                             case field of
                                 Markdown_Question ->
-                                    MarkdownForm
-                                        { card
-                                            | question = newVal
-                                            , renderedQuestion = renderMarkdown newVal
-                                        }
+                                    ( MarkdownForm { card | question = str }
+                                    , Scripta.API.update model.questionEditRecord str
+                                    , model.answerEditRecord
+                                    )
 
                                 Markdown_Answer ->
-                                    MarkdownForm
-                                        { card
-                                            | answer = newVal
-                                            , renderedAnswer = renderMarkdown newVal
-                                        }
+                                    ( MarkdownForm { card | question = str }
+                                    , model.questionEditRecord
+                                    , Scripta.API.update model.answerEditRecord str
+                                    )
 
                                 _ ->
                                     -- smell?
-                                    MarkdownForm defaultMarkdownCard
+                                    ( MarkdownForm card
+                                    , model.questionEditRecord
+                                    , model.answerEditRecord
+                                    )
             in
             ( { model
                 | editorForm = newForm
+                , questionEditRecord = newQEditRecord
+                , answerEditRecord = newAEditRecord
               }
             , Effect.none
             )
@@ -188,9 +204,7 @@ update msg model =
                                 MarkdownForm _ ->
                                     MarkdownForm
                                         { question = ""
-                                        , renderedQuestion = ""
                                         , answer = ""
-                                        , renderedAnswer = ""
                                         , tags = []
                                         }
 
@@ -199,9 +213,6 @@ update msg model =
                       }
                     , Effect.none
                     )
-
-        MarkdownMsg _ ->
-            ( model, Effect.none )
 
 
 
@@ -312,6 +323,38 @@ viewCardSubmitStatus model =
             E.text <| "Success"
 
 
+outputDisplay_ : Model -> Element Msg
+outputDisplay_ model =
+    let
+        htmlId : String -> Attribute msg
+        htmlId str =
+            htmlAttribute (HA.id str)
+
+        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+        settings counter =
+            { windowWidth = 500
+            , counter = counter
+            , selectedId = "--"
+            , selectedSlug = Nothing
+            , scale = 0.8
+            }
+    in
+    column
+        [ spacing 18
+        , Background.color (E.rgb 1.0 1.0 1.0)
+        , width (px 500)
+        , height (px 600)
+        , paddingXY 16 32
+        , scrollbarY
+        , htmlId "scripta-output"
+        ]
+        []
+
+
+
+--(Scripta.API.render (settings model.count) model.questionEditRecord |> List.map (E.map Render))
+
+
 viewCardTypeSelector : Model -> Element Msg
 viewCardTypeSelector model =
     E.column
@@ -338,14 +381,22 @@ viewCardTypeSelector model =
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
 viewRenderedQuestion card =
-    E.html
-        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+    E.none
+
+
+
+--E.html
+--    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
 
 
 viewRenderedAnswer : MarkdownCard -> Element Msg
 viewRenderedAnswer card =
-    E.html
-        (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
+    E.none
+
+
+
+--E.html
+--    (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
 
 
 markdownQuestionPlaceholder =
@@ -375,7 +426,7 @@ viewMarkdownEditor card =
                 , E.width <| E.minimum 400 fill
                 , E.height <| E.minimum 200 fill
                 ]
-                { onChange = \text -> Updated (MarkdownForm card) Markdown_Question text
+                { onChange = \text -> FormUpdated (MarkdownForm card) Markdown_Question text
                 , text = card.question
                 , placeholder = markdownQuestionPlaceholder
                 , label = Input.labelAbove [] <| E.text "Prompt side:"
@@ -403,7 +454,7 @@ viewMarkdownEditor card =
                 , E.width <| E.minimum 400 fill
                 , E.height <| E.minimum 200 fill
                 ]
-                { onChange = \text -> Updated (MarkdownForm card) Markdown_Answer text
+                { onChange = \text -> FormUpdated (MarkdownForm card) Markdown_Answer text
                 , text = card.answer
                 , placeholder = Just <| Input.placeholder [] (E.text "Enter Markdown here!")
                 , label = Input.labelAbove [] <| E.text "Answer side:"
@@ -448,7 +499,7 @@ viewPlainTextEditor card userId =
             ]
             { text = card.question
             , placeholder = Just <| Input.placeholder [] (E.text "Question goes here..")
-            , onChange = \text -> Updated (PlainTextForm card) PlainText_Question text
+            , onChange = \text -> FormUpdated (PlainTextForm card) PlainText_Question text
             , label = Input.labelAbove [ Font.size 14 ] (E.text "Flash card prompt")
             , spellcheck = True
             }
@@ -459,7 +510,7 @@ viewPlainTextEditor card userId =
             ]
             { text = card.answer
             , placeholder = Just <| Input.placeholder [] (E.text "Input answer here")
-            , onChange = \text -> Updated (PlainTextForm card) PlainText_Answer text
+            , onChange = \text -> FormUpdated (PlainTextForm card) PlainText_Answer text
             , label = Input.labelAbove [ Font.size 14 ] (E.text "Answer prompt:")
             , spellcheck = True
             }

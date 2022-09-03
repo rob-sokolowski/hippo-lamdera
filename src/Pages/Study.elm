@@ -12,14 +12,13 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Gen.Params.Study exposing (Params)
-import Html exposing (Html)
 import Lamdera
 import List exposing (..)
-import Markdown.Option exposing (..)
-import Markdown.Render
 import Page
 import Palette
 import Request
+import Scripta.API
+import Scripta.Language exposing (Language(..))
 import Shared
 import View exposing (View)
 
@@ -60,7 +59,7 @@ type Msg
     | GotGradedResponse (Data CardId)
     | GotStudySessionSummary (Data StudySessionSummary)
     | UserStartStudySession
-    | MarkdownMsg Markdown.Render.MarkdownMsg
+    | Render Scripta.API.Msg
 
 
 init : Shared.Model -> ( Model, Effect Msg )
@@ -203,7 +202,7 @@ update msg model =
             , Effect.fromCmd <| fetchUsersStudyCards model.user
             )
 
-        MarkdownMsg _ ->
+        Render _ ->
             ( model, Effect.none )
 
 
@@ -513,9 +512,13 @@ viewRenderedQuestion card =
         , clipX
         , scrollbarX
         ]
-        (E.html
-            (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
-        )
+        E.none
+
+
+
+--(E.html
+--    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+--)
 
 
 viewRenderedAnswer : MarkdownCard -> Element Msg
@@ -526,9 +529,13 @@ viewRenderedAnswer card =
         , clipX
         , scrollbarX
         ]
-        (E.html
-            (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
-        )
+        E.none
+
+
+
+--(E.html
+--    (Markdown.Render.toHtml ExtendedMath card.answer |> Html.map MarkdownMsg)
+--)
 
 
 viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg

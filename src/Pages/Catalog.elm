@@ -14,11 +14,11 @@ import Element.Input as Input
 import Gen.Params.Catalog exposing (Params)
 import Html
 import Lamdera exposing (sendToBackend)
-import Markdown.Option exposing (MarkdownOption(..))
-import Markdown.Render
 import Page
 import Palette exposing (..)
 import Request
+import Scripta.API
+import Scripta.Language exposing (Language(..))
 import Shared
 import Time exposing (toHour, toMinute, toSecond, utc)
 import Time.Extra
@@ -97,7 +97,7 @@ type Msg
     | UserClickedDelete CardId UserId
     | UserMousesOver CardEnvelope
     | ClearTableHover
-    | MarkdownMsg Markdown.Render.MarkdownMsg
+    | Render Scripta.API.Msg
     | Noop
 
 
@@ -107,7 +107,7 @@ update msg model =
         Noop ->
             ( model, Effect.none )
 
-        MarkdownMsg _ ->
+        Render _ ->
             ( model, Effect.none )
 
         GotUserCatalog catalog ->
@@ -184,8 +184,12 @@ view _ model =
 
 viewRenderedQuestion : MarkdownCard -> Element Msg
 viewRenderedQuestion card =
-    E.html
-        (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
+    E.none
+
+
+
+--E.html
+--    (Markdown.Render.toHtml ExtendedMath card.question |> Html.map MarkdownMsg)
 
 
 viewElements : Model -> Element Msg
