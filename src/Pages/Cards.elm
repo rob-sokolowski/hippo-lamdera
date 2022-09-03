@@ -52,8 +52,7 @@ type alias Model =
     , editorForm : EditorForm
     , cardSubmitStatus : Data CardId
     , user : User
-    , questionEditRecord : Scripta.API.EditRecord
-    , answerEditRecord : Scripta.API.EditRecord
+    , count : Int
     }
 
 
@@ -70,9 +69,7 @@ type SelectedFormRadioOption
     | PlainTextRadioOption
 
 
-type
-    EditorField
-    -- TODO: I'm unsure if this is normal, or the _ this is a smell
+type EditorField
     = PlainText_Question
     | PlainText_Answer
     | Markdown_Question
@@ -85,8 +82,7 @@ init user =
       , editorForm = MarkdownForm defaultMarkdownCard
       , cardSubmitStatus = NotAsked
       , user = user
-      , questionEditRecord = Scripta.API.init Dict.empty XMarkdownLang "question"
-      , answerEditRecord = Scripta.API.init Dict.empty XMarkdownLang "answer"
+      , count = 0
       }
     , Effect.none
     )
@@ -112,54 +108,35 @@ update msg model =
 
         FormUpdated form field str ->
             let
-                ( newForm, newQEditRecord, newAEditRecord ) =
+                newForm =
                     case form of
                         PlainTextForm card ->
                             case field of
                                 PlainText_Question ->
-                                    ( PlainTextForm { card | question = str }
-                                    , Scripta.API.update model.questionEditRecord str
-                                    , model.answerEditRecord
-                                    )
+                                    PlainTextForm { card | question = str }
 
                                 PlainText_Answer ->
-                                    ( PlainTextForm { card | answer = str }
-                                    , model.questionEditRecord
-                                    , Scripta.API.update model.answerEditRecord str
-                                    )
+                                    PlainTextForm { card | answer = str }
 
                                 _ ->
                                     -- smell?
-                                    ( PlainTextForm { card | answer = str }
-                                    , model.questionEditRecord
-                                    , model.answerEditRecord
-                                    )
+                                    PlainTextForm { card | answer = str }
 
                         MarkdownForm card ->
                             case field of
                                 Markdown_Question ->
-                                    ( MarkdownForm { card | question = str }
-                                    , Scripta.API.update model.questionEditRecord str
-                                    , model.answerEditRecord
-                                    )
+                                    MarkdownForm { card | question = str }
 
                                 Markdown_Answer ->
-                                    ( MarkdownForm { card | question = str }
-                                    , model.questionEditRecord
-                                    , Scripta.API.update model.answerEditRecord str
-                                    )
+                                    MarkdownForm { card | answer = str }
 
                                 _ ->
                                     -- smell?
-                                    ( MarkdownForm card
-                                    , model.questionEditRecord
-                                    , model.answerEditRecord
-                                    )
+                                    MarkdownForm card
             in
             ( { model
                 | editorForm = newForm
-                , questionEditRecord = newQEditRecord
-                , answerEditRecord = newAEditRecord
+                , count = model.count + 1
               }
             , Effect.none
             )
@@ -260,7 +237,7 @@ viewElements model =
             [ E.width <| E.minimum 600 fill
             , height fill
             ]
-            [ viewCardForm model.editorForm model.user
+            [ viewCardForm model.editorForm model.user model.count
             ]
         ]
 
@@ -294,8 +271,8 @@ viewCardSubmission form user =
             }
 
 
-viewCardForm : EditorForm -> User -> Element Msg
-viewCardForm form user =
+viewCardForm : EditorForm -> User -> Int -> Element Msg
+viewCardForm form user count =
     case form of
         PlainTextForm plainTextCard ->
             el [] (viewPlainTextEditor plainTextCard user.id)
@@ -305,7 +282,7 @@ viewCardForm form user =
                 [ E.width fill
                 , E.height fill
                 ]
-                (viewMarkdownEditor markdownCard)
+                (viewMarkdownEditor markdownCard count)
 
 
 viewCardSubmitStatus : Model -> Element Msg
@@ -339,6 +316,15 @@ outputDisplay_ model =
             , selectedSlug = Nothing
             , scale = 0.8
             }
+
+        questionText : String
+        questionText =
+            case model.editorForm of
+                PlainTextForm card ->
+                    card.question
+
+                MarkdownForm markdownCard ->
+                    markdownCard.question
     in
     column
         [ spacing 18
@@ -349,7 +335,7 @@ outputDisplay_ model =
         , scrollbarY
         , htmlId "scripta-output"
         ]
-        []
+        (Scripta.API.compile (settings model.count) XMarkdownLang questionText |> List.map (E.map Render))
 
 
 
@@ -380,9 +366,29 @@ viewCardTypeSelector model =
         ]
 
 
-viewRenderedQuestion : MarkdownCard -> Element Msg
-viewRenderedQuestion card =
-    E.none
+viewRenderedQuestion : MarkdownCard -> Int -> Element Msg
+viewRenderedQuestion card count =
+    let
+        htmlId : String -> Attribute msg
+        htmlId str =
+            htmlAttribute (HA.id str)
+
+        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+        settings counter =
+            { windowWidth = 500
+            , counter = counter
+            , selectedId = "--"
+            , selectedSlug = Nothing
+            , scale = 0.8
+            }
+
+        questionText : String
+        questionText =
+            card.question
+    in
+    column
+        []
+        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
 
 
 
@@ -406,8 +412,8 @@ markdownQuestionPlaceholder =
     """
 
 
-viewMarkdownEditor : MarkdownCard -> Element Msg
-viewMarkdownEditor card =
+viewMarkdownEditor : MarkdownCard -> Int -> Element Msg
+viewMarkdownEditor card count =
     E.column
         [ padding 0
         , spacing 5
@@ -441,7 +447,7 @@ viewMarkdownEditor card =
                 , Background.color Palette.white
                 ]
               <|
-                viewRenderedQuestion card
+                viewRenderedQuestion card count
             ]
         , E.row
             [ padding 5
