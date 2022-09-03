@@ -295,7 +295,7 @@ viewElements model =
                                         , centerY
                                         , centerX
                                         ]
-                                        (viewMarkdownFlashcardPrompt card_ env.id model.promptStatus)
+                                        (viewMarkdownFlashcardPrompt card_ env.id model.promptStatus 0)
 
                         Nothing ->
                             E.text "You have studied all your cards!"
@@ -356,8 +356,8 @@ viewElements model =
         ]
 
 
-viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Element Msg
-viewMarkdownFlashcardPrompt card cid ps =
+viewMarkdownFlashcardPrompt : MarkdownCard -> CardId -> PromptStatus -> Int -> Element Msg
+viewMarkdownFlashcardPrompt card cid ps count =
     case ps of
         Idle ->
             E.none
@@ -377,12 +377,12 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.maximum 600 fill
+                        , E.width <| E.minimum 400 <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
                         , clip
                         ]
                       <|
-                        viewRenderedQuestion card
+                        viewRenderedQuestion card count
                     , el
                         [ E.width fill
                         , E.height <| E.minimum 60 <| E.maximum 100 fill
@@ -397,7 +397,7 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.minimum 600 fill
+                        , E.width <| E.minimum 400 <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
                         ]
                       <|
@@ -443,12 +443,12 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.maximum 600 fill
+                        , E.width <| E.minimum 400 <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
                         , clip
                         ]
                       <|
-                        viewRenderedQuestion card
+                        viewRenderedQuestion card count
                     , el
                         [ E.width fill
                         , E.height <| E.minimum 60 <| E.maximum 100 fill
@@ -463,12 +463,12 @@ viewMarkdownFlashcardPrompt card cid ps =
                         [ Background.color Palette.white
                         , Border.rounded 10
                         , padding 10
-                        , E.width <| E.maximum 600 fill
+                        , E.width <| E.minimum 400 <| E.maximum 600 fill
                         , E.height <| E.minimum 300 fill
                         , clip
                         ]
                       <|
-                        viewRenderedAnswer card
+                        viewRenderedAnswer card count
                     , E.row
                         [ spacing 10
                         , E.width fill
@@ -504,15 +504,25 @@ viewMarkdownFlashcardPrompt card cid ps =
                 ]
 
 
-viewRenderedQuestion : MarkdownCard -> Element Msg
-viewRenderedQuestion card =
-    el
-        [ width fill
-        , height fill
-        , clipX
-        , scrollbarX
-        ]
-        E.none
+viewRenderedQuestion : MarkdownCard -> Int -> Element Msg
+viewRenderedQuestion card count =
+    let
+        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+        settings counter =
+            { windowWidth = 500
+            , counter = counter
+            , selectedId = "--"
+            , selectedSlug = Nothing
+            , scale = 0.8
+            }
+
+        questionText : String
+        questionText =
+            card.question
+    in
+    column
+        []
+        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
 
 
 
@@ -521,15 +531,25 @@ viewRenderedQuestion card =
 --)
 
 
-viewRenderedAnswer : MarkdownCard -> Element Msg
-viewRenderedAnswer card =
-    el
-        [ width fill
-        , height fill
-        , clipX
-        , scrollbarX
-        ]
-        E.none
+viewRenderedAnswer : MarkdownCard -> Int -> Element Msg
+viewRenderedAnswer card count =
+    let
+        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+        settings counter =
+            { windowWidth = 500
+            , counter = counter
+            , selectedId = "--"
+            , selectedSlug = Nothing
+            , scale = 0.8
+            }
+
+        questionText : String
+        questionText =
+            card.question
+    in
+    column
+        []
+        (Scripta.API.compile (settings count) XMarkdownLang questionText |> List.map (E.map Render))
 
 
 
