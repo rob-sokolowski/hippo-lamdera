@@ -114,7 +114,17 @@ updateFromFrontend sessionId clientId msg model =
                         fromEmail : Email -> AdminSummary
                         fromEmail email =
                             { email = email
-                            , cardCount = Dict.foldl (\_ em acc -> acc + 1) 0 model.cards
+                            , cardCount =
+                                Dict.foldl
+                                    (\_ em acc ->
+                                        if em.userId == user.id then
+                                            acc + 1
+
+                                        else
+                                            acc
+                                    )
+                                    0
+                                    model.cards
                             }
 
                         adminSummary : List AdminSummary
