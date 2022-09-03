@@ -33,9 +33,11 @@ type alias PlainTextCard =
 
 type alias MarkdownCard =
     { question : String
-    , renderedQuestion : String
+
+    --, renderedQuestion : String
     , answer : String
-    , renderedAnswer : String
+
+    --, renderedAnswer : String
     , tags : List String
     }
 

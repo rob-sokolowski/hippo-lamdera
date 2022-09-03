@@ -1,0 +1,32 @@
+scripts:
+
+  #  update-vendor:
+  #     - cp -r /Users/jxxcarlson/dev/bluesky/microlatex/src vendor/L0/
+
+  #  backfill:
+  #      - cp -r vendor/L0/src /Users/jxxcarlson/dev/bluesky/microlatex/
+
+
+  review: npx elm-review
+
+  review-fix: npx elm-review  --fix
+
+  review-fix-all: npx elm-review  --fix-all
+
+  review-debug: npx elm-review --fix-all --rules NoDebug.Log
+
+  review-x: npx elm-review  --rules NoUnused.CustomTypeConstructors
+
+  cloc: cloc --by-file compiler/
+
+  clean-macros:
+    cat macros.txt | sed 's/^, (//g' | sed 's/,.*//g' | sed 's/"//g'
+
+  clean-macros2:
+    sed 's/^.*(//' macros.txt | sed 's/\",.*//'  | sed 's/^ //' | sed 's/^\"//' | grep -v "^ " | grep -v "^E"
+
+  server: fs -p 3300 initialDocs
+
+  # vendor: cp -r  /Users/carlson/dev/lamdera/bluesky/scripta-compiler/compiler/* ./compiler/
+
+  ssh: ssh root@161.35.125.40

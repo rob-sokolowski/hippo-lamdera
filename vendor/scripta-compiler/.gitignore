@@ -1,0 +1,6 @@
+Example/main.js
+elm-stuff
+.idea/
+**/*/node_modules/
+node_modules/
+**/*/main.js
