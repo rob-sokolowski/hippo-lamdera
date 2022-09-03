@@ -113,15 +113,30 @@ updateFromFrontend sessionId clientId msg model =
 
                         fromEmail : Email -> AdminSummary
                         fromEmail email =
+                            let
+                                userId_ : Email -> Maybe UserId
+                                userId_ email_ =
+                                    List.head <|
+                                        List.filterMap
+                                            (\userProf ->
+                                                if userProf.email == email_ then
+                                                    Just userProf.id
+
+                                                else
+                                                    Nothing
+                                            )
+                                            (Dict.values model.users)
+                            in
                             { email = email
                             , cardCount =
                                 Dict.foldl
                                     (\_ em acc ->
-                                        if em.userId == user.id then
-                                            acc + 1
+                                        case userId_ email of
+                                            Nothing ->
+                                                acc
 
-                                        else
-                                            acc
+                                            Just _ ->
+                                                acc + 1
                                     )
                                     0
                                     model.cards
