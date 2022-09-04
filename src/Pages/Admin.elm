@@ -80,14 +80,18 @@ view user model =
 viewElements : Model -> User -> Element Msg
 viewElements model user =
     let
+        toSummary : AdminSummary -> String
+        toSummary sum =
+            String.fromInt sum.userId ++ "-" ++ String.fromInt sum.cardId ++ " : " ++ sum.question ++ " : " ++ sum.answer
+
         viewAdminSummary : Element Msg
         viewAdminSummary =
             case model.adminSummary of
                 Nothing ->
                     E.none
 
-                Just summary ->
-                    E.column [] (List.map (\sum -> E.text <| sum.email ++ ": " ++ String.fromInt sum.cardCount) summary)
+                Just summaries ->
+                    E.column [] (List.map (\sum -> E.text <| toSummary sum) summaries)
     in
     case user.email of
         "rpsoko@gmail.com" ->

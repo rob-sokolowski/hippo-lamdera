@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import Api.Admin exposing (AdminSummary)
-import Api.Card exposing (CardEnvelope, CardId, FlashCard, PromptFrequency(..), processGrade)
+import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), PromptFrequency(..), processGrade)
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
 import Api.User exposing (Email, User, UserFull, UserId)
@@ -107,46 +107,32 @@ updateFromFrontend sessionId clientId msg model =
             case user.email of
                 "rpsoko@gmail.com" ->
                     let
-                        emails : List Email
-                        emails =
-                            Dict.values <| Dict.map (\k v -> v.email) model.users
+                        adminSummaries : List AdminSummary
+                        adminSummaries =
+                            Dict.values <|
+                                Dict.map
+                                    (\_ cardEnv ->
+                                        { cardId = cardEnv.id
+                                        , userId = cardEnv.userId
+                                        , question =
+                                            case cardEnv.card of
+                                                PlainText card_ ->
+                                                    card_.question
 
-                        fromEmail : Email -> AdminSummary
-                        fromEmail email =
-                            let
-                                userId_ : Email -> Maybe UserId
-                                userId_ email_ =
-                                    List.head <|
-                                        List.filterMap
-                                            (\userProf ->
-                                                if userProf.email == email_ then
-                                                    Just userProf.id
+                                                Markdown card_ ->
+                                                    card_.question
+                                        , answer =
+                                            case cardEnv.card of
+                                                PlainText card_ ->
+                                                    card_.answer
 
-                                                else
-                                                    Nothing
-                                            )
-                                            (Dict.values model.users)
-                            in
-                            { email = email
-                            , cardCount =
-                                Dict.foldl
-                                    (\_ em acc ->
-                                        case userId_ email of
-                                            Nothing ->
-                                                acc
-
-                                            Just _ ->
-                                                acc + 1
+                                                Markdown card_ ->
+                                                    card_.answer
+                                        }
                                     )
-                                    0
                                     model.cards
-                            }
-
-                        adminSummary : List AdminSummary
-                        adminSummary =
-                            List.map (\em -> fromEmail em) emails
                     in
-                    ( model, send_ (PageMsg (Gen.Msg.Admin (Pages.Admin.GotAdminSummary adminSummary))) )
+                    ( model, send_ (PageMsg (Gen.Msg.Admin (Pages.Admin.GotAdminSummary adminSummaries))) )
 
                 _ ->
                     ( model, Cmd.none )
