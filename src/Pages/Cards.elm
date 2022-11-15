@@ -62,6 +62,7 @@ type Msg
     | Submitted FlashCard UserId
     | GotCard (Data CardId)
     | Render Scripta.API.Msg
+    | Noop String
 
 
 type SelectedFormRadioOption
@@ -74,6 +75,7 @@ type EditorField
     | PlainText_Answer
     | Markdown_Question
     | Markdown_Answer
+    | Markdown_Tag
 
 
 init : User -> ( Model, Effect Msg )
@@ -93,7 +95,7 @@ defaultPlaintextCard =
 
 
 defaultMarkdownCard =
-    MarkdownCard "" "" []
+    MarkdownCard "" "" Nothing
 
 
 
@@ -103,6 +105,9 @@ defaultMarkdownCard =
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        Noop _ ->
+            ( model, Effect.none )
+
         Render _ ->
             ( model, Effect.none )
 
@@ -129,6 +134,9 @@ update msg model =
 
                                 Markdown_Answer ->
                                     MarkdownForm { card | answer = str }
+
+                                Markdown_Tag ->
+                                    MarkdownForm { card | tag = Just str }
 
                                 _ ->
                                     -- smell?
@@ -183,7 +191,7 @@ update msg model =
                                     MarkdownForm
                                         { question = ""
                                         , answer = ""
-                                        , tags = []
+                                        , tag = Nothing
                                         }
 
                                 PlainTextForm _ ->
@@ -231,6 +239,7 @@ viewElements model =
             ]
             [ viewCardTypeSelector model
             , viewCardSubmitStatus model
+            , viewTagField model.editorForm
             , viewCardSubmission model.editorForm model.user
             ]
         , E.column
@@ -240,6 +249,36 @@ viewElements model =
             [ viewCardForm model.editorForm model.user model.count
             ]
         ]
+
+
+viewTagField : EditorForm -> Element Msg
+viewTagField form =
+    let
+        ( onChange, tagDisplayText ) =
+            case form of
+                PlainTextForm card ->
+                    -- TODO: Deprecate plain text cards
+                    ( Noop, "" )
+
+                MarkdownForm card ->
+                    ( FormUpdated (MarkdownForm card) Markdown_Tag, Maybe.withDefault "" card.tag )
+    in
+    el
+        [ E.width fill
+        ]
+    <|
+        Input.text
+            [ Background.color Palette.white
+            , Border.width 1
+            , padding 10
+            , Border.rounded 5
+            , E.width fill
+            ]
+            { onChange = onChange
+            , text = tagDisplayText
+            , placeholder = Nothing
+            , label = Input.labelLeft [] (E.text "Tag: ")
+            }
 
 
 viewCardSubmission : EditorForm -> User -> Element Msg
