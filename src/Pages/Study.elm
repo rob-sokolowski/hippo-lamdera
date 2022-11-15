@@ -454,6 +454,7 @@ viewMarkdownFlashcardPrompt card cid ps count =
                         , E.height <| E.minimum 60 <| E.maximum 100 fill
                         ]
                         E.none
+                    , el [ alignRight, centerY ] <| E.text ("Tag: " ++ Maybe.withDefault "" card.tag)
                     ]
                 , E.column
                     [ spacing 5

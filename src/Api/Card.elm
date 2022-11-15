@@ -36,9 +36,7 @@ type alias MarkdownCard =
 
     --, renderedQuestion : String
     , answer : String
-
-    --, renderedAnswer : String
-    , tags : List String
+    , tag : Maybe String
     }
 
 
