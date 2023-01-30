@@ -11,6 +11,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
+import Gen.Params.Stories.MathJaxDemo
 import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
@@ -23,6 +24,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
+import Pages.Stories.MathJaxDemo
 import Request exposing (Request)
 import Shared
 import Task
@@ -64,6 +66,9 @@ init route =
     
         Route.Login__Provider___Callback params ->
             pages.login__provider___callback.init params
+    
+        Route.Stories__MathJaxDemo ->
+            pages.stories__mathJaxDemo.init ()
 
 
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
@@ -92,6 +97,9 @@ update msg_ model_ =
     
         ( Msg.Login__Provider___Callback msg, Model.Login__Provider___Callback params model ) ->
             pages.login__provider___callback.update params msg model
+    
+        ( Msg.Stories__MathJaxDemo msg, Model.Stories__MathJaxDemo params model ) ->
+            pages.stories__mathJaxDemo.update params msg model
 
         _ ->
             \_ _ _ -> ( model_, Effect.none )
@@ -126,6 +134,9 @@ view model_ =
     
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.view params model
+    
+        Model.Stories__MathJaxDemo params model ->
+            pages.stories__mathJaxDemo.view params model
 
 
 subscriptions : Model -> Shared.Model -> Url -> Key -> Sub Msg
@@ -157,6 +168,9 @@ subscriptions model_ =
     
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.subscriptions params model
+    
+        Model.Stories__MathJaxDemo params model ->
+            pages.stories__mathJaxDemo.subscriptions params model
 
 
 
@@ -172,6 +186,7 @@ pages :
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
     , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
+    , stories__mathJaxDemo : Bundle Gen.Params.Stories.MathJaxDemo.Params Pages.Stories.MathJaxDemo.Model Pages.Stories.MathJaxDemo.Msg
     }
 pages =
     { admin = bundle Pages.Admin.page Model.Admin Msg.Admin
@@ -182,6 +197,7 @@ pages =
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , study = bundle Pages.Study.page Model.Study Msg.Study
     , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
+    , stories__mathJaxDemo = bundle Pages.Stories.MathJaxDemo.page Model.Stories__MathJaxDemo Msg.Stories__MathJaxDemo
     }
 
 
