@@ -12,6 +12,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
+import Gen.Params.Stories.MathJaxDemo
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -25,6 +26,7 @@ type Route
     | NotFound
     | Study
     | Login__Provider___Callback { provider : String }
+    | Stories__MathJaxDemo
 
 
 fromUrl : Url -> Route
@@ -41,6 +43,7 @@ routes =
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Study Gen.Params.Study.parser
+    , Parser.map Stories__MathJaxDemo Gen.Params.Stories.MathJaxDemo.parser
     , Parser.map Login__Provider___Callback Gen.Params.Login.Provider_.Callback.parser
     ]
 
@@ -76,4 +79,7 @@ toHref route =
     
         Login__Provider___Callback params ->
             joinAsHref [ "login", params.provider, "callback" ]
+    
+        Stories__MathJaxDemo ->
+            joinAsHref [ "stories", "math-jax-demo" ]
 
