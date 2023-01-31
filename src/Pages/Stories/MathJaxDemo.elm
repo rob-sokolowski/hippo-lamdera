@@ -98,7 +98,9 @@ viewElements model =
             , Border.color Palette.black
             ]
             [ E.text "LHS:"
-            , viewRenderedCard demoText2 model.counter
+            , mathElements demoText2
+
+            --, viewRenderedCard demoText2 model.counter
             ]
         , column
             [ width fill
@@ -119,8 +121,21 @@ katexElements sourceText =
 
 katexHtml : String -> Html Msg
 katexHtml sourceText =
-    Html.p []
-        [ Scripta.API.compile sourceText ]
+    Html.node "math-container"
+        []
+        [ Expression.compile sourceText ]
+
+
+mathElements : String -> Element Msg
+mathElements content =
+    E.html (mathText content)
+
+
+mathText : String -> Html msg
+mathText content =
+    Html.node "math-container-2"
+        [ HA.property "content" (Json.Encode.string content) ]
+        []
 
 
 demoText =
@@ -140,35 +155,3 @@ $$
 
 Study hard!
 """
-
-
-mathText : String -> Html msg
-mathText content =
-    Html.node "math-text-2"
-        [ HA.property "content" (Json.Encode.string content) ]
-        []
-
-
-viewRenderedCard : String -> Int -> Element Msg
-viewRenderedCard text count =
-    let
-        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
-        settings counter =
-            { windowWidth = 500
-            , counter = counter
-            , selectedId = "--"
-            , selectedSlug = Nothing
-            , scale = 0.8
-            }
-
-        compiledResult : List (Element Msg)
-        compiledResult =
-            Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render)
-    in
-    column
-        [ Border.color Palette.blue
-        , Border.width 5
-        , width (px 500)
-        , height (px 500)
-        ]
-        [ E.html (mathText "Hello!") ]
