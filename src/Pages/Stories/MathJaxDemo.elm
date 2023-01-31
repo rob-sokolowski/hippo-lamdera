@@ -10,6 +10,7 @@ import Html exposing (Html)
 import Html.Attributes as HA
 import Json.Encode
 import Page
+import Pages.Stories.Expression as Expression
 import Palette
 import Request
 import Scripta.API
@@ -83,32 +84,61 @@ view model =
 
 viewElements : Model -> Element Msg
 viewElements model =
-    column
-        [ width (px 800)
+    row
+        [ width (px 1200)
         , height fill
+        , padding 5
+        , spacing 5
         , centerX
-        , centerY
-        , Border.width 1
-        , Border.color Palette.blue
         ]
-        [ el [ centerX ] <| E.text "MathJax is awesome!"
+        [ column
+            [ width fill
+            , height fill
+            , Border.width 1
+            , Border.color Palette.black
+            ]
+            [ E.text "LHS:"
+            , viewRenderedCard demoText2 model.counter
+            ]
+        , column
+            [ width fill
+            , height fill
+            , Border.width 1
+            , Border.color Palette.black
+            ]
+            [ E.text "RHS:"
+            , katexElements demoText2
+            ]
+        ]
 
-        --, el [ centerX, centerY ] (E.html (mathText demoText))
-        , viewRenderedCard demoText2 model.counter
-        ]
+
+katexElements : String -> Element Msg
+katexElements sourceText =
+    E.html (katexHtml sourceText)
+
+
+katexHtml : String -> Html Msg
+katexHtml sourceText =
+    Html.p []
+        [ Scripta.API.compile sourceText ]
 
 
 demoText =
-    """Hi hi hi, I like your face!
+    """Hi hi hi!!
 """
 
 
 demoText2 =
     """
+Pythagoras sez: $a^2 + b^2 = c^2$.  Extremely cool!
+
+This will be on the test:
+
 $$
-\\int_\\infty^\\infty e^{-x^2} dx = \\sqrt\\pi
+\\int_0^1 x^n dx = \\frac{1}{n+ 1}
 $$
 
+Study hard!
 """
 
 
