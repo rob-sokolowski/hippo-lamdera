@@ -48,11 +48,13 @@ type alias Model =
 init : Request.With Params -> ( Model, Effect Msg )
 init req =
     let
+        model : Model
         model =
             { authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
             }
 
+        url : Url
         url =
             req.url
 

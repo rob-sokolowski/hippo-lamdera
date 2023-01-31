@@ -15,6 +15,7 @@ import Request
 import Scripta.API
 import Scripta.Language exposing (Language(..))
 import Shared
+import Utils.Task exposing (send)
 import View exposing (View)
 
 
@@ -33,12 +34,16 @@ page shared req =
 
 
 type alias Model =
-    {}
+    { counter : Int
+    }
 
 
 init : ( Model, Effect Msg )
 init =
-    ( {}, Effect.none )
+    ( { counter = 0
+      }
+    , Effect.none
+    )
 
 
 
@@ -53,7 +58,7 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         Render scriptaMsg ->
-            ( model, Effect.none )
+            ( { model | counter = model.counter + 1 }, Effect.none )
 
 
 
@@ -79,7 +84,7 @@ view model =
 viewElements : Model -> Element Msg
 viewElements model =
     column
-        [ width (px 1200)
+        [ width (px 800)
         , height fill
         , centerX
         , centerY
@@ -87,21 +92,29 @@ viewElements model =
         , Border.color Palette.blue
         ]
         [ el [ centerX ] <| E.text "MathJax is awesome!"
-        , el [ centerX, centerY ] (E.html (mathText demoText))
+
+        --, el [ centerX, centerY ] (E.html (mathText demoText))
+        , viewRenderedCard demoText2 model.counter
         ]
 
 
 demoText =
+    """Hi hi hi, I like your face!
+"""
+
+
+demoText2 =
     """
 $$
 \\int_\\infty^\\infty e^{-x^2} dx = \\sqrt\\pi
 $$
+
 """
 
 
 mathText : String -> Html msg
 mathText content =
-    Html.node "math-text"
+    Html.node "math-text-2"
         [ HA.property "content" (Json.Encode.string content) ]
         []
 
@@ -117,7 +130,15 @@ viewRenderedCard text count =
             , selectedSlug = Nothing
             , scale = 0.8
             }
+
+        compiledResult : List (Element Msg)
+        compiledResult =
+            Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render)
     in
     column
-        []
-        (Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render))
+        [ Border.color Palette.blue
+        , Border.width 5
+        , width (px 500)
+        , height (px 500)
+        ]
+        [ E.html (mathText "Hello!") ]

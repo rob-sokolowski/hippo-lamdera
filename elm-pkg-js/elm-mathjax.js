@@ -3,6 +3,7 @@
 
 
 exports.init = async function init(app) {
+    console.log("Initializing elm-mathjax.js");
     var mathjaxJs = document.createElement('script')
     mathjaxJs.type = 'text/javascript'
     mathjaxJs.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js'
@@ -25,6 +26,7 @@ MathJax = {
             //  just an example and so we use an expedient method of
             //  accessing these for now.)
             //
+            console.log("MathJax startup!");
             const mathjax = MathJax._.mathjax.mathjax;
             const HTMLAdaptor = MathJax._.adaptors.HTMLAdaptor.HTMLAdaptor;
             const HTMLHandler = MathJax._.handlers.html.HTMLHandler.HTMLHandler;
