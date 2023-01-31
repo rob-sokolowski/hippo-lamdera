@@ -10,7 +10,9 @@ import Html exposing (Html)
 import Html.Attributes as HA
 import Json.Encode
 import Page
+import Pages.Stories.Data as Data
 import Pages.Stories.Expression as Expression
+import Pages.Stories.KaTeX exposing (DisplayMode(..), mathText)
 import Palette
 import Request
 import Scripta.API
@@ -35,13 +37,13 @@ page shared req =
 
 
 type alias Model =
-    { counter : Int
+    { sourceText : String
     }
 
 
 init : ( Model, Effect Msg )
 init =
-    ( { counter = 0
+    ( { sourceText = Data.initialText
       }
     , Effect.none
     )
@@ -52,14 +54,14 @@ init =
 
 
 type Msg
-    = Render Scripta.API.Msg
+    = Noop
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Render scriptaMsg ->
-            ( { model | counter = model.counter + 1 }, Effect.none )
+        Noop ->
+            ( model, Effect.none )
 
 
 
@@ -78,80 +80,17 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Story | MathJax"
-    , body = [ el [ width fill, height fill ] (viewElements model) ]
+    , body =
+        [ el
+            [ width fill
+            , height fill
+            ]
+            (E.html (viewHtml model))
+        ]
     }
 
 
-viewElements : Model -> Element Msg
-viewElements model =
-    row
-        [ width (px 1200)
-        , height fill
-        , padding 5
-        , spacing 5
-        , centerX
-        ]
-        [ column
-            [ width fill
-            , height fill
-            , Border.width 1
-            , Border.color Palette.black
-            ]
-            [ E.text "LHS:"
-            , mathElements demoText2
-
-            --, viewRenderedCard demoText2 model.counter
-            ]
-        , column
-            [ width fill
-            , height fill
-            , Border.width 1
-            , Border.color Palette.black
-            ]
-            [ E.text "RHS:"
-            , katexElements demoText2
-            ]
-        ]
-
-
-katexElements : String -> Element Msg
-katexElements sourceText =
-    E.html (katexHtml sourceText)
-
-
-katexHtml : String -> Html Msg
-katexHtml sourceText =
-    Html.node "math-container"
-        []
-        [ Expression.compile sourceText ]
-
-
-mathElements : String -> Element Msg
-mathElements content =
-    E.html (mathText content)
-
-
-mathText : String -> Html msg
-mathText content =
-    Html.node "math-container-2"
-        [ HA.property "content" (Json.Encode.string content) ]
-        []
-
-
-demoText =
-    """Hi hi hi!!
-"""
-
-
-demoText2 =
-    """
-Pythagoras sez: $a^2 + b^2 = c^2$.  Extremely cool!
-
-This will be on the test:
-
-$$
-\\int_0^1 x^n dx = \\frac{1}{n+ 1}
-$$
-
-Study hard!
-"""
+viewHtml : Model -> Html Msg
+viewHtml model =
+    Html.p []
+        [ Expression.compile model.sourceText ]

@@ -18,6 +18,7 @@ MathJax = {
     },
     startup: {
         ready: () => {
+            console.log("MathJax ready!");
             //
             //  Get some MathJax objects from the MathJax global
             //

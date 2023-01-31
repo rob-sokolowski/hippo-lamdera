@@ -37,7 +37,7 @@ render expr =
 
 {-|
 
-    > parse "Pythagoras sez $a^2 + b^2 = c^2$.  Yay!"
+    > parse "Pythagoras sez $fabbbb$.  Yay!"
     Just [Text ("Pythagoras sez "),InlineMath ("a^2 + b^2 = c^2"),Text (".  Yay!")]
 
 -}
