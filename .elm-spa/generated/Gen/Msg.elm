@@ -29,4 +29,5 @@ type Msg
     | NotFound Pages.NotFound.Msg
     | Study Pages.Study.Msg
     | Login__Provider___Callback Pages.Login.Provider_.Callback.Msg
+    | Stories__KatexDemo Pages.Stories.KatexDemo.Msg
 

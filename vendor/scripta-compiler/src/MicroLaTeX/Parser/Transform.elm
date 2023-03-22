@@ -1,14 +1,15 @@
-module MicroLaTeX.Parser.Transform exposing (transform)
+module MicroLaTeX.Parser.Transform exposing (handleImage, macroArg, pseudoBlockNamesWithContent, transform)
 
 import Compiler.Util
 import Dict exposing (Dict)
+import MicroLaTeX.Parser.Line
 import Parser as P
 import Parser.Line exposing (PrimitiveBlockType(..))
 import Parser.PrimitiveBlock exposing (PrimitiveBlock)
 
 
 pseudoBlockNamesWithContent =
-    [ "title", "section", "subsection", "subsubsection", "subheading", "setcounter" ]
+    [ "title", "section", "subsection", "subsubsection", "subheading", "setcounter", "contents", "endnotes", "image" ]
 
 
 sectionDict : Dict String String
@@ -21,6 +22,41 @@ sectionDict =
         ]
 
 
+{-|
+
+        The purpose of this function is to transform a primitive block
+        like the one coming from a single-line paragraph with text
+        "\section{Intro}" to an ordinary (blockType PBOrdinaryBlock)
+        block with name "section", args ["1"], and content ["Introduction"].
+        This is to coerce parsed MiniLaTeX source to our standard model.
+
+
+
+        { indent = 0
+        , lineNumber = 123
+        , position = 4561
+        , content = ["\section{Introduction}"]
+        , name = Nothing
+        , args = []
+        , properties = Dict.empty
+        , sourceText "\section{Introduction}"
+        , blockType = PBParagraph
+        }
+
+        -->
+
+        { indent = 0
+        , lineNumber = 123
+        , position = 4561
+        , content = ["Introduction"]
+        , name = Just "section"
+        , args = ["1"]
+        , properties = Dict.empty
+        , sourceText "\section{Introduction}"
+        , blockType = PBOrdinaryBlock
+        }
+
+-}
 transform : PrimitiveBlock -> PrimitiveBlock
 transform block =
     let
@@ -29,29 +65,30 @@ transform block =
                 |> List.map String.trimLeft
                 |> normalize
     in
-    case normalizedContent of
-        name_ :: _ ->
+    case ( block.blockType, normalizedContent ) of
+        ( PBVerbatim, _ ) ->
+            block
+
+        ( _, firstLine :: _ ) ->
             let
                 name =
-                    (if String.left 1 name_ == "\\" then
-                        String.dropLeft 1 name_ |> String.split "{" |> List.head |> Maybe.withDefault "---"
+                    if String.left 1 firstLine == "\\" then
+                        String.dropLeft 1 firstLine |> String.split "{" |> List.head |> Maybe.withDefault "---"
 
-                     else
-                        name_
-                    )
-                        |> String.trimRight
+                    else
+                        firstLine
 
-                macroExpr : Maybe String
-                macroExpr =
-                    case P.run (Compiler.Util.macroValParser name) name_ of
+                arg : Maybe String
+                arg =
+                    case P.run (Compiler.Util.macroValParserX name) firstLine of
                         Ok result ->
-                            Just result
+                            Just (result |> String.dropRight 1)
 
                         Err _ ->
                             Nothing
             in
             if List.member name pseudoBlockNamesWithContent then
-                handlePseudoBlockWithContent block name macroExpr
+                handlePseudoBlockWithContent name arg block
 
             else
                 block
@@ -60,28 +97,75 @@ transform block =
             block
 
 
-handlePseudoBlockWithContent block macroName macroExpr =
-    case macroExpr of
+macroArg : String -> String -> String
+macroArg macroName str =
+    String.replace ("\\" ++ macroName ++ "{") "" str |> String.dropRight 1
+
+
+handlePseudoBlockWithContent : String -> Maybe String -> PrimitiveBlock -> PrimitiveBlock
+handlePseudoBlockWithContent name maybeArg block =
+    case maybeArg of
         Nothing ->
-            block
+            { block
+                | content = [] -- ("| section " ++ val) :: [ str ]
+                , args = []
+                , name = Just name
+                , blockType = PBOrdinary
+            }
 
-        Just str ->
-            case Dict.get macroName sectionDict of
-                Nothing ->
-                    { block
-                        | content = ("| " ++ macroName) :: [ str ]
-                        , name = Just macroName
-                        , args = []
-                        , blockType = PBOrdinary
-                    }
+        Just arg ->
+            if name == "image" then
+                handleImage block
 
-                Just val ->
-                    { block
-                        | content = ("| section " ++ val) :: [ str ]
-                        , args = val :: []
-                        , name = Just "section"
-                        , blockType = PBOrdinary
-                    }
+            else
+                case Dict.get name sectionDict of
+                    Nothing ->
+                        { block
+                            | content = [ arg ] --("| " ++ macroName) :: [ str ]
+                            , name = Just name
+                            , args = [ arg ]
+                            , blockType = PBOrdinary
+                        }
+
+                    Just val ->
+                        { block
+                            | content = [ arg ] -- ("| section " ++ val) :: [ str ]
+                            , args = val :: []
+                            , name = Just "section"
+                            , blockType = PBOrdinary
+                        }
+
+
+handleImage block =
+    let
+        words =
+            List.head block.content
+                |> Maybe.withDefault "???"
+                |> String.replace "\\image{" ""
+                |> String.replace "}" ""
+                |> String.words
+
+        ( _, properties_ ) =
+            Parser.PrimitiveBlock.argsAndProperties (List.drop 1 words)
+
+        properties =
+            properties_
+
+        --case Dict.get "caption" properties_ of
+        --    Just _ ->
+        --        properties_
+        --
+        --    Nothing ->
+        --        -- Make sure that there is a caption entry
+        --        Dict.insert "caption" " " properties_
+    in
+    { block
+        | blockType = PBVerbatim
+        , args = []
+        , name = Just "image"
+        , properties = properties
+        , content = List.take 1 words
+    }
 
 
 normalize : List String -> List String

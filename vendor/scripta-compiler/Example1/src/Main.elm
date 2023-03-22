@@ -7,6 +7,7 @@ module Main exposing (main)
 -}
 
 import Browser
+import Data
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -58,22 +59,9 @@ displaySettings counter =
     }
 
 
-initialText =
-    """
-Pythagoras says: $a^2 + b^2 = c^2$
-
-This \\strong{will} be on the test:
-
-$$
-\\int_0^1 x^n dx = \\frac{1}{n+1}
-$$
-
-"""
-
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { sourceText = initialText
+    ( { sourceText = Data.initialText
       , count = 0
       , language = MicroLaTeXLang
       }

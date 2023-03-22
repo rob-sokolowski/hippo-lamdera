@@ -459,7 +459,7 @@ recoverFromError state =
         (LB _) :: (RB meta) :: _ ->
             Loop
                 { state
-                    | committed = errorMessage "[?]" :: state.committed
+                    | committed = errorMessage "{?}" :: state.committed
                     , stack = []
                     , tokenIndex = meta.index + 1
                     , messages = Helpers.prependMessage state.lineNumber "Brackets need to enclose something" state.messages
@@ -469,7 +469,7 @@ recoverFromError state =
         (LB _) :: (LB meta) :: _ ->
             Loop
                 { state
-                    | committed = errorMessage "[" :: state.committed
+                    | committed = errorMessage "{" :: state.committed
                     , stack = []
                     , tokenIndex = meta.index
                     , messages = Helpers.prependMessage state.lineNumber "You have consecutive left brackets" state.messages
@@ -479,7 +479,7 @@ recoverFromError state =
         (LB _) :: (S fName meta) :: rest ->
             Loop
                 { state
-                    | committed = errorMessage (errorSuffix rest) :: errorMessage2 ("[" ++ fName) :: state.committed
+                    | committed = errorMessage (errorSuffix rest) :: errorMessage2 ("{" ++ fName) :: state.committed
                     , stack = []
                     , tokenIndex = meta.index + 1
                     , messages = Helpers.prependMessage state.lineNumber "Missing right bracket" state.messages
@@ -489,7 +489,7 @@ recoverFromError state =
         (LB _) :: (W " " meta) :: _ ->
             Loop
                 { state
-                    | committed = errorMessage "[ - can't have space after the bracket " :: state.committed
+                    | committed = errorMessage "{ - can't have space after the brace " :: state.committed
                     , stack = []
                     , tokenIndex = meta.index + 1
                     , messages = Helpers.prependMessage state.lineNumber "Can't have space after left bracket - try [something ..." state.messages
@@ -499,7 +499,7 @@ recoverFromError state =
         (LB _) :: [] ->
             Done
                 { state
-                    | committed = errorMessage "[...?" :: state.committed
+                    | committed = errorMessage "..extra{?" :: state.committed
                     , stack = []
                     , tokenIndex = 0
                     , numberOfTokens = 0
@@ -510,10 +510,10 @@ recoverFromError state =
         (RB meta) :: _ ->
             Loop
                 { state
-                    | committed = errorMessage " extra ]?" :: state.committed
+                    | committed = errorMessage " extra }?" :: state.committed
                     , stack = []
                     , tokenIndex = meta.index + 1
-                    , messages = Helpers.prependMessage state.lineNumber "Extra right bracket(s)" state.messages
+                    , messages = Helpers.prependMessage state.lineNumber "Extra right braces(s)" state.messages
                 }
 
         -- dollar sign with no closing dollar sign
@@ -536,6 +536,28 @@ recoverFromError state =
                     , tokenIndex = meta.index + 1
                     , numberOfTokens = 0
                     , messages = Helpers.prependMessage state.lineNumber "opening dollar sign needs to be matched with a closing one" state.messages
+                }
+
+        -- left bracket with no closing right bracket
+        (LMathBracket meta) :: rest ->
+            let
+                content =
+                    Token.toString rest
+
+                message =
+                    if content == "" then
+                        "\\[ ? \\]"
+
+                    else
+                        "\\[ "
+            in
+            Loop
+                { state
+                    | committed = errorMessage message :: state.committed
+                    , stack = []
+                    , tokenIndex = meta.index + 1
+                    , numberOfTokens = 0
+                    , messages = Helpers.prependMessage state.lineNumber "left bracket needs to be matched with a right bracket" state.messages
                 }
 
         -- backtick with no closing backtick
@@ -561,7 +583,7 @@ recoverFromError state =
                 }
 
         _ ->
-            recoverFromError1 state
+            recoverFromError2 state
 
 
 errorSuffix rest =
@@ -591,8 +613,8 @@ makeId a b =
     String.fromInt a ++ "." ++ String.fromInt b
 
 
-recoverFromError1 : State -> Step State State
-recoverFromError1 state =
+recoverFromError2 : State -> Step State State
+recoverFromError2 state =
     let
         k =
             Symbol.balance <| Symbol.convertTokens2 (List.reverse state.stack)
@@ -614,7 +636,7 @@ recoverFromError1 state =
                         | stack = newStack
                         , tokenIndex = 0
                         , numberOfTokens = List.length newStack
-                        , committed = errorMessage "[" :: state.committed
+                        , committed = errorMessage "{" :: state.committed
 
                         -- TODO: the below supresses spurious error messages. But it might supress others as well.
                         --, messages = Helpers.prependMessage state.lineNumber ("Unmatched brackets: added " ++ String.fromInt k ++ " right brackets") state.messages
@@ -626,7 +648,7 @@ recoverFromError1 state =
                 | committed =
                     bracketError k
                         :: state.committed
-                , messages = Helpers.prependMessage state.lineNumber (bracketErrorAsString k) state.messages
+                , messages = Helpers.prependMessage state.lineNumber (braceErrorAsString k) state.messages
             }
 
 
@@ -637,23 +659,24 @@ bracketError k =
             brackets =
                 List.repeat -k "]" |> String.join ""
         in
-        errorMessage <| " " ++ brackets ++ " << !!Too many right brackets (" ++ String.fromInt -k ++ ")"
+        errorMessage <| " " ++ "\\" ++ brackets ++ "?"
+        -- ++ " extra { (" ++ String.fromInt -k ++ ")"
 
     else
         let
             brackets =
                 List.repeat k "[" |> String.join ""
         in
-        errorMessage <| " " ++ brackets ++ " << Too many left brackets (" ++ String.fromInt k ++ ")"
+        errorMessage <| " " ++ "\\" ++ brackets ++ "?"
 
 
-bracketErrorAsString : Int -> String
-bracketErrorAsString k =
+braceErrorAsString : Int -> String
+braceErrorAsString k =
     if k < 0 then
-        "Too many right brackets (" ++ String.fromInt -k ++ ")"
+        "Too many right braces (" ++ String.fromInt -k ++ ")"
 
     else
-        "Too many left brackets (" ++ String.fromInt k ++ ")"
+        "Too many left braces (" ++ String.fromInt k ++ ")"
 
 
 

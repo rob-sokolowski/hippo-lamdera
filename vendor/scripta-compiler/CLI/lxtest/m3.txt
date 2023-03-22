@@ -1,0 +1,5 @@
+\begin{equation}
+{\bf r}(t) = (x,y,z)(t)
+\end{equation}
+
+

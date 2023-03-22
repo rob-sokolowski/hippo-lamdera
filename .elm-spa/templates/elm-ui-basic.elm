@@ -8,13 +8,12 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import Gen.Params.{{module}} exposing (Params)
+import Gen.Params.Stories.KatexDemo exposing (Params)
 import Page
+import Palette
 import Request
 import Shared
-import Ui exposing (ColorTheme)
 import View exposing (View)
-import Page
 
 
 page : Shared.Model -> Request.With Params -> Page.With Model Msg
@@ -32,16 +31,14 @@ page shared req =
 
 
 type alias Model =
-    {
-        theme : ColorTheme
-    }
+    {}
 
 
 init : Shared.Model -> ( Model, Effect Msg )
 init shared =
-    ( {
-        theme = shared.selectedTheme
-    }, Effect.none )
+    ( {}
+    , Effect.none
+    )
 
 
 
@@ -71,19 +68,22 @@ subscriptions model =
 
 -- VIEW
 
+
 view : Model -> View Msg
 view model =
-    { title = "{{module}}"
+    { title = "Stories.KatexDemo"
     , body =
-        el
+        [ el
             [ width fill
             , height fill
-            , Background.color model.theme.deadspace
+            , Background.color Palette.white
             ]
             (viewElements model)
+        ]
     }
 
 
 viewElements : Model -> Element Msg
 viewElements model =
     E.text "{{module}}"
+

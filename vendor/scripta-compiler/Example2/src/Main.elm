@@ -1,11 +1,5 @@
 module Main exposing (main)
 
-{- This is a starter app which presents a text label, text field, and a button.
-   What you enter in the text field is echoed in the label.  When you press the
-   button, the text in the label is revers
-   This version uses `mdgriffith/elm-ui` for the view functions.
--}
-
 import Browser
 import Browser.Dom
 import Button
@@ -16,7 +10,6 @@ import Element.Background as Background
 import Element.Events
 import Element.Font as Font
 import Element.Input as Input
-import Experimental
 import File.Download
 import Html exposing (Html)
 import Html.Attributes
@@ -40,7 +33,7 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 40000 Tick
+    Time.every 500 Tick
 
 
 type alias Model =
@@ -85,21 +78,22 @@ type alias Flags =
     {}
 
 
-settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+settings : a -> { longEquationLimit : Float, windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
 settings counter =
     { windowWidth = 500
     , counter = counter
     , selectedId = "--"
     , selectedSlug = Nothing
     , scale = 0.8
+    , longEquationLimit = 300
     }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { input = Experimental.text
+    ( { input = Text.microLaTeXDemo
       , count = 0
-      , editRecord = Scripta.API.init Dict.empty MicroLaTeXLang Experimental.text
+      , editRecord = Scripta.API.init Dict.empty MicroLaTeXLang Text.microLaTeXDemo
       , language = MicroLaTeXLang
       , documentType = Example
       , currentTime = Time.millisToPosix 0
@@ -221,7 +215,7 @@ update msg model =
                 exportSettings_ =
                     { defaultSettings_ | isStandaloneDocument = True }
             in
-            if Scripta.API.getImageUrls model.editRecord.parsed == [] then
+            if Scripta.API.getImageUrls model.editRecord.tree == [] then
                 let
                     defaultSettings =
                         Scripta.API.defaultSettings
@@ -230,10 +224,10 @@ update msg model =
                         { defaultSettings | isStandaloneDocument = True }
 
                     exportText =
-                        Scripta.API.prepareContentForExport model.currentTime exportSettings model.editRecord.parsed
+                        Scripta.API.prepareContentForExport model.currentTime exportSettings model.editRecord.tree
 
                     fileName =
-                        Scripta.API.fileNameForExport model.editRecord.parsed
+                        Scripta.API.fileNameForExport model.editRecord.tree
                 in
                 ( model, download fileName exportText )
 
@@ -243,7 +237,7 @@ update msg model =
                     , tarFileState = PDF.TarFileProcessing
                     , message = "requesting TAR file"
                   }
-                , PDF.tarCmd model.currentTime exportSettings_ model.editRecord.parsed
+                , PDF.tarCmd model.currentTime exportSettings_ model.editRecord
                     |> Cmd.map PDF
                 )
 
@@ -265,7 +259,7 @@ update msg model =
                 exportSettings =
                     { defaultSettings | isStandaloneDocument = True }
             in
-            ( { model | ticks = 0, printingState = PDF.PrintProcessing, message = "requesting PDF" }, PDF.printCmd model.currentTime exportSettings model.editRecord.parsed |> Cmd.map PDF )
+            ( { model | ticks = 0, printingState = PDF.PrintProcessing, message = "requesting PDF" }, PDF.printCmd model.currentTime exportSettings model.editRecord |> Cmd.map PDF )
 
         GotTarFile result ->
             ( { model | printingState = PDF.PrintReady, message = "Got TarFile" }, Cmd.none )
@@ -311,6 +305,8 @@ view : Model -> Html Msg
 view model =
     layoutWith { options = [ focusStyle noFocus ] }
         [ bgGray 0.2 ]
+        --(mainColumn model)
+        -- (Element.el [ Font.color (Element.rgb 1 1 1) ] (Element.text "Howdy!"))
         (mainColumn model)
 
 
@@ -367,6 +363,8 @@ outputDisplay_ model =
         , scrollbarY
         , htmlId "scripta-output"
         ]
+        -- (Scripta.API.render (settings model.count) model.editRecord |> List.map (Element.map Render))
+        -- [ Element.el [ Font.color (Element.rgb 1 1 1) ] (Element.text "Howdy!") ]
         (Scripta.API.render (settings model.count) model.editRecord |> List.map (Element.map Render))
 
 
@@ -423,7 +421,7 @@ printToPDF model =
                 , Element.Events.onClick (ChangePrintingState PDF.PrintWaiting)
                 , elementAttribute "target" "_blank"
                 ]
-                { url = PDF.pdfServUrl ++ Scripta.API.fileNameForExport model.editRecord.parsed, label = el [] (text "Click for PDF") }
+                { url = PDF.pdfServUrl ++ Scripta.API.fileNameForExport model.editRecord.tree, label = el [] (text "Click for PDF") }
 
 
 tarFileButton : Model -> Element Msg
@@ -444,7 +442,7 @@ tarFileButton model =
                 , Element.Events.onClick (ChangeTarFileState PDF.TarFileProcessing)
                 , elementAttribute "target" "_blank"
                 ]
-                { url = PDF.tarArchiveUrl ++ (Scripta.API.fileNameForExport model.editRecord.parsed |> String.replace ".tex" ".tar"), label = el [] (text "Click for Tar file") }
+                { url = PDF.tarArchiveUrl ++ (Scripta.API.fileNameForExport model.editRecord.tree |> String.replace ".tex" ".tar"), label = el [] (text "Click for Tar file") }
 
 
 elementAttribute : String -> String -> Attribute msg
@@ -467,11 +465,11 @@ testFileButton documentType =
                     darkRed
     in
     Button.template
-        { tooltipText = "Load Test file"
+        { tooltipText = "Quantum mechanics example"
         , tooltipPlacement = above
         , attributes = [ Font.color white, Background.color bgColor, width (px buttonWidth) ]
         , msg = SetDocument
-        , label = "Test Doc"
+        , label = "Example"
         }
 
 

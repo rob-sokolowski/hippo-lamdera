@@ -12,6 +12,7 @@ module PDF exposing
 import Http
 import Json.Encode as E
 import Process
+import Render.Settings
 import Scripta.API
 import Task
 import Time
@@ -54,7 +55,7 @@ type TarFileState
     | TarFileReady
 
 
-printCmd : Time.Posix -> Scripta.API.Settings -> Scripta.API.SyntaxTree -> Cmd PDFMsg
+printCmd : Time.Posix -> Render.Settings.Settings -> Scripta.API.EditRecord -> Cmd PDFMsg
 printCmd currentTime settings forest =
     Cmd.batch
         [ Process.sleep 30 |> Task.perform (always (ChangePrintingState PrintProcessing))
@@ -62,25 +63,28 @@ printCmd currentTime settings forest =
         ]
 
 
-pdfCmd : Time.Posix -> Scripta.API.Settings -> Scripta.API.SyntaxTree -> Cmd PDFMsg
-pdfCmd currentTime settings syntaxTree =
+pdfCmd1 : Time.Posix -> Render.Settings.Settings -> Scripta.API.EditRecord -> Cmd PDFMsg
+pdfCmd1 currentTime settings editRecord =
     let
         imageUrls : List String
         imageUrls =
-            Scripta.API.getImageUrls syntaxTree
+            Scripta.API.getImageUrls editRecord.tree
+
+        packageNames =
+            Scripta.API.packageNames editRecord.tree
 
         fileName =
-            Scripta.API.fileNameForExport syntaxTree
+            Scripta.API.fileNameForExport editRecord.tree
 
         contentForExport =
-            Scripta.API.prepareContentForExport currentTime settings syntaxTree
+            Scripta.API.prepareContentForExport currentTime settings editRecord.tree
     in
     Cmd.batch
         [ Http.request
             { method = "POST"
             , headers = [ Http.header "Content-Type" "application/json" ]
             , url = pdfServUrl
-            , body = Http.jsonBody (encodeForPDF fileName contentForExport imageUrls)
+            , body = Http.jsonBody (encodeForPDF fileName contentForExport imageUrls packageNames)
             , expect = Http.expectString GotPdfLink
             , timeout = Nothing
             , tracker = Nothing
@@ -88,25 +92,43 @@ pdfCmd currentTime settings syntaxTree =
         ]
 
 
-tarCmd : Time.Posix -> Scripta.API.Settings -> Scripta.API.SyntaxTree -> Cmd PDFMsg
-tarCmd currentTime settings syntaxTree =
+pdfCmd : Time.Posix -> Render.Settings.Settings -> Scripta.API.EditRecord -> Cmd PDFMsg
+pdfCmd currentTime settings editRecord =
+    Cmd.batch
+        [ Http.request
+            { method = "POST"
+            , headers = [ Http.header "Content-Type" "application/json" ]
+            , url = pdfServUrl
+            , body = Http.jsonBody (Scripta.API.encodeForPDF currentTime settings editRecord.tree)
+            , expect = Http.expectString GotPdfLink
+            , timeout = Nothing
+            , tracker = Nothing
+            }
+        ]
+
+
+tarCmd : Time.Posix -> Render.Settings.Settings -> Scripta.API.EditRecord -> Cmd PDFMsg
+tarCmd currentTime settings editRecord =
     let
         imageUrls : List String
         imageUrls =
-            Scripta.API.getImageUrls syntaxTree
+            Scripta.API.getImageUrls editRecord.tree
+
+        packageNames =
+            Scripta.API.packageNames editRecord.tree
 
         fileName =
-            Scripta.API.fileNameForExport syntaxTree
+            Scripta.API.fileNameForExport editRecord.tree
 
         contentForExport =
-            Scripta.API.prepareContentForExport currentTime settings syntaxTree
+            Scripta.API.prepareContentForExport currentTime settings editRecord.tree
     in
     Cmd.batch
         [ Http.request
             { method = "POST"
             , headers = [ Http.header "Content-Type" "application/json" ]
             , url = tarArchiveUrl
-            , body = Http.jsonBody (encodeForPDF fileName contentForExport imageUrls)
+            , body = Http.jsonBody (encodeForPDF fileName contentForExport imageUrls packageNames)
             , expect = Http.expectString GotTarFile
             , timeout = Nothing
             , tracker = Nothing
@@ -128,10 +150,11 @@ gotLink model result =
             )
 
 
-encodeForPDF : String -> String -> List String -> E.Value
-encodeForPDF id content urlList =
+encodeForPDF : String -> String -> List String -> List String -> E.Value
+encodeForPDF id content urlList packageNames =
     E.object
         [ ( "id", E.string id )
         , ( "content", E.string content )
         , ( "urlList", E.list E.string urlList )
+        , ( "packageList", E.list E.string [] )
         ]

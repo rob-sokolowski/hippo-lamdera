@@ -1,5 +1,8 @@
 module Parser.MathMacro exposing
-    ( MathMacroDict
+    ( Deco(..)
+    , MacroBody(..)
+    , MathExpr(..)
+    , MathMacroDict
     , evalStr
     , makeMacroDict
     , parse
@@ -58,7 +61,10 @@ evalStr dict str =
             List.map (expandMacroWithDict dict) result |> printList
 
         Err _ ->
-            "Error: " ++ str
+            -- the intent of evalStr is to expand macros.  So if something
+            -- goes wrong with the process, just return the input string.
+            -- TODO: This solves the problem of false error reporting, but I don't like the solution.
+            str
 
 
 parseMany : String -> Result (List (DeadEnd Context Problem)) (List MathExpr)

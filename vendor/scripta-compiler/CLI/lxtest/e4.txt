@@ -1,0 +1,11 @@
+\begin{A}
+abc NotOK (sourceText for block A)
+def
+
+\begin{C}
+pqr
+stu
+\end{C}
+
+xyz
+\end{A}
