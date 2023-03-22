@@ -108,10 +108,6 @@ processGrade now c g =
     { c | frequency = freq, nextPromptSchedFor = next }
 
 
-
--- TODO: This type def feels a bit out of place here.
-
-
 type alias StudySessionSummary =
     { usersTotalCardCount : Int
     , cardsToStudy : Int

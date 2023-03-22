@@ -54,8 +54,8 @@ type BackendMsg
     = AuthBackendMsg Auth.Common.BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
-    | NoOpBackendMsg
     | Tick Time.Posix
+    | Roll ClientId (List CardEnvelope)
 
 
 type ToFrontend
