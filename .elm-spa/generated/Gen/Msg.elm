@@ -8,7 +8,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
-import Gen.Params.Stories.MathJaxDemo
+import Gen.Params.Stories.KatexDemo
 import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
@@ -17,7 +17,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
-import Pages.Stories.MathJaxDemo
+import Pages.Stories.KatexDemo
 
 
 type Msg
@@ -29,5 +29,4 @@ type Msg
     | NotFound Pages.NotFound.Msg
     | Study Pages.Study.Msg
     | Login__Provider___Callback Pages.Login.Provider_.Callback.Msg
-    | Stories__MathJaxDemo Pages.Stories.MathJaxDemo.Msg
 
