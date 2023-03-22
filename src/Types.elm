@@ -56,6 +56,8 @@ type BackendMsg
     | RenewSession UserId SessionId ClientId Time.Posix
     | NoOpBackendMsg
     | Tick Time.Posix
+      -- Note: This is a shortcut for Evergreen ease
+    | EVERGREEN_NOOP
 
 
 type ToFrontend
