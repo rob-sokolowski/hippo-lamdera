@@ -84,17 +84,11 @@ update msg model =
         Tick time ->
             ( { model | now = time }, Cmd.none )
 
-        NoOpBackendMsg ->
-            ( model, Cmd.none )
-
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
-        send v =
-            ( model, send_ v )
-
-        send_ v =
+        sendToFrontEnd_ v =
             sendToFrontend clientId v
     in
     case msg of
@@ -133,7 +127,7 @@ updateFromFrontend sessionId clientId msg model =
                                     )
                                     model.cards
                     in
-                    ( model, send_ (PageMsg (Gen.Msg.Admin (Pages.Admin.GotAdminSummary adminSummaries))) )
+                    ( model, sendToFrontEnd_ (PageMsg (Gen.Msg.Admin (Pages.Admin.GotAdminSummary adminSummaries))) )
 
                 _ ->
                     ( model, Cmd.none )
@@ -158,7 +152,7 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( { model | cards = cards_, nextCardId = model.nextCardId + 1 }
             , Cmd.batch
-                [ send_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId)))
+                [ sendToFrontEnd_ (PageMsg (Gen.Msg.Cards (Pages.Cards.GotCard <| Success cardId)))
                 ]
             )
 
@@ -178,7 +172,7 @@ updateFromFrontend sessionId clientId msg model =
                 asList =
                     Dict.values userCards
             in
-            ( model, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))) )
+            ( model, sendToFrontEnd_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))) )
 
         FetchUsersCatalog_Catalog user ->
             -- Fetches all cards belonging to a user, note this doesn't take time into account!
@@ -193,7 +187,7 @@ updateFromFrontend sessionId clientId msg model =
                 asList =
                     Dict.values userCards
             in
-            ( model, send_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotUserCatalog <| Success asList))) )
+            ( model, sendToFrontEnd_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotUserCatalog <| Success asList))) )
 
         DeleteCard_Catalog cardId userId ->
             let
@@ -217,7 +211,7 @@ updateFromFrontend sessionId clientId msg model =
                             else
                                 model.cards
             in
-            ( { model | cards = newCards }, send_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotDeleteCardResponse cardId))) )
+            ( { model | cards = newCards }, sendToFrontEnd_ (PageMsg (Gen.Msg.Catalog (Pages.Catalog.GotDeleteCardResponse cardId))) )
 
         UserSubmitGrade_Study cardId grade_ ->
             -- We've received a msg to apply this grade to the specified cardId
@@ -238,7 +232,7 @@ updateFromFrontend sessionId clientId msg model =
                         cards =
                             Dict.insert c.id c model.cards
                     in
-                    ( { model | cards = cards }, send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))) )
+                    ( { model | cards = cards }, sendToFrontEnd_ (PageMsg (Gen.Msg.Study (Pages.Study.GotGradedResponse <| Success c.id))) )
 
         FetchUsersStudySummary_Study user ->
             let
@@ -254,31 +248,18 @@ updateFromFrontend sessionId clientId msg model =
                     }
             in
             ( model
-            , send_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
+            , sendToFrontEnd_ (PageMsg (Gen.Msg.Study (Pages.Study.GotStudySessionSummary <| Success studySessionSummary)))
             )
 
 
-renewSession email sid cid =
-    Time.now |> Task.perform (RenewSession email sid cid)
 
-
-updateUser : UserFull -> Model -> Model
-updateUser user model =
-    { model | users = model.users |> Dict.update user.id (Maybe.map (always user)) }
-
-
-profileByUsername username model =
-    model.users |> Dict.find (\k u -> u.username == username) |> Maybe.map (Tuple.second >> Api.User.toProfile)
-
-
-profileByEmail email model =
-    model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
-
-
-
--- utiliity funcs
+-- begin region: utility funcs
 
 
 isCardScheduled : Time.Posix -> CardEnvelope -> Bool
 isCardScheduled now cardEnv =
     Time.posixToMillis now >= Time.posixToMillis cardEnv.nextPromptSchedFor
+
+
+
+-- end region: utility funcs
