@@ -2,13 +2,15 @@ module Render.Markup exposing (getMessages, renderFromAST, renderFromString, ren
 
 import Compiler.Acc exposing (Accumulator)
 import Element exposing (Element)
+import Element.Background
 import Element.Font as Font
 import Markup
 import Parser.Block exposing (ExpressionBlock)
-import Parser.BlockUtil as BlockUtil
 import Parser.Forest exposing (Forest)
 import Parser.Settings
+import Parser.Transform as BlockUtil
 import Render.Block
+import Render.Color
 import Render.Msg exposing (MarkupMsg)
 import Render.Settings exposing (Settings)
 import Scripta.Language exposing (Language)
@@ -41,10 +43,10 @@ renderTree count accumulator settings tree =
                 |> Maybe.withDefault "---"
     in
     if List.member blockName Parser.Settings.numberedBlockNames then
-        Element.el [ Font.italic ] ((Tree.map (Render.Block.render count accumulator settings) >> unravelFlat) tree)
+        Element.el [ Font.italic ] ((Tree.map (Render.Block.render count accumulator settings) >> unravel accumulator.language settings) tree)
 
     else
-        (Tree.map (Render.Block.render count accumulator settings) >> unravel) tree
+        (Tree.map (Render.Block.render count accumulator settings) >> unravel accumulator.language settings) tree
 
 
 getMessages : Forest ExpressionBlock -> List String
@@ -56,10 +58,8 @@ getMessages syntaxTree =
         |> List.concat
 
 
-{-| Comment on this! Get better name.
--}
-unravelFlat : Tree (Element MarkupMsg) -> Element MarkupMsg
-unravelFlat tree =
+unravel : Language -> Settings -> Tree (Element MarkupMsg) -> Element MarkupMsg
+unravel lang settings tree =
     let
         children =
             Tree.children tree
@@ -68,23 +68,30 @@ unravelFlat tree =
         Tree.label tree
 
     else
+        let
+            root : Element MarkupMsg
+            root =
+                Tree.label tree
+        in
         Element.column []
             --  Render.Settings.leftIndentation,
-            (Tree.label tree :: List.map unravel children)
+            [ root
+            , Element.column
+                [ Element.paddingEach
+                    { top = settings.topMarginForChildren
+                    , left =
+                        if lang == Scripta.Language.MicroLaTeXLang then
+                            0
 
-
-unravel : Tree (Element MarkupMsg) -> Element MarkupMsg
-unravel tree =
-    let
-        children =
-            Tree.children tree
-    in
-    if List.isEmpty children then
-        Tree.label tree
-
-    else
-        Element.column []
-            --  Render.Settings.leftIndentation,
-            [ Tree.label tree
-            , Element.column [ Element.paddingEach { top = Render.Settings.topMarginForChildren, left = Render.Settings.leftIndent, right = 0, bottom = 0 } ] (List.map unravel children)
+                        else
+                            settings.leftIndentation
+                    , right = 0
+                    , bottom = 0
+                    }
+                ]
+                (List.map (unravel lang settings) children)
             ]
+
+
+leftPadding p =
+    Element.paddingEach { left = p, right = 0, top = 0, bottom = 0 }

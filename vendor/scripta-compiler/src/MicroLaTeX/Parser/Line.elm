@@ -1,7 +1,9 @@
 module MicroLaTeX.Parser.Line exposing
     ( Line
     , classify
+    , getNameAndArgString
     , getNameAndArgs
+    , getNameAndArgsFromString
     , isEmpty
     , isNonEmptyBlank
     , prefixLength
@@ -14,7 +16,7 @@ import Parser exposing ((|.), (|=), Parser)
 
 {-|
 
-    - ident:      the number of blanks before the first non-blank
+    - indent:     the number of blanks before the first non-blank
     - prefix:     the string of blanks preceding the first non-blank
     - content:    the original string with the prefix removed
     - lineNumber: the line number in the source text
@@ -71,6 +73,7 @@ prefixParser position lineNumber =
         |= Parser.getSource
 
 
+getNameAndArgs : { a | content : String } -> ( Maybe String, List String )
 getNameAndArgs line =
     let
         normalizedLine =
@@ -89,3 +92,45 @@ getNameAndArgs line =
                         Nothing
     in
     ( name, Compiler.Util.getBracketedItems normalizedLine )
+
+
+getNameAndArgsFromString : String -> ( Maybe String, List String )
+getNameAndArgsFromString line =
+    let
+        normalizedLine =
+            String.trim line
+
+        name =
+            case Compiler.Util.getMicroLaTeXItem "begin" normalizedLine of
+                Just str ->
+                    Just str
+
+                Nothing ->
+                    if normalizedLine == "$$" then
+                        Just "math"
+
+                    else
+                        Nothing
+    in
+    ( name, Compiler.Util.getBracketedItems normalizedLine )
+
+
+getNameAndArgString : Line -> ( Maybe String, Maybe String )
+getNameAndArgString line =
+    let
+        normalizedLine =
+            String.trim line.content
+
+        name =
+            case Compiler.Util.getMicroLaTeXItem "begin" normalizedLine of
+                Just str ->
+                    Just str
+
+                Nothing ->
+                    if normalizedLine == "$$" then
+                        Just "math"
+
+                    else
+                        Nothing
+    in
+    ( name, Compiler.Util.getBracketedItem normalizedLine )

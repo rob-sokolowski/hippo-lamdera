@@ -17,7 +17,7 @@ import Lamdera exposing (sendToBackend)
 import Page
 import Palette exposing (..)
 import Request
-import Scripta.API
+import Scripta.API exposing (DisplaySettings)
 import Scripta.Language exposing (Language(..))
 import Shared
 import Time exposing (toHour, toMinute, toSecond, utc)
@@ -185,13 +185,14 @@ view _ model =
 viewRenderedCard : String -> Int -> Element Msg
 viewRenderedCard text count =
     let
-        settings : a -> { windowWidth : number, counter : a, selectedId : String, selectedSlug : Maybe b, scale : Float }
+        settings : Int -> DisplaySettings
         settings counter =
             { windowWidth = 500
             , counter = counter
             , selectedId = "--"
             , selectedSlug = Nothing
             , scale = 0.8
+            , longEquationLimit = 100.0
             }
     in
     column

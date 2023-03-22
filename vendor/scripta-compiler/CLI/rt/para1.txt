@@ -1,0 +1,25 @@
+\section{Introduction}
+
+This \italic{is} a test.
+
+Pythagoras sez: $a^2 + b^2 = c^2$. Yes!
+
+Turing sez: `a[i] = 0` for all $i$.
+
+\begin{theorem}
+There are infinitely many primes
+
+\begin{equation}
+p \equiv 1 \text{ mod } 4
+\end{equation}
+
+\end{theorem}
+
+Its a nice day!
+
+\item Bread
+
+\item Cheese
+
+
+

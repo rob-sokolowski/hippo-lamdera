@@ -46,8 +46,13 @@ type alias State a =
 
 type Mode
     = Normal
-    | InMath
+    | InMath InLineKind
     | InCode
+
+
+type InLineKind
+    = ILDollar
+    | ILBracket
 
 
 type TokenType
@@ -480,7 +485,10 @@ newMode token currentMode =
         Normal ->
             case token of
                 MathToken _ ->
-                    InMath
+                    InMath ILDollar
+
+                LMathBracket _ ->
+                    InMath ILBracket
 
                 CodeToken _ ->
                     InCode
@@ -488,13 +496,27 @@ newMode token currentMode =
                 _ ->
                     Normal
 
-        InMath ->
+        InMath ILDollar ->
             case token of
                 MathToken _ ->
                     Normal
 
+                RMathBracket _ ->
+                    InMath ILDollar
+
                 _ ->
-                    InMath
+                    InMath ILDollar
+
+        InMath ILBracket ->
+            case token of
+                MathToken _ ->
+                    InMath ILBracket
+
+                RMathBracket _ ->
+                    Normal
+
+                _ ->
+                    InMath ILBracket
 
         InCode ->
             case token of
@@ -515,8 +537,11 @@ tokenParser mode start index =
         Normal ->
             tokenParser_ start index
 
-        InMath ->
+        InMath ILDollar ->
             mathParser_ start index
+
+        InMath ILBracket ->
+            mathParser2_ start index
 
         InCode ->
             codeParser_ start index
@@ -560,6 +585,19 @@ mathParser_ start index =
         ]
 
 
+mathParser2_ : Int -> Int -> TokenParser
+mathParser2_ start index =
+    Parser.oneOf
+        [ leftMathBracketParser start index
+        , rightMathBracketParser start index
+        , mathTextParser start index
+
+        --, mathParser start index
+        --,
+        , whiteSpaceParser start index
+        ]
+
+
 codeParser_ : Int -> Int -> TokenParser
 codeParser_ start index =
     Parser.oneOf
@@ -577,7 +615,7 @@ whiteSpaceParser start index =
 
 backslashParser : Int -> Int -> TokenParser
 backslashParser start index =
-    -- Parser.oneOf [ Parser.backtrackable (backslashParser2 start index), backslashParser1 start index ]
+    -- Expression.oneOf [ Expression.backtrackable (backslashParser2 start index), backslashParser1 start index ]
     -- backslashParser1 start index
     Parser.oneOf [ Parser.backtrackable (backslashParser2 start index), backslashParser1 start index ]
 
@@ -602,7 +640,7 @@ first p q =
 --decide data =
 --    let
 --        content = data.content { begin = start, end = start + data.end - data.begin - 1, index = index, id = makeId start index }
--- |> Parser.map (\data -> S data.content { begin = start, end = start + data.end - data.begin - 1, index = index, id = makeId start index })
+-- |> Expression.map (\data -> S data.content { begin = start, end = start + data.end - data.begin - 1, index = index, id = makeId start index })
 
 
 leftBraceParser : Int -> Int -> TokenParser

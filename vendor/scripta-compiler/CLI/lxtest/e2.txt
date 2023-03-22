@@ -1,0 +1,9 @@
+\begin{A}
+abc OK
+def
+\end{B}
+
+\begin{A}
+pqr
+stu
+\end{A}

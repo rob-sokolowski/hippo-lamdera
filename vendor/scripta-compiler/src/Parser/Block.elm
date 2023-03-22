@@ -1,6 +1,6 @@
 module Parser.Block exposing
     ( BlockType(..), ExpressionBlock(..)
-    , ExpressionBlockData, RawBlock, condenseUrls, empty, empty_, getContent, getName, setName
+    , ExpressionBlockData, RawBlock, condenseUrls, empty, empty_, getBlockType, getContent, getExprs, getLineNumber, getName, getType, getVerbatimContent, setLineNumber, setName
     )
 
 {-| Source text is parsed into a tree of IntermediateBlocks, where the tree
@@ -18,7 +18,7 @@ consumes trees of ExpressionBlocks to produce Html.
 -}
 
 import Dict exposing (Dict)
-import Either exposing (Either)
+import Either exposing (Either(..))
 import Parser.Expr exposing (Expr)
 
 
@@ -43,6 +43,7 @@ type alias ExpressionBlockData =
     , content : Either String (List Expr)
     , messages : List String
     , sourceText : String
+    , error : Maybe { error : String }
     }
 
 
@@ -61,7 +62,33 @@ type ExpressionBlock
         , content : Either String (List Expr)
         , messages : List String
         , sourceText : String
+        , error : Maybe { error : String }
         }
+
+
+getExprs : ExpressionBlock -> List Expr
+getExprs (ExpressionBlock { content }) =
+    case content of
+        Left _ ->
+            []
+
+        Right stuff ->
+            stuff
+
+
+getLineNumber : ExpressionBlock -> Int
+getLineNumber (ExpressionBlock { lineNumber }) =
+    lineNumber
+
+
+setLineNumber : Int -> ExpressionBlock -> ExpressionBlock
+setLineNumber k (ExpressionBlock data) =
+    ExpressionBlock { data | lineNumber = k }
+
+
+getType : ExpressionBlock -> BlockType
+getType (ExpressionBlock { blockType }) =
+    blockType
 
 
 empty =
@@ -81,12 +108,18 @@ empty_ =
     , content = Either.Left "-"
     , messages = []
     , sourceText = "-"
+    , error = Nothing
     }
 
 
 setName : String -> ExpressionBlock -> ExpressionBlock
 setName name (ExpressionBlock data) =
     ExpressionBlock { data | name = Just name }
+
+
+getBlockType : ExpressionBlock -> BlockType
+getBlockType (ExpressionBlock { blockType }) =
+    blockType
 
 
 getContent : ExpressionBlock -> List Expr
@@ -97,6 +130,16 @@ getContent (ExpressionBlock { content }) =
 
         Either.Right exprs ->
             exprs
+
+
+getVerbatimContent : ExpressionBlock -> String
+getVerbatimContent (ExpressionBlock { content }) =
+    case content of
+        Either.Left str ->
+            str
+
+        Either.Right _ ->
+            ""
 
 
 

@@ -97,6 +97,9 @@ update msg_ model_ =
     
         ( Msg.Login__Provider___Callback msg, Model.Login__Provider___Callback params model ) ->
             pages.login__provider___callback.update params msg model
+    
+        ( Msg.Stories__KatexDemo msg, Model.Stories__KatexDemo params model ) ->
+            pages.stories__katexDemo.update params msg model
 
         _ ->
             \_ _ _ -> ( model_, Effect.none )
@@ -132,8 +135,8 @@ view model_ =
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.view params model
     
-        Model.Stories__KatexDemo params ->
-            pages.stories__katexDemo.view params ()
+        Model.Stories__KatexDemo params model ->
+            pages.stories__katexDemo.view params model
 
 
 subscriptions : Model -> Shared.Model -> Url -> Key -> Sub Msg
@@ -166,8 +169,8 @@ subscriptions model_ =
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.subscriptions params model
     
-        Model.Stories__KatexDemo params ->
-            pages.stories__katexDemo.subscriptions params ()
+        Model.Stories__KatexDemo params model ->
+            pages.stories__katexDemo.subscriptions params model
 
 
 
@@ -183,7 +186,7 @@ pages :
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
     , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
-    , stories__katexDemo : Static Gen.Params.Stories.KatexDemo.Params
+    , stories__katexDemo : Bundle Gen.Params.Stories.KatexDemo.Params Pages.Stories.KatexDemo.Model Pages.Stories.KatexDemo.Msg
     }
 pages =
     { admin = bundle Pages.Admin.page Model.Admin Msg.Admin
@@ -194,7 +197,7 @@ pages =
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , study = bundle Pages.Study.page Model.Study Msg.Study
     , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
-    , stories__katexDemo = static Pages.Stories.KatexDemo.view Model.Stories__KatexDemo
+    , stories__katexDemo = bundle Pages.Stories.KatexDemo.page Model.Stories__KatexDemo Msg.Stories__KatexDemo
     }
 
 

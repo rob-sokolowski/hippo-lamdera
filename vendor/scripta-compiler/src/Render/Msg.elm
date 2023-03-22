@@ -1,9 +1,17 @@
-module Render.Msg exposing (Handling(..), MarkupMsg(..), SolutionState(..))
+module Render.Msg exposing (MarkupMsg(..), SolutionState(..), Handling(..))
+
+{-| The Render.Msg.MarkupMsg type is need for synchronization of the source and rendered
+text when using the Codemirror editor.
+
+@docs MarkupMsg, SolutionState, Handling
+
+-}
 
 
+{-| -}
 type MarkupMsg
     = SendMeta { begin : Int, end : Int, index : Int, id : String }
-    | SendId String
+    | SendLineNumber { begin : Int, end : Int }
     | SelectId String
     | HighlightId String
     | GetPublicDocument Handling String
@@ -12,11 +20,13 @@ type MarkupMsg
     | ProposeSolution SolutionState
 
 
+{-| -}
 type Handling
     = MHStandard
     | MHAsCheatSheet
 
 
+{-| -}
 type SolutionState
     = Unsolved
     | Solved String -- Solved SolutionId

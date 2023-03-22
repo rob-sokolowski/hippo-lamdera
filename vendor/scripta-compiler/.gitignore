@@ -4,3 +4,7 @@ elm-stuff
 **/*/node_modules/
 node_modules/
 **/*/main.js
+src/TestStuff2.elm
+mkdocs/site/
+CLI/*.txt
+macros.txt

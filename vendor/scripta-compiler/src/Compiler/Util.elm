@@ -1,18 +1,18 @@
 module Compiler.Util exposing
-    ( compressWhitespace
-    , depth
+    ( depth
     , dropLast
     , eraseItem
+    , getBracedItems
     , getBracketedItem
     , getBracketedItems
     , getItem
     , getMarkdownImageArgs
     , getMicroLaTeXItem
     , macroValParser
+    , macroValParserX
     , many
     , middle
     , normalizedWord
-    , removeNonAlphaNum
     , size
     , transformLabel
     )
@@ -21,6 +21,7 @@ import Parser exposing ((|.), (|=), Parser, Step(..), loop, map, oneOf, spaces, 
 import Regex
 import Scripta.Language exposing (Language(..))
 import Tree exposing (Tree)
+import Utility
 
 
 normalizedWord : List String -> String
@@ -28,10 +29,8 @@ normalizedWord words =
     words
         |> List.map
             (String.toLower
-                -->> compressWhitespace
-                >> removeNonAlphaNum
+                >> Utility.removeNonAlphaNum
             )
-        -- >> String.replace " " "-")
         |> String.join "-"
 
 
@@ -49,33 +48,13 @@ middle list =
     list |> List.drop 1 |> dropLast
 
 
-userReplace : String -> (Regex.Match -> String) -> String -> String
-userReplace userRegex replacer string =
-    case Regex.fromString userRegex of
-        Nothing ->
-            string
-
-        Just regex ->
-            Regex.replace regex replacer string
-
-
 transformLabel : String -> String
 transformLabel str =
     let
         normalize m =
             m |> List.map (Maybe.withDefault "") |> String.join "" |> String.trim
     in
-    userReplace "\\[label(.*)\\]" (\m -> "\\label{" ++ (m.submatches |> normalize) ++ "}") str
-
-
-compressWhitespace : String -> String
-compressWhitespace string =
-    userReplace "\\s\\s+" (\m -> " ") string
-
-
-removeNonAlphaNum : String -> String
-removeNonAlphaNum string =
-    userReplace "[^a-zA-Z0-9 ]" (\_ -> "") string
+    Utility.userReplace "\\[label(.*)\\]" (\m -> "\\label{" ++ (m.submatches |> normalize) ++ "}") str
 
 
 {-| Apply a parser zero or more times and return a list of the results.
@@ -189,6 +168,16 @@ getBracketedItem str =
             Nothing
 
 
+getBracedItems : String -> List String
+getBracedItems str =
+    case Parser.run (many bracedItemParser) str of
+        Ok val ->
+            val
+
+        Err _ ->
+            []
+
+
 {-|
 
     > eraseItem MicroLaTeXLang "foo" "bar" "... whatever\\foo{bar}\n, whatever else ..."
@@ -234,7 +223,7 @@ runParser stringParser str default =
 
 {-|
 
-    > Parser.run macroValParser "... whatever ... \\foo{bar} ... whatever else ..."
+    > Expression.run macroValParser "... whatever ... \\foo{bar} ... whatever else ..."
     Ok "bar"
 
 -}
@@ -245,7 +234,21 @@ macroValParser macroName =
         |. Parser.symbol ("\\" ++ macroName ++ "{")
         |. Parser.spaces
         |= Parser.getOffset
-        |. Parser.chompUntil "}"
+        |. Parser.chompUntilEndOr "}"
+        |= Parser.getOffset
+        |= Parser.getSource
+    )
+        |> Parser.map String.trim
+
+
+macroValParserX : String -> Parser String
+macroValParserX macroName =
+    (Parser.succeed String.slice
+        |. Parser.chompUntil ("\\" ++ macroName ++ "{")
+        |. Parser.symbol ("\\" ++ macroName ++ "{")
+        |. Parser.spaces
+        |= Parser.getOffset
+        |. Parser.chompUntilEndOr "!!!!"
         |= Parser.getOffset
         |= Parser.getSource
     )
@@ -276,6 +279,16 @@ parenthesizedItemParser =
     itemParser "(" ")"
 
 
+bracedItemParser : Parser String
+bracedItemParser =
+    itemParser "{" "}"
+
+
+bracedItemsParser : Parser (List String)
+bracedItemsParser =
+    many bracedItemParser
+
+
 itemParser : String -> String -> Parser String
 itemParser leftDelimiter rightDelimiter =
     (Parser.succeed String.slice
@@ -292,7 +305,7 @@ itemParser leftDelimiter rightDelimiter =
 
 {-|
 
-    > Parser.run macroValParser "... whatever ... \\foo{bar} ... whatever else ..."
+    > Expression.run macroValParser "... whatever ... \\foo{bar} ... whatever else ..."
     Ok "bar"
 
 -}
