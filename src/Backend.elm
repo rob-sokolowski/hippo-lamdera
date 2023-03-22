@@ -29,7 +29,8 @@ type alias Model =
 
 
 ticMs =
-    10000000
+    -- This incremental "now-ish", one second should be good enough for our purposes
+    1000
 
 
 app : { init : ( Model, Cmd BackendMsg ), update : BackendMsg -> Model -> ( Model, Cmd BackendMsg ), updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg ), subscriptions : Model -> Sub BackendMsg }
