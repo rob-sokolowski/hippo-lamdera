@@ -87,6 +87,9 @@ update msg model =
         Roll clientId cards ->
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success cards))) )
 
+        EVERGREEN_NOOP ->
+            ( model, Cmd.none )
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =

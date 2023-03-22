@@ -56,6 +56,8 @@ type BackendMsg
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
     | Roll ClientId (List CardEnvelope)
+      -- Note: This is a shortcut for Evergreen ease
+    | EVERGREEN_NOOP
 
 
 type ToFrontend
