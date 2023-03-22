@@ -8,7 +8,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
-import Gen.Params.Stories.MathJaxDemo
+import Gen.Params.Stories.KatexDemo
 import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
@@ -17,7 +17,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
-import Pages.Stories.MathJaxDemo
+import Pages.Stories.KatexDemo
 
 
 type Model
@@ -30,5 +30,5 @@ type Model
     | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
     | Study Gen.Params.Study.Params Pages.Study.Model
     | Login__Provider___Callback Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model
-    | Stories__MathJaxDemo Gen.Params.Stories.MathJaxDemo.Params Pages.Stories.MathJaxDemo.Model
+    | Stories__KatexDemo Gen.Params.Stories.KatexDemo.Params
 
