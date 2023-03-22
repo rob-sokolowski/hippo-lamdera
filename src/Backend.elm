@@ -21,7 +21,7 @@ import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
-import Utils.Task as Utils
+import Utils.Task as Utils exposing (send)
 
 
 type alias Model =
@@ -84,12 +84,15 @@ update msg model =
         Tick time ->
             ( { model | now = time }, Cmd.none )
 
+        Roll clientId cards ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success cards))) )
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
-        sendToFrontEnd_ v =
-            sendToFrontend clientId v
+        sendToFrontEnd_ msg_ =
+            sendToFrontend clientId msg_
     in
     case msg of
         AuthToBackend authToBackend ->
@@ -169,10 +172,11 @@ updateFromFrontend sessionId clientId msg model =
                         )
                         model.cards
 
+                asList : List CardEnvelope
                 asList =
                     Dict.values userCards
             in
-            ( model, sendToFrontEnd_ (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success asList))) )
+            ( model, send <| Roll clientId asList )
 
         FetchUsersCatalog_Catalog user ->
             -- Fetches all cards belonging to a user, note this doesn't take time into account!

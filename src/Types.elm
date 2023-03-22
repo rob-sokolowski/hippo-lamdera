@@ -55,6 +55,7 @@ type BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
+    | Roll ClientId (List CardEnvelope)
 
 
 type ToFrontend
