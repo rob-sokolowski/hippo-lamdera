@@ -4,6 +4,7 @@ module Parser.Settings exposing (Arity, blockData, numberedBlockNames)
 numberedBlockNames =
     [ "q"
     , "axiom"
+    , "box"
     , "theorem"
     , "definition"
     , "lemma"
@@ -18,6 +19,8 @@ numberedBlockNames =
     , "aligned"
     , "quiver"
     , "image"
+    , "iframe"
+    , "chart"
     ]
 
 
@@ -35,6 +38,7 @@ blockData =
     , ( "definition", { prefix = "|", arity = Arity 0 } )
     , ( "equation", { prefix = "||", arity = Arity 0 } )
     , ( "aligned", { prefix = "||", arity = Arity 0 } )
+    , ( "iframe", { prefix = "||", arity = Arity 0 } )
     , ( "example", { prefix = "|", arity = Arity 0 } )
     , ( "lemma", { prefix = "|", arity = Arity 0 } )
     , ( "note", { prefix = "|", arity = Arity 0 } )

@@ -15,7 +15,7 @@ About the Scripta compiler
 [link Scripta.io https://scripta.io]
 
 
-| section 1 -
+| section -
 What it is
 
 The Scripta compiler transforms source text to HTML, where
@@ -44,7 +44,7 @@ in the rendered text, and with the following text rendered
 properly to the greatest extent possible.
 
 
-| section 1 -
+| section -
 Open source
 
 The Scripta compiler is open-source, and can be found at
@@ -58,13 +58,13 @@ interactive editing, a searchable store of documents,
 and facilities for collaboration and web publishing.
 
 
-| section 1 -
+| section -
 Code
 
 If you are interested in looking at the code, there are two
 good places to start. The first is `compiler/Scripta/API.elm`.
-The second is the folder `compiler/L0/Parser/` especially
-the file `compiler/L0/Parser/Expression`.  The latter
+The second is the folder `compiler/L0/Expression/` especially
+the file `compiler/L0/Expression/Expression`.  The latter
 is the shift-reduce parser used for L0, the simplest
 of the three markup languages considered.
 
@@ -95,7 +95,7 @@ mathematical text and inline code,
 respectively.
 
 
-| section 1 -
+| section -
 Status and Roadmap
 
 The Scripta compiler is serviceable — I've used to to write
@@ -107,9 +107,10 @@ I am on the Elm Slack and Github as jxxcarlson and on Twitter as @epsilon2718.
 """
 
 
-
 microLaTeXDemo =
     """
+
+
 \\title{Demo (MicroLaTeX)}
 
 | banner
@@ -117,21 +118,129 @@ microLaTeXDemo =
 
 \\contents
 
+\\italic{You can freely edit what you see here – your edits won't be saved.
+The best way to understand how MicroLaTeX works is to compare
+the source text (left window) with the rendered text (right window).}
+
+
+\\section{Before you begin}
+
+There are some differences between regular LaTeX and microLaTeX.  The main one is that microLaTeX is made of blocks.  Blocks have an empty line
+above and below, as in the example below — first the source text,
+then the rendered text.
+
+\\begin{code}
+$$
+\\int_\\infty^\\infty e^{-x^2} dx = \\sqrt\\pi
+$$
+\\end{code}
+
+$$
+\\int_\\infty^\\infty e^{-x^2} dx = \\sqrt\\pi
+$$
+
+The beginning and ending tags of this display math block occupy lines
+of their own and begin at the left margin.
+
+\\italic{Imitate this example: write some math in} `$$ ... $$` HERE:
+
+
 \\section{Images}
 
-\\image{https://see.news/wp-content/uploads/2020/12/UK_wildbirds-01-robin.jpg width:400}
+Place an image like this:
+
+\\begin{code}
+\\image{https://www.birds ... .jpg}
+\\end{code}
+
+\\image{https://www.birdsandblooms.com/wp-content/uploads/2018/10/BNBbyc18_patricia-warren.jpg width:400}
 
 \\section{Math}
 
-Pythagoras says: $a^2 + b^2 = c^2$
+Pythagoras says: $a^2 + b^2 = c^2$.  We wrote the formula
+like this: `$a^2 + b^2 = c^2$`.
 
-From calculus:
+Let's do a theorem environment.
 
-$$
+Source text
+
+\\begin{code}
+\\begin{equation}
+\\label{integral}
 \\int_0^1 x^n dx = \\frac{1}{n+1}
-$$
+\\end{equation}
+\\end{code}
 
-\\strong{Tip:} Click on a section title to go back to the table of contents.
+Rendered text
+
+\\begin{equation}
+\\label{integral}
+\\int_0^1 x^n dx = \\frac{1}{n+1}
+\\end{equation}
+
+\\section{Lists}
+
+Lets look at some lists.
+First the source text for a bulletted list:
+
+\\begin{code}
+\\item Bread
+
+\\item Cheese
+
+\\item Wine
+\\end{code}
+
+Then the rendered text:
+
+\\item Bread
+
+\\item Cheese
+
+\\item Wine
+
+Note that the `\\begin{itemize} ... \\end{itemize}` construct
+is not needed.  Here is a numbered list:
+
+
+Source text:
+
+\\begin{code}
+\\numbered Olive Oil
+
+\\numbered Vinegar
+
+\\numbered Salt
+\\end{code}
+
+Rendered text:
+
+\\numbered Olive Oil
+
+\\numbered Vinegar
+
+\\numbered Salt
+
+Once again, no need for `\\begin{enumerate} ... \\end{enumerate}`.
+
+
+
+
+\\section{Notes}
+
+
+\\item Click on a section title to go back to the table of contents.
+
+
+\\item The editor in \\link{Scripta.io https://scripta.io} is much more capable
+than the one you see here.  If you click on some rendered text (right-hand window),
+the editor will bring the corresponding source text (left-hand window) into view.  If you select
+some source text and press `ctrl-S` ("S" for "sync"), the corresponding rendered text
+will be brought into view.
+
+\\item Cross references work: see formula \\eqref{integral}
+
+
 """
 
 
@@ -145,7 +254,7 @@ Demo (L0)
 
 | contents
 
-| section 1
+| section
 Images
 
 || hide
@@ -154,7 +263,7 @@ Images
 [image https://www.birdsandblooms.com/wp-content/uploads/2018/10/BNBbyc18_patricia-warren.jpg width:400]
 
 
-| section 1
+| section
 Math
 
 Pythagoras says: $a^2 + b^2 = c^2$
@@ -170,10 +279,9 @@ $$
 """
 
 
-
-
 xMarkdown =
     """
+
 | title
 XMarkdown Visual Check
 
@@ -206,20 +314,39 @@ Some *italic* and  **bold** text.  @[blue Blue stuff.]
 
 This is a formula: $a^2 + b^2 = c^2$.
 
-## Displayed formula
+And this is a displayed formulat
 
 $$
 \\int_0^1 x^n dx = \\frac{1}{n+1}
 $$
 
+done in the usual TeX way:
+
+```
+ $$
+\\int_0^1 x^n dx = \\frac{1}{n+1}
+$$
+```
 
 ## Numbered formula
+
+```
+|| equation
+\\int_0^1 x^n dx = \\frac{1}{n+1}
+```
 
 || equation
 \\int_0^1 x^n dx = \\frac{1}{n+1}
 
 ## Aligned equations
 
+```
+|| aligned
+\\label{foo}
+a &= b + 1 \\\\
+c &= a^2 \\\\
+ &= b^2 + 2b + 1 \\\\
+```
 
 || aligned
 \\label{foo}
@@ -230,6 +357,11 @@ c &= a^2 \\\\
 
 ## Theorems
 
+|| code
+| theorem
+There are infinitely many primes $p \\equiv 1\\ mod\\ 4$. Isn't that nice?
+
+
 | theorem
 There are infinitely many primes $p \\equiv 1\\ mod\\ 4$. Isn't that nice?
 
@@ -239,7 +371,7 @@ There are infinitely many primes $p \\equiv 1\\ mod\\ 4$. Isn't that nice?
 Some inline code `a[0] := a[0] + 1`.  A block of code:
 
 ```
-# multiplication table
+ # Multiplication table
   for x in range(1, 11):
       for y in range(1, 11):
           print('%d ** %d = %d' % (x, y, x**y)
@@ -249,13 +381,16 @@ Here is the source text:
 
 || code
 ```
-# multiplication table
+# Multiplication table
   for x in range(1, 11):
       for y in range(1, 11):
           print('%d ** %d = %d' % (x, y, x**y)
 ```
 
+
 # Bulleted Lists
+
+Levels in the list are controlled by indentation.
 
 - One
 
@@ -272,6 +407,8 @@ Here is the source text:
 
 # Numbered Lists
 
+Numbered lists are constructed in the same way,
+but with a  period `.` instead of a hyphen `-` to start a new item.
 
 . One
 
@@ -287,7 +424,7 @@ Here is the source text:
 """
 
 
-testFile1 =
+testFile =
     """
 
 \\title{Wave Packets and the Dispersion Relation}
@@ -569,7 +706,7 @@ In the case of our electron, we find that $t_{double} \\sim 10^{-16}\\,\\text{se
 """
 
 
-testFile =
+testFile2 =
     """
 \\title{Test Math Macros (MicroLaTeX)}
 

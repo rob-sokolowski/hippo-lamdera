@@ -1,0 +1,7 @@
+| theorem
+abc
+def
+
+pqr
+stu
+

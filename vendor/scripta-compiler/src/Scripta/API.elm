@@ -1,9 +1,10 @@
 module Scripta.API exposing
     ( compile, DisplaySettings
     , EditRecord, init, update, render, makeSettings, defaultSettings
-    , fileNameForExport, prepareContentForExport, getImageUrls, Settings
+    , fileNameForExport, packageNames, prepareContentForExport, getImageUrls, banner, getBlockNames, rawExport, encodeForPDF
     , Msg, SyntaxTree
-    , getBlockNames
+    , matchingIdsInAST
+    , pdfFileNameToGet
     )
 
 {-| Scripta.API provides the functions you will need for an application
@@ -61,7 +62,7 @@ The Elm app sends data to `https://pdfServ.app`, a small server
 tar archive where it is then accessible by a GET request.
 See [pdfServer2@Github](https://github.com/jxxcarlson/pdfServer2).
 
-@docs fileNameForExport, prepareContentForExport, getImageUrls, Settings
+@docs fileNameForExport, packageNames, prepareContentForExport, getImageUrls, banner, getBlockNames, rawExport, encodeForPDF
 
 
 # Compatibility
@@ -70,20 +71,24 @@ The PDF module in Example2 requires these.
 
 @docs Msg, SyntaxTree
 
+
+# Utility
+
+@docs matchingIdsInAST
+
 -}
 
 import Compiler.ASTTools as ASTTools
 import Compiler.AbstractDifferentialParser
-import Compiler.Acc
 import Compiler.DifferentialParser
 import Dict exposing (Dict)
 import Either exposing (Either(..))
 import Element exposing (..)
+import Json.Encode as E
 import List.Extra
 import Maybe.Extra
 import Parser.Block exposing (ExpressionBlock(..))
 import Parser.Forest exposing (Forest)
-import Parser.PrimitiveBlock exposing (PrimitiveBlock)
 import Regex
 import Render.Block
 import Render.Export.LaTeX
@@ -94,6 +99,10 @@ import Scripta.Language exposing (Language)
 import Scripta.TOC
 import Time
 import Tree
+
+
+
+-- type alias MarkupMsg = Render.Msg.MarkupMsg
 
 
 {-| -}
@@ -132,6 +141,7 @@ compile displaySettings language sourceText =
 -}
 type alias DisplaySettings =
     { windowWidth : Int
+    , longEquationLimit : Float
     , counter : Int
     , selectedId : String
     , selectedSlug : Maybe String
@@ -153,7 +163,18 @@ update =
 
 {-| -}
 type alias EditRecord =
-    Compiler.AbstractDifferentialParser.EditRecord (Tree.Tree PrimitiveBlock) (Tree.Tree ExpressionBlock) Compiler.Acc.Accumulator
+    -- Compiler.AbstractDifferentialParser.EditRecord (Tree.Tree PrimitiveBlock) (Tree.Tree ExpressionBlock) Compiler.Acc.Accumulator
+    Compiler.DifferentialParser.EditRecord
+
+
+
+-- EDITOR
+
+
+{-| -}
+matchingIdsInAST : String -> Forest ExpressionBlock -> List String
+matchingIdsInAST =
+    ASTTools.matchingIdsInAST
 
 
 
@@ -161,11 +182,13 @@ type alias EditRecord =
 
 
 {-| -}
-makeSettings : String -> Maybe String -> Float -> Int -> Render.Settings.Settings
-makeSettings id selectedSlug scale width =
+makeSettings : String -> Maybe String -> Float -> Int -> Float -> Render.Settings.Settings
+makeSettings id selectedSlug scale width longEquationLimit =
     { width = round (scale * toFloat width)
     , titleSize = 30
     , paragraphSpacing = 28
+    , display = Render.Settings.DefaultDisplay
+    , longEquationLimit = longEquationLimit
     , showTOC = True
     , showErrorMessages = False
     , selectedId = id
@@ -173,6 +196,15 @@ makeSettings id selectedSlug scale width =
     , backgroundColor = Element.rgb 1 1 1
     , titlePrefix = ""
     , isStandaloneDocument = False
+    , codeColor = Element.rgb255 0 0 210
+    , leftIndent = 18
+    , leftIndentation = 18
+    , leftRightIndentation = 18
+    , wideLeftIndentation = 54
+    , windowWidthScale = 0.3
+    , maxHeadingFontSize = 32
+    , redColor = Element.rgb 0.7 0 0
+    , topMarginForChildren = 6
     }
 
 
@@ -188,7 +220,9 @@ render displaySettings editRecord =
         settings =
             renderSettings displaySettings
     in
-    banner displaySettings editRecord :: Scripta.TOC.view displaySettings.counter editRecord.accumulator (renderSettings displaySettings) editRecord.tree :: renderBody displaySettings.counter settings editRecord
+    banner displaySettings editRecord
+        :: Scripta.TOC.view displaySettings.counter editRecord.accumulator (renderSettings displaySettings) editRecord.tree
+        :: renderBody displaySettings.counter settings editRecord
 
 
 renderBody : Int -> Render.Settings.Settings -> Compiler.DifferentialParser.EditRecord -> List (Element Render.Msg.MarkupMsg)
@@ -196,32 +230,21 @@ renderBody count settings editRecord =
     Render.Markup.renderFromAST count editRecord.accumulator settings (body editRecord)
 
 
+{-| -}
 banner : DisplaySettings -> Compiler.DifferentialParser.EditRecord -> Element MarkupMsg
 banner displaySettings editRecord =
-    ASTTools.banner editRecord.tree
-        |> Maybe.map (Parser.Block.setName "banner_")
-        |> Maybe.map (Render.Block.render displaySettings.counter editRecord.accumulator (renderSettings displaySettings))
-        |> Maybe.withDefault Element.none
+    case ASTTools.banner editRecord.tree of
+        Nothing ->
+            Element.column [ Element.height (Element.px 36) ] []
+
+        Just ast ->
+            ast
+                |> Parser.Block.setName "banner_"
+                |> Render.Block.render displaySettings.counter editRecord.accumulator (renderSettings displaySettings)
 
 
 
 -- EXPORT
-
-
-{-| Settings used by render
--}
-type alias Settings =
-    { paragraphSpacing : Int
-    , selectedId : String
-    , selectedSlug : Maybe String
-    , showErrorMessages : Bool
-    , showTOC : Bool
-    , titleSize : Int
-    , width : Int
-    , backgroundColor : Element.Color
-    , titlePrefix : String
-    , isStandaloneDocument : Bool
-    }
 
 
 {-| -}
@@ -235,8 +258,31 @@ fileNameForExport ast =
         |> (\s -> s ++ ".tex")
 
 
+pdfFileNameToGet : Forest ExpressionBlock -> String
+pdfFileNameToGet ast =
+    ast
+        |> ASTTools.title
+        |> compressWhitespace
+        |> String.replace " " "-"
+        |> String.toLower
+        |> removeNonAlphaNum
+        |> (\s -> s ++ ".pdf")
+
+
+packageDict =
+    Dict.fromList [ ( "quiver", "quiver.sty" ) ]
+
+
 {-| -}
-prepareContentForExport : Time.Posix -> Settings -> Forest ExpressionBlock -> String
+packageNames : Forest ExpressionBlock -> List String
+packageNames syntaxTree =
+    getBlockNames syntaxTree
+        |> List.map (\name -> Dict.get name packageDict)
+        |> Maybe.Extra.values
+
+
+{-| -}
+prepareContentForExport : Time.Posix -> Render.Settings.Settings -> Forest ExpressionBlock -> String
 prepareContentForExport currentTime settings syntaxTree =
     let
         contentForExport : String
@@ -247,13 +293,50 @@ prepareContentForExport currentTime settings syntaxTree =
 
 
 {-| -}
+rawExport : Render.Settings.Settings -> Forest ExpressionBlock -> String
+rawExport =
+    Render.Export.LaTeX.rawExport
+
+
+{-| -}
+encodeForPDF : Time.Posix -> Render.Settings.Settings -> Forest ExpressionBlock -> E.Value
+encodeForPDF currentTime settings forest =
+    let
+        imageUrls : List String
+        imageUrls =
+            getImageUrls forest
+
+        fileName : String
+        fileName =
+            fileNameForExport forest
+
+        contentForExport : String
+        contentForExport =
+            prepareContentForExport currentTime settings forest
+
+        packages : List String
+        packages =
+            packageNames forest
+    in
+    E.object
+        [ ( "id", E.string fileName )
+        , ( "content", E.string contentForExport )
+        , ( "urlList", E.list E.string imageUrls )
+        , ( "packageList", E.list E.string packages )
+        ]
+
+
+{-| -}
 getImageUrls : Forest ExpressionBlock -> List String
 getImageUrls syntaxTree =
-    getImageUrls1 syntaxTree ++ getImageUrls2 syntaxTree |> List.sort |> List.Extra.unique
+    getImageUrlsFromExpressions syntaxTree
+        ++ getImageUrlsFromBlocks syntaxTree
+        |> List.sort
+        |> List.Extra.unique
 
 
-getImageUrls1 : Forest ExpressionBlock -> List String
-getImageUrls1 syntaxTree =
+getImageUrlsFromExpressions : Forest ExpressionBlock -> List String
+getImageUrlsFromExpressions syntaxTree =
     syntaxTree
         |> List.map Tree.flatten
         |> List.concat
@@ -266,8 +349,8 @@ getImageUrls1 syntaxTree =
         |> Maybe.Extra.values
 
 
-getImageUrls2 : Forest ExpressionBlock -> List String
-getImageUrls2 syntaxTree =
+getImageUrlsFromBlocks : Forest ExpressionBlock -> List String
+getImageUrlsFromBlocks syntaxTree =
     syntaxTree
         |> List.map Tree.flatten
         |> List.concat
@@ -286,6 +369,7 @@ verbatimContent (ExpressionBlock { content }) =
             Nothing
 
 
+{-| -}
 getBlockNames : Forest ExpressionBlock -> List String
 getBlockNames syntaxTree =
     syntaxTree

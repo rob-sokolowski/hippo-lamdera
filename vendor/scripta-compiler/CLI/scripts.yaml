@@ -1,0 +1,24 @@
+scripts:
+  lxpb: elm-cli run --debug src/LXPB.elm
+  # Example: vr lxparse lxtest/a1.txt
+  # Test the MicroLaTeX block parser
+
+  lxerr: elm-cli run --debug src/LXPBErr.elm
+
+  l0pb: elm-cli run --debug src/L0PB.elm
+  # Example: vr l0parse l0test/datatable.txt
+  # Test the L0 block parser
+
+  xmpb: elm-cli run --debug src/XMPB.elm
+  # Example: xmpb foo.txt
+  # Test the XMarkdown block parser
+
+  lxe: elm-cli run --debug src/LXEB.elm
+  # Example: vr lxe rt/para.txt rt
+  # Example: vr lxe rt/para.txt p
+
+  rs: elm-cli run src/RoundTrip2.elm
+  # Example: vr rt rt/para.txt
+
+  bench: time elm-cli run src/Benchmark.elm
+  # Example: vr bench init 100 bench/harmonic.tex

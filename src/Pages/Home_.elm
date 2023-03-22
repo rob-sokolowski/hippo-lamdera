@@ -71,20 +71,6 @@ subscriptions _ =
 
 
 -- VIEW
---view : Shared.Model -> Model -> View Msg
---view shared model =
---    { title = ""
---    , body =
---        [ div [ class "home-page" ]
---            [ div [ class "banner" ]
---                [ div [ class "container" ]
---                    [ h1 [ class "logo-font" ] [ text "hippo" ]
---                    , p [] [ text "flash cards" ]
---                    ]
---                ]
---            ]
---        ]
---    }
 
 
 view : Shared.Model -> Model -> View Msg

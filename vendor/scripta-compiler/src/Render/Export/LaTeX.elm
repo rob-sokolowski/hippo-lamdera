@@ -11,6 +11,7 @@ import Parser.Block exposing (BlockType(..), ExpressionBlock(..))
 import Parser.Expr exposing (Expr(..))
 import Parser.Forest exposing (Forest)
 import Parser.Helpers exposing (Step(..), loop)
+import Render.Data
 import Render.Export.Image
 import Render.Export.Preamble
 import Render.Export.Util
@@ -82,7 +83,7 @@ frontMatter currentTime ast =
             ASTTools.title ast |> (\title_ -> "\\title{" ++ title_ ++ "}")
 
         date =
-            Dict.get "date" dict |> Maybe.map (\date_ -> "\\date{" ++ date_ ++ "}") |> Maybe.withDefault "\\date{Today}"
+            Dict.get "date" dict |> Maybe.map (\date_ -> "\\date{" ++ date_ ++ "}") |> Maybe.withDefault ""
     in
     ("\\begin{document}"
         :: title
@@ -128,6 +129,16 @@ oneOrTwo mInt =
             2
 
 
+{-| In a standalone MicroLaTeX document, sections correspond to sections in the
+exported document.
+
+If a document is part of a collection or "notebook", where we have
+set the section number using \\setcounter{N}, sections correspond
+to subsections IF the document is exported as a standalone document.
+
+Function shiftSection makes the adjustments needed for export.
+
+-}
 shiftSection : Int -> ExpressionBlock -> ExpressionBlock
 shiftSection delta ((ExpressionBlock data) as block) =
     if data.name == Just "section" then
@@ -186,34 +197,13 @@ exportTree settings tree =
 
 rawExport : Settings -> List (Tree ExpressionBlock) -> String
 rawExport settings ast =
-    let
-        deltaShift =
-            counterValue ast
-    in
     ast
         |> ASTTools.filterForestOnLabelNames (\name -> not (name == Just "runninghead"))
         |> Parser.Forest.map Parser.Block.condenseUrls
         |> encloseLists
-        |> Parser.Forest.map (deltaShift |> oneOrTwo |> shiftSection)
+        |> Parser.Forest.map (counterValue ast |> oneOrTwo |> shiftSection)
         |> List.map (exportTree settings)
         |> String.join "\n\n"
-
-
-
--- rawExport1 : Settings -> Forest ExpressionBlock -> Forest ExpressionBlock
-
-
-rawExport1 : a -> Forest ExpressionBlock -> Forest ExpressionBlock
-rawExport1 settings ast =
-    let
-        deltaShift =
-            counterValue ast
-    in
-    ast
-        |> ASTTools.filterForestOnLabelNames (\name -> not (name == Just "runninghead"))
-        |> Parser.Forest.map Parser.Block.condenseUrls
-        |> encloseLists
-        |> Parser.Forest.map (deltaShift |> oneOrTwo |> shiftSection)
 
 
 
@@ -275,6 +265,7 @@ beginItemizedBlock =
         , name = Just "beginBlock"
         , numberOfLines = 2
         , sourceText = "| beginBlock\nitemize"
+        , error = Nothing
         }
 
 
@@ -293,6 +284,7 @@ endItemizedBlock =
         , name = Just "endBlock"
         , numberOfLines = 2
         , sourceText = "| endBlock\nitemize"
+        , error = Nothing
         }
 
 
@@ -311,6 +303,7 @@ beginNumberedBlock =
         , name = Just "beginNumberedBlock"
         , numberOfLines = 2
         , sourceText = "| beginBlock\nitemize"
+        , error = Nothing
         }
 
 
@@ -329,6 +322,7 @@ endNumberedBlock =
         , name = Just "endNumberedBlock"
         , numberOfLines = 2
         , sourceText = "| endBlock\nitemize"
+        , error = Nothing
         }
 
 
@@ -347,6 +341,7 @@ beginDescriptionBlock =
         , name = Just "beginDescriptionBlock"
         , numberOfLines = 2
         , sourceText = "| beginBlock\ndescription"
+        , error = Nothing
         }
 
 
@@ -365,6 +360,7 @@ endDescriptionBlock =
         , name = Just "endDescriptionBlock"
         , numberOfLines = 2
         , sourceText = "| endBlock\ndescription"
+        , error = Nothing
         }
 
 
@@ -457,6 +453,35 @@ exportBlock settings ((ExpressionBlock { blockType, name, args, content }) as bl
                             -- TODO: This should be fixed upstream
                             [ "$$", fix_ str, "$$" ] |> String.join "\n"
 
+                        Just "datatable" ->
+                            let
+                                data =
+                                    Render.Data.prepareTable 1 block
+
+                                renderRow : Int -> List Int -> List String -> String
+                                renderRow rowNumber widths_ rowOfCells =
+                                    if rowNumber == 0 then
+                                        List.map2 (\cell width -> String.padRight width ' ' cell) rowOfCells widths_
+                                            |> String.join " "
+                                            |> String.replace "_" " "
+
+                                    else
+                                        List.map2 (\cell width -> String.padRight width ' ' cell) rowOfCells widths_ |> String.join " "
+
+                                renderedRows =
+                                    List.indexedMap (\rowNumber -> renderRow rowNumber data.columnWidths) data.selectedCells |> String.join "\n"
+                            in
+                            case data.title of
+                                Nothing ->
+                                    [ "\\begin{verbatim}", renderedRows, "\\end{verbatim}" ] |> String.join "\n"
+
+                                Just title ->
+                                    let
+                                        separator =
+                                            String.repeat data.totalWidth "-"
+                                    in
+                                    [ "\\begin{verbatim}", title, separator, renderedRows, "\\end{verbatim}" ] |> String.join "\n"
+
                         Just "equation" ->
                             -- TODO: there should be a trailing "$$"
                             -- TODO: equation numbers and label
@@ -469,6 +494,9 @@ exportBlock settings ((ExpressionBlock { blockType, name, args, content }) as bl
                         Just "code" ->
                             str |> fixChars |> (\s -> "\\begin{verbatim}\n" ++ s ++ "\n\\end{verbatim}")
 
+                        Just "tabular" ->
+                            str |> fixChars |> (\s -> "\\begin{tabular}{" ++ String.join " " args ++ "}\n" ++ s ++ "\n\\end{tabular}")
+
                         Just "verbatim" ->
                             str |> fixChars |> (\s -> "\\begin{verbatim}\n" ++ s ++ "\n\\end{verbatim}")
 
@@ -480,6 +508,9 @@ exportBlock settings ((ExpressionBlock { blockType, name, args, content }) as bl
 
                         Just "mathmacros" ->
                             str
+
+                        Just "texComment" ->
+                            str |> String.lines |> texComment
 
                         Just "textmacros" ->
                             Compiler.TextMacro.exportTexMacros str
@@ -626,7 +657,13 @@ macroDict =
         , ( "rb", \_ -> rb )
         , ( "bt", \_ -> bt )
         , ( "underscore", \_ -> underscore )
+        , ( "tags", dontRender )
         ]
+
+
+dontRender : Settings -> List Expr -> String
+dontRender _ _ =
+    ""
 
 
 
@@ -642,6 +679,7 @@ blockDict =
         , ( "date", \_ _ _ -> "" )
         , ( "contents", \_ _ _ -> "" )
         , ( "hide", \_ _ _ -> "" )
+        , ( "texComment", \_ lines _ -> texComment lines )
         , ( "tags", \_ _ _ -> "" )
         , ( "docinfo", \_ _ _ -> "" )
         , ( "banner", \_ _ _ -> "" )
@@ -672,6 +710,18 @@ verbatimExprDict =
         [ ( "code", inlineCode )
         , ( "math", inlineMath )
         ]
+
+
+texComment lines =
+    lines |> List.map putPercent |> String.join "\n"
+
+
+putPercent str =
+    if String.left 1 str == "%" then
+        str
+
+    else
+        "% " ++ str
 
 
 
@@ -886,10 +936,10 @@ macro1 name arg =
     else
         case Dict.get name functionDict of
             Nothing ->
-                "\\" ++ name ++ "{" ++ mapChars2 (String.trimLeft arg) ++ "}"
+                "\\" ++ unalias name ++ "{" ++ mapChars2 (String.trimLeft arg) ++ "}"
 
-            Just realName ->
-                "\\" ++ realName ++ "{" ++ mapChars2 (String.trimLeft arg) ++ "}"
+            Just fName ->
+                "\\" ++ fName ++ "{" ++ mapChars2 (String.trimLeft arg) ++ "}"
 
 
 exportExprList : Settings -> List Expr -> String
@@ -915,13 +965,38 @@ exportExpr settings expr =
                         f settings exps_
 
                     Nothing ->
-                        macro1 name (List.map (exportExpr settings) exps_ |> String.join " ")
+                        "\\" ++ unalias name ++ (List.map (encloseWithBraces << exportExpr settings) exps_ |> String.join "")
 
         Text str _ ->
             mapChars2 str
 
         Verbatim name body _ ->
             renderVerbatim name body
+
+
+{-| Use this to unalias names
+-}
+unalias : String -> String
+unalias str =
+    case Dict.get str aliases of
+        Nothing ->
+            str
+
+        Just realName_ ->
+            realName_
+
+
+aliases : Dict String String
+aliases =
+    Dict.fromList
+        [ ( "i", "italic" )
+        , ( "b", "bold" )
+        ]
+
+
+encloseWithBraces : String -> String
+encloseWithBraces str_ =
+    "{" ++ String.trim str_ ++ "}"
 
 
 renderVerbatim : String -> String -> String

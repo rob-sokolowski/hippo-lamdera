@@ -30,5 +30,5 @@ type Model
     | NotFound Gen.Params.NotFound.Params Pages.NotFound.Model
     | Study Gen.Params.Study.Params Pages.Study.Model
     | Login__Provider___Callback Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model
-    | Stories__KatexDemo Gen.Params.Stories.KatexDemo.Params
+    | Stories__KatexDemo Gen.Params.Stories.KatexDemo.Params Pages.Stories.KatexDemo.Model
 

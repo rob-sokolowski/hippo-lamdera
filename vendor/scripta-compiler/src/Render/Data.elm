@@ -1,4 +1,4 @@
-module Render.Data exposing (chart, table)
+module Render.Data exposing (chart, prepareTable, table)
 
 import Chart
 import Chart.Attributes as CA
@@ -25,6 +25,7 @@ type alias Options =
     , reverse : Maybe String
     , columns : Maybe (List Int)
     , lowest : Maybe Float
+    , caption : Maybe String
     , label : Maybe String
     , kind : Maybe String -- e.g, kind:line or --kind:scatter
     , domain : Maybe Range
@@ -41,18 +42,19 @@ fontWidth =
 
 
 chart : Int -> Accumulator -> Settings -> ExpressionBlock -> Element MarkupMsg
-chart count acc settings ((ExpressionBlock { id, args }) as block) =
+chart count acc settings ((ExpressionBlock { id, args, properties }) as block) =
     let
         options : Options
         options =
             { timeseries = getArg "timeseries" args
             , reverse = getArg "reverse" args
-            , columns = getColumns args
-            , lowest = getArg "lowest" args |> getFloat
-            , label = getArgAfter "label" args
-            , kind = getArg "kind" args |> getString
-            , domain = getArg "domain" args |> Maybe.andThen getRange
-            , range = getArg "range" args |> Maybe.andThen getRange
+            , columns = Dict.get "columns" properties |> Maybe.map (String.split "," >> List.map String.trim >> List.map String.toInt >> Maybe.Extra.values)
+            , lowest = Dict.get "lowest" properties |> Maybe.andThen String.toFloat
+            , caption = Dict.get "caption" properties
+            , label = Dict.get "figure" properties
+            , kind = Dict.get "kind" properties
+            , domain = Dict.get "domain" properties |> Maybe.andThen getRange
+            , range = Dict.get "range" properties |> Maybe.andThen getRange
             }
 
         data : Maybe ChartData
@@ -62,12 +64,18 @@ chart count acc settings ((ExpressionBlock { id, args }) as block) =
     Element.column [ Element.width (Element.px settings.width), Element.paddingEach { left = 48, right = 0, top = 36, bottom = 72 }, Element.spacing 24 ]
         [ Element.el [ Element.width (Element.px settings.width) ]
             (rawLineChart options data)
-        , case options.label of
-            Nothing ->
+        , case ( options.label, options.caption ) of
+            ( Nothing, Nothing ) ->
                 Element.none
 
-            Just labelText ->
-                Element.el [ Element.centerX, Font.size 14, Font.color (Element.rgb 0.5 0.5 0.7), Element.paddingEach { left = 0, right = 0, top = 24, bottom = 0 } ] (Element.text labelText)
+            ( Just labelText, Nothing ) ->
+                Element.el [ Element.centerX, Font.size 14, Font.color (Element.rgb 0.5 0.5 0.7), Element.paddingEach { left = 0, right = 0, top = 24, bottom = 0 } ] (Element.text <| "Figure " ++ labelText)
+
+            ( Nothing, Just captionText ) ->
+                Element.el [ Element.centerX, Font.size 14, Font.color (Element.rgb 0.5 0.5 0.7), Element.paddingEach { left = 0, right = 0, top = 24, bottom = 0 } ] (Element.text <| captionText)
+
+            ( Just labelText, Just captionText ) ->
+                Element.el [ Element.centerX, Font.size 14, Font.color (Element.rgb 0.5 0.5 0.7), Element.paddingEach { left = 0, right = 0, top = 24, bottom = 0 } ] (Element.text <| "Figure " ++ labelText ++ ". " ++ captionText)
         ]
 
 
@@ -379,6 +387,7 @@ maybeChoose maybe f g x =
 -- ARG
 
 
+getColumns : List String -> Maybe (List Int)
 getColumns args =
     case getArg "columns" args of
         Nothing ->
@@ -468,29 +477,19 @@ getVerbatimContent (ExpressionBlock { content }) =
             ""
 
 
-table : Int -> Accumulator -> Settings -> ExpressionBlock -> Element MarkupMsg
-table count acc settings ((ExpressionBlock { id, args }) as block) =
+type alias TableData =
+    { title : Maybe String, columnWidths : List Int, totalWidth : Int, selectedCells : List (List String) }
+
+
+prepareTable : Int -> ExpressionBlock -> TableData
+prepareTable fontWidth_ ((ExpressionBlock { id, args, properties }) as block) =
     let
-        argString =
-            String.join " " args
-
-        newArgs =
-            argString |> String.split ";" |> List.map String.trim
-
-        argDict =
-            Render.Utility.keyValueDict newArgs
-
         title =
-            case Dict.get "title" argDict of
-                Nothing ->
-                    Element.none
-
-                Just title_ ->
-                    Element.el [ Font.bold ] (Element.text title_)
+            Dict.get "title" properties
 
         columnsToDisplay : List Int
         columnsToDisplay =
-            Dict.get "columns" argDict
+            Dict.get "columns" properties
                 |> Maybe.map (String.split ",")
                 |> Maybe.withDefault []
                 |> List.map (String.trim >> String.toInt)
@@ -535,14 +534,38 @@ table count acc settings ((ExpressionBlock { id, args }) as block) =
             List.map (List.map String.length) selectedCells
                 |> List.Extra.transpose
                 |> List.map (\column -> List.maximum column |> Maybe.withDefault 1)
-                |> List.map (\w -> fontWidth * w)
+                |> List.map (\w -> fontWidth_ * w)
 
-        renderRow : List Int -> List String -> Element MarkupMsg
-        renderRow widths_ cells_ =
+        totalWidth =
+            List.sum columnWidths
+    in
+    { title = title, columnWidths = columnWidths, totalWidth = totalWidth, selectedCells = selectedCells }
+
+
+table : Int -> Accumulator -> Settings -> ExpressionBlock -> Element MarkupMsg
+table count acc settings ((ExpressionBlock { id, args, properties }) as block) =
+    let
+        data =
+            prepareTable fontWidth block
+
+        title =
+            case data.title of
+                Nothing ->
+                    Element.none
+
+                Just title_ ->
+                    Element.el [ Font.bold ] (Element.text title_)
+
+        renderRow : Int -> List Int -> List String -> Element MarkupMsg
+        renderRow rowNumber widths_ cells_ =
             let
                 totalWidth =
                     List.sum widths_ + 0
             in
-            Element.row [ Element.width (Element.px totalWidth) ] (List.map2 (\cell width -> Element.el [ Element.width (Element.px width) ] (Element.text cell)) cells_ widths_)
+            if rowNumber == 0 then
+                Element.row [ Element.width (Element.px totalWidth) ] (List.map2 (\cell width -> Element.el [ Element.width (Element.px width), Font.underline ] (Element.text <| String.replace "_" "" cell)) cells_ widths_)
+
+            else
+                Element.row [ Element.width (Element.px totalWidth) ] (List.map2 (\cell width -> Element.el [ Element.width (Element.px width) ] (Element.text cell)) cells_ widths_)
     in
-    Element.column [ Element.spacing 12, Element.paddingEach { left = 36, right = 0, top = 18, bottom = 18 } ] (title :: List.map (renderRow columnWidths) selectedCells)
+    Element.column [ Element.spacing 12, Element.paddingEach { left = 36, right = 0, top = 18, bottom = 18 } ] (title :: List.indexedMap (\k row -> renderRow k data.columnWidths row) data.selectedCells)

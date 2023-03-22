@@ -31,10 +31,13 @@ transform block =
 
             else if String.left 2 firstLine == "> " then
                 handleQuotation block firstLine
-                --    handleOrdinaryBlock block (String.dropLeft 1 firstLine) rest_
-                --
-                --else if String.left 1 firstLine == "!" then
-                --    handleImageBlock block (String.dropLeft 1 firstLine) rest_
+
+            else if block.blockType == PBVerbatim then
+                if block.name == Nothing then
+                    { block | name = Just "code", content = List.filter (\line -> line /= "```") block.content }
+
+                else
+                    block
 
             else
                 block
@@ -44,18 +47,17 @@ transform block =
 
 
 handleItem block firstLine rest =
-    { block | name = Just "item", blockType = PBOrdinary, content = "| item" :: firstLine :: rest }
+    { block | name = Just "item", blockType = PBOrdinary, content = firstLine :: rest }
 
 
 handleNumberedItem block firstLine rest =
-    { block | name = Just "numbered", blockType = PBOrdinary, content = "| numbered" :: firstLine :: rest }
+    { block | name = Just "numbered", blockType = PBOrdinary, content = firstLine :: rest }
 
 
 handleVerbatim : PrimitiveBlock -> List String -> PrimitiveBlock
 handleVerbatim block rest =
     { block
         | name = Just "code"
-        , named = True
         , blockType = PBVerbatim
         , content =
             if Maybe.map String.trim (List.Extra.last rest) == Just "```" then
@@ -68,7 +70,7 @@ handleVerbatim block rest =
 
 handleMath : PrimitiveBlock -> PrimitiveBlock
 handleMath block =
-    { block | name = Just "math", named = True, blockType = PBVerbatim, content = List.filter (\item -> item /= "") block.content }
+    { block | name = Just "math", blockType = PBVerbatim, content = List.filter (\item -> item /= "") block.content }
 
 
 handleTitle : PrimitiveBlock -> String -> PrimitiveBlock
@@ -94,7 +96,7 @@ handleTitle block firstLine =
                 level =
                     String.fromInt n
             in
-            { block | args = [ level ], blockType = PBOrdinary, name = Just "section", content = [ first, String.join " " (List.drop 1 words) ] }
+            { block | args = [ level ], blockType = PBOrdinary, name = Just "section", content = [ String.join " " (List.drop 1 words) ] }
 
 
 handleQuotation block firstLine =
@@ -103,7 +105,7 @@ handleQuotation block firstLine =
         args =
             firstLine |> String.dropLeft 2 |> String.words
     in
-    { block | args = args, blockType = PBOrdinary, name = Just "quotation" }
+    { block | args = args, content = String.join " " args :: List.drop 1 block.content, blockType = PBOrdinary, name = Just "quotation" }
 
 
 

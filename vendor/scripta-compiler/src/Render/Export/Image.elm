@@ -3,23 +3,34 @@ module Render.Export.Image exposing (export, exportBlock)
 import Compiler.ASTTools
 import Dict
 import Either exposing (Either(..))
+import List.Extra
 import Parser.Block exposing (ExpressionBlock(..))
 import Parser.Expr exposing (Expr)
 import Render.Export.Util
 import Render.Settings exposing (Settings)
 import Render.Utility
+import Utility
 
 
 exportBlock : Settings -> ExpressionBlock -> String
 exportBlock settings ((ExpressionBlock { content, args }) as block) =
     let
         params =
-            imageParameters2 settings block
+            imageParametersForBlock settings block
 
         options =
             [ params.fractionalWidth, ",keepaspectratio" ] |> String.join ""
     in
     exportCenteredFigure params.url options params.caption
+
+
+fixWidth : String -> String
+fixWidth w =
+    if w == "" || w == "fill" then
+        "500"
+
+    else
+        w
 
 
 export : Settings -> List Expr -> String
@@ -32,22 +43,22 @@ export s exprs =
             imageParameters s exprs
 
         options =
-            [ params.width, ",keepaspectratio" ] |> String.join ""
+            [ params.width |> fixWidth, ",keepaspectratio" ] |> String.join ""
     in
     case List.head args of
         Nothing ->
             "ERROR IN IMAGE"
 
-        Just url ->
+        Just url_ ->
             if params.placement == "C" then
-                exportCenteredFigure url options params.caption
+                exportCenteredFigure url_ options params.caption
 
             else
-                exportWrappedFigure params.placement url params.fractionalWidth params.caption
+                exportWrappedFigure params.placement url_ params.fractionalWidth params.caption
 
 
 exportCenteredFigure url options caption =
-    if caption == "" then
+    if caption == "none" then
         [ "\\imagecenter{", url, "}{" ++ options ++ "}" ] |> String.join ""
 
     else
@@ -55,7 +66,8 @@ exportCenteredFigure url options caption =
 
 
 exportWrappedFigure placement url options caption =
-    [ "\\imagefloat{", url, "}{" ++ options ++ "}{" ++ caption ++ "}{" ++ placement ++ "}" ] |> String.join ""
+    [ "\\imagefloat{", url, "}{" ++ options ++ "}{" ++ caption ++ "}{" ++ placement ++ "}" ]
+        |> String.join ""
 
 
 type alias ImageParameters =
@@ -97,7 +109,7 @@ imageParameters settings body =
             (captionLeadString :: List.filter (\s -> not (String.contains ":" s)) remainingArguments) |> String.join " "
 
         dict =
-            Render.Utility.keyValueDict keyValueStrings
+            Utility.keyValueDict keyValueStrings
 
         description =
             Dict.get "caption" dict |> Maybe.withDefault ""
@@ -159,8 +171,8 @@ imageParameters settings body =
     { caption = caption, description = description, placement = placement, width = width, fractionalWidth = fractionalWidth, url = url }
 
 
-imageParameters2 : Render.Settings.Settings -> ExpressionBlock -> ImageParameters
-imageParameters2 settings (ExpressionBlock { content, args }) =
+imageParametersForBlock : Render.Settings.Settings -> ExpressionBlock -> ImageParameters
+imageParametersForBlock settings (ExpressionBlock { content, args, properties }) =
     let
         arguments : List String
         arguments =
@@ -169,7 +181,7 @@ imageParameters2 settings (ExpressionBlock { content, args }) =
         url =
             case content of
                 Left str ->
-                    String.replace "https://" "" str
+                    str
 
                 Right _ ->
                     "bad block"
@@ -177,36 +189,15 @@ imageParameters2 settings (ExpressionBlock { content, args }) =
         _ =
             url
 
-        remainingArguments =
-            List.drop 1 arguments
-
-        keyValueStrings_ =
-            List.filter (\s -> String.contains ":" s) remainingArguments
-
-        keyValueStrings : List String
-        keyValueStrings =
-            List.filter (\s -> not (String.contains "caption" s)) keyValueStrings_
-
-        captionLeadString =
-            List.filter (\s -> String.contains "caption" s) keyValueStrings_
-                |> String.join ""
-                |> String.replace "caption:" ""
-
         caption =
-            (captionLeadString :: List.filter (\s -> not (String.contains ":" s)) remainingArguments) |> String.join " "
-
-        dict =
-            Render.Utility.keyValueDict keyValueStrings
-
-        description =
-            Dict.get "caption" dict |> Maybe.withDefault ""
+            Dict.get "caption" properties |> Maybe.withDefault "" |> String.replace ":" ""
 
         displayWidth =
             settings.width
 
         width : String
         width =
-            case Dict.get "width" dict of
+            case Dict.get "width" properties of
                 Nothing ->
                     rescale displayWidth displayWidth
 
@@ -223,7 +214,7 @@ imageParameters2 settings (ExpressionBlock { content, args }) =
 
         fractionalWidth : String
         fractionalWidth =
-            case Dict.get "width" dict of
+            case Dict.get "width" properties of
                 Nothing ->
                     "0.51\\textwidth"
 
@@ -239,7 +230,7 @@ imageParameters2 settings (ExpressionBlock { content, args }) =
                             fractionaRescale w
 
         placement =
-            case Dict.get "placement" dict of
+            case Dict.get "placement" properties of
                 Nothing ->
                     "C"
 
@@ -255,12 +246,12 @@ imageParameters2 settings (ExpressionBlock { content, args }) =
                 _ ->
                     "C"
     in
-    { caption = caption, description = description, placement = placement, width = width, fractionalWidth = fractionalWidth, url = url }
+    { caption = caption, description = caption, placement = placement, width = width, fractionalWidth = fractionalWidth, url = url }
 
 
 rescale : Int -> Int -> String
 rescale displayWidth k =
-    (toFloat k * (8.0 / toFloat displayWidth) |> String.fromFloat) ++ "truein"
+    (toFloat k * (6.0 / toFloat displayWidth) |> String.fromFloat) ++ "truein"
 
 
 fractionaRescale : Int -> String

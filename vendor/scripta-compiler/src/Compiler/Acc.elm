@@ -9,7 +9,6 @@ module Compiler.Acc exposing
 
 import Compiler.ASTTools
 import Compiler.TextMacro exposing (Macro)
-import Compiler.Util
 import Compiler.Vector as Vector exposing (Vector)
 import Dict exposing (Dict)
 import Either exposing (Either(..))
@@ -21,9 +20,9 @@ import Parser.Forest exposing (Forest)
 import Parser.MathMacro
 import Parser.Meta exposing (Meta)
 import Parser.Settings
-import Render.Utility
 import Scripta.Language exposing (Language)
 import Tree exposing (Tree)
+import Utility
 
 
 indentationQuantum =
@@ -40,11 +39,12 @@ initialData lang =
 
 
 type alias Accumulator =
-    { headingIndex : Vector
+    { language : Language
+    , headingIndex : Vector
     , documentIndex : Vector
     , counter : Dict String Int
     , blockCounter : Int
-    , itemVector : Vector
+    , itemVector : Vector -- Used for section numbering
     , numberedItemDict : Dict String { level : Int, index : Int }
     , numberedBlockNames : List String
     , inList : Bool
@@ -83,8 +83,8 @@ transformST data ast =
 {-| Note that function transformAccumulate operates on initialized accumulator.
 -}
 transformAccumulate : InitialAccumulatorData -> Forest ExpressionBlock -> ( Accumulator, Forest ExpressionBlock )
-transformAccumulate data ast =
-    List.foldl (\tree ( acc_, ast_ ) -> transformAccumulateTree tree acc_ |> mapper ast_) ( init data, [] ) ast
+transformAccumulate data forest =
+    List.foldl (\tree ( acc_, ast_ ) -> transformAccumulateTree tree acc_ |> mapper ast_) ( init data, [] ) forest
         |> (\( acc_, ast_ ) -> ( acc_, List.reverse ast_ ))
 
 
@@ -98,7 +98,8 @@ type alias InitialAccumulatorData =
 
 init : InitialAccumulatorData -> Accumulator
 init data =
-    { headingIndex = Vector.init data.vectorSize
+    { language = data.language
+    , headingIndex = Vector.init data.vectorSize
     , documentIndex = Vector.init data.vectorSize
     , inList = False
     , counter = Dict.empty
@@ -150,7 +151,15 @@ transformBlock acc (ExpressionBlock block) =
             ExpressionBlock
                 { block | properties = Dict.insert "figure" (getCounterAsString "figure" acc.counter) block.properties }
 
+        ( Just "chart", _ ) ->
+            ExpressionBlock
+                { block | properties = Dict.insert "figure" (getCounterAsString "figure" acc.counter) block.properties }
+
         ( Just "image", _ ) ->
+            ExpressionBlock
+                { block | properties = Dict.insert "figure" (getCounterAsString "figure" acc.counter) block.properties }
+
+        ( Just "iframe", _ ) ->
             ExpressionBlock
                 { block | properties = Dict.insert "figure" (getCounterAsString "figure" acc.counter) block.properties }
 
@@ -158,11 +167,7 @@ transformBlock acc (ExpressionBlock block) =
             ExpressionBlock
                 { block | args = level :: "-" :: [] }
 
-        ( Just "document", id :: [] ) ->
-            ExpressionBlock
-                { block | args = [ id, "1", Vector.toString acc.documentIndex ] }
-
-        ( Just "document", id :: level :: _ ) ->
+        ( Just "document", _ ) ->
             ExpressionBlock
                 { block | properties = Dict.insert "label" (Vector.toString acc.documentIndex) block.properties }
 
@@ -178,7 +183,6 @@ transformBlock acc (ExpressionBlock block) =
                     else
                         Vector.toString acc.headingIndex ++ "." ++ getCounterAsString "equation" acc.counter
             in
-            -- Insert the numerical counter, e.g,, equation number, in the arg list of the block
             ExpressionBlock
                 { block | properties = Dict.insert "equation" equationProp block.properties }
 
@@ -219,9 +223,15 @@ transformBlock acc (ExpressionBlock block) =
 
             else
                 ExpressionBlock
-                    { block
-                        | properties = Dict.insert "label" (vectorPrefix acc.headingIndex ++ String.fromInt acc.blockCounter) block.properties
-                    }
+                    -- Default insertion of "label" property (used for block numbering)
+                    (if List.member name_ Parser.Settings.numberedBlockNames then
+                        { block
+                            | properties = Dict.insert "label" (vectorPrefix acc.headingIndex ++ String.fromInt acc.blockCounter) block.properties
+                        }
+
+                     else
+                        block
+                    )
                     |> expand acc.textMacroDict
 
         _ ->
@@ -252,12 +262,17 @@ vectorPrefix headingIndex =
         Vector.toString headingIndex ++ "."
 
 
+{-| Map name to name of counter
+-}
 reduceName : String -> String
 reduceName str =
     if List.member str [ "equation", "aligned" ] then
         "equation"
 
-    else if List.member str [ "quiver", "image" ] then
+    else if str == "code" then
+        "listing"
+
+    else if List.member str [ "quiver", "image", "iframe", "chart", "datatable", "svg", "tikz", "iframe" ] then
         "figure"
 
     else
@@ -384,7 +399,7 @@ updateAccumulator (ExpressionBlock { name, indent, args, blockType, content, tag
 
         ( Just name_, OrdinaryBlock _ ) ->
             -- TODO: tighten up
-            updateWithOrdinaryBlock accumulator (Just name_) content tag id indent
+            accumulator |> updateWithOrdinaryBlock (Just name_) content tag id indent
 
         -- provide for numbering of equations
         ( Just "mathmacros", VerbatimBlock [] ) ->
@@ -405,10 +420,10 @@ updateAccumulator (ExpressionBlock { name, indent, args, blockType, content, tag
 
         ( Just _, VerbatimBlock _ ) ->
             -- TODO: tighten up
-            updateWithVerbatimBlock accumulator name args tag id
+            accumulator |> updateWithVerbatimBlock name args tag id
 
         ( Nothing, Paragraph ) ->
-            updateWithParagraph accumulator Nothing content tag id
+            accumulator |> updateWithParagraph Nothing content tag id
 
         _ ->
             -- TODO: take care of numberedItemIndex
@@ -433,17 +448,17 @@ updateWithOrdinarySectionBlock accumulator name content level id =
         titleWords =
             case content of
                 Left str ->
-                    [ Compiler.Util.compressWhitespace str ]
+                    [ Utility.compressWhitespace str ]
 
                 Right expr ->
-                    List.map Compiler.ASTTools.getText expr |> Maybe.Extra.values |> List.map Compiler.Util.compressWhitespace
+                    List.map Compiler.ASTTools.getText expr |> Maybe.Extra.values |> List.map Utility.compressWhitespace
 
         sectionTag =
             -- TODO: the below is a bad solution
-            titleWords |> List.map (String.toLower >> Compiler.Util.compressWhitespace >> Compiler.Util.removeNonAlphaNum >> String.replace " " "-") |> String.join ""
+            titleWords |> List.map (String.toLower >> Utility.compressWhitespace >> Utility.removeNonAlphaNum >> String.replace " " "-") |> String.join ""
 
         headingIndex =
-            Vector.increment (String.toInt level |> Maybe.withDefault 0) accumulator.headingIndex
+            Vector.increment (String.toInt level |> Maybe.withDefault 2) accumulator.headingIndex
 
         blockCounter =
             0
@@ -491,8 +506,8 @@ updateBibItemBlock accumulator args id =
             { accumulator | reference = Dict.insert label { id = id, numRef = "_irrelevant_" } accumulator.reference }
 
 
-updateWithOrdinaryBlock : Accumulator -> Maybe String -> Either b (List Expr) -> String -> String -> Int -> Accumulator
-updateWithOrdinaryBlock accumulator name content tag id indent =
+updateWithOrdinaryBlock : Maybe String -> Either b (List Expr) -> String -> String -> Int -> Accumulator -> Accumulator
+updateWithOrdinaryBlock name content tag id indent accumulator =
     let
         ( inList, initialNumberedVector ) =
             listData accumulator name
@@ -563,9 +578,33 @@ updateWithOrdinaryBlock accumulator name content tag id indent =
             if List.member name_ [ "title", "contents", "banner", "a" ] then
                 accumulator
 
+            else if List.member name_ Parser.Settings.numberedBlockNames then
+                --- TODO: fix thereom labels
+                let
+                    prefix =
+                        Vector.toString accumulator.headingIndex
+
+                    equationProp =
+                        if prefix == "" then
+                            getCounterAsString "equation" accumulator.counter
+
+                        else
+                            Vector.toString accumulator.headingIndex ++ "." ++ String.fromInt (accumulator.blockCounter + 1)
+
+                    level =
+                        indent // indentationQuantum
+
+                    itemVector =
+                        Vector.increment level accumulator.itemVector
+
+                    numberedItemDict =
+                        Dict.insert id { level = level, index = Vector.get level itemVector } accumulator.numberedItemDict
+                in
+                { accumulator | blockCounter = accumulator.blockCounter + 1, itemVector = itemVector, numberedItemDict = numberedItemDict }
+                    |> updateReference tag id equationProp
+
             else
-                { accumulator | blockCounter = accumulator.blockCounter + 1 }
-                    |> updateReference tag id tag
+                accumulator
 
         _ ->
             accumulator
@@ -592,7 +631,8 @@ updateWithMathMacros content accumulator =
     { accumulator | mathMacroDict = mathMacroDict }
 
 
-updateWithVerbatimBlock accumulator name_ args tag_ id =
+updateWithVerbatimBlock : Maybe String -> List String -> String -> String -> Accumulator -> Accumulator
+updateWithVerbatimBlock name_ args tag_ id accumulator =
     let
         _ =
             ( name_, tag, id )
@@ -604,7 +644,7 @@ updateWithVerbatimBlock accumulator name_ args tag_ id =
             Maybe.withDefault "---" name_
 
         dict =
-            Render.Utility.keyValueDict args
+            Utility.keyValueDict args
 
         tag =
             Dict.get "label" dict |> Maybe.withDefault tag_
@@ -645,7 +685,7 @@ verbatimBlockReference isSimple headingIndex name newCounter =
         a ++ "." ++ (getCounter (reduceName name) newCounter |> String.fromInt)
 
 
-updateWithParagraph accumulator name content tag id =
+updateWithParagraph name content tag id accumulator =
     let
         ( inList, _ ) =
             listData accumulator name
