@@ -1,4 +1,5 @@
-exports.init = async (app) => {
+
+exports.init = async function(app) {
     var katexJs = document.createElement('script')
     katexJs.type = 'text/javascript'
     katexJs.onload = initKatex
@@ -7,11 +8,12 @@ exports.init = async (app) => {
     document.head.appendChild(katexJs);
 }
 
-initKatex = () => {
+function initKatex() {
     console.log("elm-katex: initializing");
 
     class MathText extends HTMLElement {
         constructor() {
+            // Always call super first in constructor
             super();
         }
 
