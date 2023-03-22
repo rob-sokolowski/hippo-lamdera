@@ -86,6 +86,9 @@ update msg model =
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
+        EVERGREEN_NOOP ->
+            ( model, Cmd.none )
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
