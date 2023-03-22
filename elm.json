@@ -11,13 +11,13 @@
     "dependencies": {
         "direct": {
             "Chadtech/elm-bool-extra": "2.4.2",
-            "Garados007/elm-svg-parser": "1.0.0",
+            "Garados007/elm-svg-parser": "1.1.0",
             "NoRedInk/elm-json-decode-pipeline": "1.0.1",
             "TSFoster/elm-sha1": "2.1.1",
             "andrewMacmurray/elm-simple-animation": "2.3.0",
             "chelovek0v/bbase64": "1.0.1",
             "elm-community/dict-extra": "2.4.0",
-            "elm-community/list-extra": "8.6.0",
+            "elm-community/list-extra": "8.7.0",
             "elm-community/maybe-extra": "5.3.0",
             "elm-community/result-extra": "2.4.0",
             "elm-community/string-extra": "4.0.1",
