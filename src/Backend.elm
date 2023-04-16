@@ -9,14 +9,14 @@ import Auth.Flow
 import AuthImplementation
 import Bridge exposing (ToBackend(..))
 import Dict
-import Dict.Extra as Dict
-import Duration exposing (Duration)
 import Gen.Msg
 import Lamdera exposing (..)
 import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
 import Pages.Study
+import Random exposing (Seed)
+import Random.List
 import Task exposing (Task)
 import Time
 import Time.Extra as Time
@@ -59,6 +59,7 @@ init =
       , now = Time.millisToPosix 0 -- Setting this to 0 here is a bit of a hack, but the server's init basically never runs after launch, so this'll do
       , nextCardId = 1000 -- setting to a high number incase I've deleted some. A one-time evergreen related thing
       , pendingAuths = Dict.empty
+      , seed = Random.initialSeed 0
       }
     , Cmd.none
     )
@@ -86,9 +87,6 @@ update msg model =
 
         Tick time ->
             ( { model | now = time }, Cmd.none )
-
-        Roll clientId cards ->
-            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success cards))) )
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -175,11 +173,12 @@ updateFromFrontend sessionId clientId msg model =
                         )
                         model.cards
 
-                asList : List CardEnvelope
-                asList =
-                    Dict.values userCards
+                ( shuffledCards, newSeed ) =
+                    Random.step (Random.List.shuffle (Dict.values userCards)) model.seed
             in
-            ( model, send <| Roll clientId asList )
+            ( { model | seed = newSeed }
+            , sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success shuffledCards)))
+            )
 
         FetchUsersCatalog_Catalog user ->
             -- Fetches all cards belonging to a user, note this doesn't take time into account!
