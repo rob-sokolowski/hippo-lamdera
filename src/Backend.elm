@@ -88,13 +88,6 @@ update msg model =
         Tick time ->
             ( { model | now = time }, Cmd.none )
 
-        ShuffleCards clientId cards ->
-            let
-                ( shuffledCards, newSeed ) =
-                    Random.step (Random.List.shuffle cards) model.seed
-            in
-            ( { model | seed = newSeed }, sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success shuffledCards))) )
-
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
@@ -180,11 +173,12 @@ updateFromFrontend sessionId clientId msg model =
                         )
                         model.cards
 
-                asList : List CardEnvelope
-                asList =
-                    Dict.values userCards
+                ( shuffledCards, newSeed ) =
+                    Random.step (Random.List.shuffle (Dict.values userCards)) model.seed
             in
-            ( model, send <| ShuffleCards clientId asList )
+            ( { model | seed = newSeed }
+            , sendToFrontend clientId (PageMsg (Gen.Msg.Study (Pages.Study.GotUserCards <| Success shuffledCards)))
+            )
 
         FetchUsersCatalog_Catalog user ->
             -- Fetches all cards belonging to a user, note this doesn't take time into account!

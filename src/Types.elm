@@ -57,7 +57,6 @@ type BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
-    | ShuffleCards ClientId (List CardEnvelope)
     | Noop_BackendMsg
 
 
