@@ -58,7 +58,7 @@ type BackendMsg
     | RenewSession Evergreen.V48.Api.User.UserId Lamdera.SessionId Lamdera.ClientId Time.Posix
     | Tick Time.Posix
     | Roll Lamdera.ClientId (List Evergreen.V48.Api.Card.CardEnvelope)
-    | EVERGREEN_NOOP
+    | Noop_BackendMsg
 
 
 type ToFrontend

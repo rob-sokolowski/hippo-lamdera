@@ -213,7 +213,7 @@ migrate_Types_BackendMsg old =
             Evergreen.V48.Types.RenewSession p0 p1 p2 p3
 
         Evergreen.V45.Types.NoOpBackendMsg ->
-            Evergreen.V48.Types.EVERGREEN_NOOP
+            Evergreen.V48.Types.Noop_BackendMsg
 
         Evergreen.V45.Types.Tick p0 ->
             Evergreen.V48.Types.Tick p0
