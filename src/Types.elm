@@ -56,6 +56,7 @@ type BackendMsg
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
     | Roll ClientId (List CardEnvelope)
+    | Noop_BackendMsg
 
 
 type ToFrontend

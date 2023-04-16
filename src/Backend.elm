@@ -67,6 +67,9 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
+        Noop_BackendMsg ->
+            ( model, Cmd.none )
+
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (AuthImplementation.backendConfig model) authMsg
 
