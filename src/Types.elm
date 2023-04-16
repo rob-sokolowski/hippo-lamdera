@@ -9,6 +9,7 @@ import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Gen.Pages as Pages
 import Lamdera exposing (ClientId, SessionId)
+import Random exposing (Seed)
 import Shared
 import Time
 import Url exposing (Url)
@@ -41,6 +42,7 @@ type alias BackendModel =
     , users : Dict Int UserFull
     , cards : Dict CardId CardEnvelope
     , now : Time.Posix
+    , seed : Seed
     , nextCardId : Int
     , pendingAuths : Dict SessionId Auth.Common.PendingAuth
     }
@@ -55,7 +57,7 @@ type BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
-    | Roll ClientId (List CardEnvelope)
+    | ShuffleCards ClientId (List CardEnvelope)
     | Noop_BackendMsg
 
 
