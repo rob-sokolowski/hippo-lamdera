@@ -1,6 +1,6 @@
 module Pages.Catalog exposing (Model, Msg(..), page)
 
-import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, PlainTextCard, StudySessionSummary)
+import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, StudySessionSummary)
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
@@ -219,9 +219,6 @@ viewElements model =
                         Markdown mkCard ->
                             E.text "Markdown"
 
-                        PlainText ptCard ->
-                            E.text "plain text"
-
                 applyHighlightEffect : CardEnvelope -> Attribute Msg
                 applyHighlightEffect cardEnv =
                     case model.hoveredOnEnv of
@@ -320,9 +317,6 @@ viewElements model =
                         renderedQuestion : Element Msg
                         renderedQuestion =
                             case env.card of
-                                PlainText card ->
-                                    E.text card.question
-
                                 Markdown card ->
                                     el
                                         [ width fill

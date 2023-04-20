@@ -1,11 +1,9 @@
-module Pages.Cards exposing (Model, Msg(..), page)
+module Pages.Cards exposing (EditorField(..), EditorForm(..), Model, Msg(..), SelectedFormRadioOption(..), page)
 
-import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, PlainTextCard, PromptFrequency(..))
+import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, PromptFrequency(..))
 import Api.Data exposing (Data(..))
 import Api.User exposing (User, UserId)
 import Bridge exposing (ToBackend(..))
-import Compiler.AbstractDifferentialParser exposing (EditRecord)
-import Dict
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -14,8 +12,6 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
 import Gen.Params.Cards exposing (Params)
-import Html exposing (Html)
-import Html.Attributes as HA
 import Lamdera
 import Page
 import Palette
@@ -43,8 +39,8 @@ page shared req =
 
 
 type EditorForm
-    = PlainTextForm PlainTextCard
-    | MarkdownForm MarkdownCard
+    = MarkdownForm MarkdownCard
+    | AiAssistedMarkdownForm (List MarkdownCard)
 
 
 type alias Model =
@@ -67,13 +63,11 @@ type Msg
 
 type SelectedFormRadioOption
     = MarkdownRadioOption
-    | PlainTextRadioOption
+    | AiAssistRadioOption
 
 
 type EditorField
-    = PlainText_Question
-    | PlainText_Answer
-    | Markdown_Question
+    = Markdown_Question
     | Markdown_Answer
     | Markdown_Tag
 
@@ -88,10 +82,6 @@ init user =
       }
     , Effect.none
     )
-
-
-defaultPlaintextCard =
-    PlainTextCard "" ""
 
 
 defaultMarkdownCard =
@@ -115,18 +105,6 @@ update msg model =
             let
                 newForm =
                     case form of
-                        PlainTextForm card ->
-                            case field of
-                                PlainText_Question ->
-                                    PlainTextForm { card | question = str }
-
-                                PlainText_Answer ->
-                                    PlainTextForm { card | answer = str }
-
-                                _ ->
-                                    -- smell?
-                                    PlainTextForm { card | answer = str }
-
                         MarkdownForm card ->
                             case field of
                                 Markdown_Question ->
@@ -138,9 +116,16 @@ update msg model =
                                 Markdown_Tag ->
                                     MarkdownForm { card | tag = Just str }
 
-                                _ ->
-                                    -- smell?
-                                    MarkdownForm card
+                        AiAssistedMarkdownForm cards ->
+                            case field of
+                                Markdown_Question ->
+                                    AiAssistedMarkdownForm (List.map (\card -> { card | question = str }) cards)
+
+                                Markdown_Answer ->
+                                    AiAssistedMarkdownForm (List.map (\card -> { card | answer = str }) cards)
+
+                                Markdown_Tag ->
+                                    AiAssistedMarkdownForm (List.map (\card -> { card | tag = Just str }) cards)
             in
             ( { model
                 | editorForm = newForm
@@ -150,16 +135,14 @@ update msg model =
             )
 
         ToggledOption selection ->
-            -- TODO: We're holding two state variables, `selectedType` and `card`. Is this necessary?
-            --       Also, this is a lazy implementation, so state is trampled on every toggle. (I'm OK with this for now)
             let
                 ( newForm, option ) =
                     case selection of
                         MarkdownRadioOption ->
                             ( MarkdownForm defaultMarkdownCard, MarkdownRadioOption )
 
-                        PlainTextRadioOption ->
-                            ( PlainTextForm defaultPlaintextCard, PlainTextRadioOption )
+                        AiAssistRadioOption ->
+                            ( AiAssistedMarkdownForm [ defaultMarkdownCard ], AiAssistRadioOption )
             in
             ( { model
                 | editorForm = newForm
@@ -194,8 +177,13 @@ update msg model =
                                         , tag = Nothing
                                         }
 
-                                PlainTextForm _ ->
-                                    PlainTextForm { question = "", answer = "" }
+                                AiAssistedMarkdownForm _ ->
+                                    AiAssistedMarkdownForm
+                                        [ { question = ""
+                                          , answer = ""
+                                          , tag = Nothing
+                                          }
+                                        ]
                       }
                     , Effect.none
                     )
@@ -256,12 +244,12 @@ viewTagField form =
     let
         ( onChange, tagDisplayText ) =
             case form of
-                PlainTextForm card ->
-                    -- TODO: Deprecate plain text cards
-                    ( Noop, "" )
-
                 MarkdownForm card ->
                     ( FormUpdated (MarkdownForm card) Markdown_Tag, Maybe.withDefault "" card.tag )
+
+                AiAssistedMarkdownForm markdownCards ->
+                    -- TODO: I think this should one tag per set of cards..
+                    ( Noop, "TODO: Implement this" )
     in
     el
         [ E.width fill
@@ -286,11 +274,12 @@ viewCardSubmission form user =
     let
         onPress_ =
             case form of
-                PlainTextForm card ->
-                    Just <| Submitted (PlainText card) user.id
-
                 MarkdownForm card ->
                     Just <| Submitted (Markdown card) user.id
+
+                AiAssistedMarkdownForm markdownCards ->
+                    -- TODO: batch upload
+                    Nothing
     in
     el
         [ E.width fill
@@ -313,15 +302,29 @@ viewCardSubmission form user =
 viewCardForm : EditorForm -> User -> Int -> Element Msg
 viewCardForm form user count =
     case form of
-        PlainTextForm plainTextCard ->
-            el [] (viewPlainTextEditor plainTextCard user.id)
-
         MarkdownForm markdownCard ->
             el
                 [ E.width fill
                 , E.height fill
                 ]
                 (viewMarkdownEditor markdownCard count)
+
+        AiAssistedMarkdownForm markdownCards ->
+            let
+                markdownCard =
+                    List.head markdownCards
+            in
+            case markdownCard of
+                -- TODO: actual multi card form
+                Nothing ->
+                    E.none
+
+                Just markdownCard_ ->
+                    el
+                        [ E.width fill
+                        , E.height fill
+                        ]
+                        (viewMarkdownEditor markdownCard_ count)
 
 
 viewCardSubmitStatus : Model -> Element Msg
@@ -358,7 +361,6 @@ viewCardTypeSelector model =
             , label = Input.labelAbove [ paddingXY 0 12 ] (E.text "What type of flash card?")
             , options =
                 [ Input.option MarkdownRadioOption (E.text "Markdown")
-                , Input.option PlainTextRadioOption (E.text "Plain text")
                 ]
             }
         ]
@@ -453,48 +455,4 @@ viewMarkdownEditor card count =
               <|
                 viewRenderedCard card.answer count
             ]
-        ]
-
-
-viewPlainTextEditor : PlainTextCard -> UserId -> Element Msg
-viewPlainTextEditor card userId =
-    let
-        update_ : String -> PlainTextCard
-        update_ updatedInput =
-            { card | question = updatedInput }
-    in
-    E.column
-        [ E.width (px 800)
-        , height shrink
-        , spacing 36
-        , padding 10
-        ]
-        [ el
-            [ Region.heading 1
-            , E.alignLeft
-            , Font.size 36
-            ]
-            (E.text "Add a new flash card:")
-        , Input.multiline
-            [ height shrink
-            , spacing 12
-            , padding 6
-            ]
-            { text = card.question
-            , placeholder = Just <| Input.placeholder [] (E.text "Question goes here..")
-            , onChange = \text -> FormUpdated (PlainTextForm card) PlainText_Question text
-            , label = Input.labelAbove [ Font.size 14 ] (E.text "Flash card prompt")
-            , spellcheck = True
-            }
-        , Input.multiline
-            [ height shrink
-            , spacing 12
-            , padding 6
-            ]
-            { text = card.answer
-            , placeholder = Just <| Input.placeholder [] (E.text "Input answer here")
-            , onChange = \text -> FormUpdated (PlainTextForm card) PlainText_Answer text
-            , label = Input.labelAbove [ Font.size 14 ] (E.text "Answer prompt:")
-            , spellcheck = True
-            }
         ]

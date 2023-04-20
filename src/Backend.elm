@@ -115,16 +115,10 @@ updateFromFrontend sessionId clientId msg model =
                                         , userId = cardEnv.userId
                                         , question =
                                             case cardEnv.card of
-                                                PlainText card_ ->
-                                                    card_.question
-
                                                 Markdown card_ ->
                                                     card_.question
                                         , answer =
                                             case cardEnv.card of
-                                                PlainText card_ ->
-                                                    card_.answer
-
                                                 Markdown card_ ->
                                                     card_.answer
                                         }

@@ -1,6 +1,6 @@
-module Pages.Study exposing (Model, Msg(..), page)
+module Pages.Study exposing (Model, Msg(..), PromptStatus(..), page)
 
-import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, PlainTextCard, StudySessionSummary)
+import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, StudySessionSummary)
 import Api.Data as Data exposing (..)
 import Api.User exposing (User)
 import Bridge exposing (ToBackend(..), sendToBackend)
@@ -283,11 +283,6 @@ viewElements model =
                     case card of
                         Just env ->
                             case env.card of
-                                PlainText card_ ->
-                                    el
-                                        []
-                                        (viewPlainTextFlashcardPrompt card_ env.id model.promptStatus)
-
                                 Markdown card_ ->
                                     el
                                         [ width fill
@@ -545,69 +540,9 @@ viewRenderedCard text count =
         (Scripta.API.compile (settings count) XMarkdownLang text |> List.map (E.map Render))
 
 
-viewPlainTextFlashcardPrompt : PlainTextCard -> CardId -> PromptStatus -> Element Msg
-viewPlainTextFlashcardPrompt card cid ps =
-    case ps of
-        Idle ->
-            E.none
-
-        QuestionPrompted ->
-            E.column
-                [ padding 10
-                , spacing 20
-                , centerX
-                ]
-                [ E.text card.answer
-                , E.row [ spacing 10 ]
-                    [ Input.button
-                        [ Background.color Palette.darkCharcoal
-                        , Font.color Palette.lightBlue
-                        , Border.color Palette.lightGrey
-                        , paddingXY 32 16
-                        , Border.rounded 3
-                        , E.width fill
-                        ]
-                        { onPress = Just UserClickedReveal
-                        , label = E.text "Reveal"
-                        }
-                    ]
-                ]
-
-        AnswerRevealed ->
-            E.column
-                [ padding 10
-                ]
-                [ E.text card.question
-                , E.text card.answer
-                , E.row [ spacing 10 ]
-                    [ Input.button
-                        [ Background.color Palette.darkCharcoal
-                        , Font.color Palette.lightBlue
-                        , Border.color Palette.lightGrey
-                        , paddingXY 32 16
-                        , Border.rounded 3
-                        , E.width fill
-                        ]
-                        { onPress = Just <| UserSelfGrade cid Incorrect
-                        , label = E.text "X"
-                        }
-                    , Input.button
-                        [ Background.color Palette.darkCharcoal
-                        , Font.color Palette.lightBlue
-                        , Border.color Palette.lightGrey
-                        , paddingXY 32 16
-                        , Border.rounded 3
-                        , E.width fill
-                        ]
-                        { onPress = Just <| UserSelfGrade cid Correct
-                        , label = E.text "✔"
-                        }
-                    ]
-                ]
-
-
 viewStudySessionSummary : Data StudySessionSummary -> Element Msg
 viewStudySessionSummary summary =
+    -- TODO: Looks like this was an old implementation? Wire it up again?
     case summary of
         NotAsked ->
             E.text "not asked"
