@@ -1,4 +1,4 @@
-module Pages.Cards exposing (Model, Msg(..), page)
+module Pages.Cards exposing (EditorField(..), EditorForm(..), Model, Msg(..), SelectedFormRadioOption(..), page)
 
 import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), MarkdownCard, PromptFrequency(..))
 import Api.Data exposing (Data(..))

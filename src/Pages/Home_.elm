@@ -1,4 +1,4 @@
-module Pages.Home_ exposing (Model, Msg(..), page)
+module Pages.Home_ exposing (Model, Msg(..), Tab(..), page)
 
 import Element as E exposing (..)
 import Element.Background as Background

@@ -1,4 +1,4 @@
-module Pages.Study exposing (Model, Msg(..), page)
+module Pages.Study exposing (Model, Msg(..), PromptStatus(..), page)
 
 import Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, StudySessionSummary)
 import Api.Data as Data exposing (..)

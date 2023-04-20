@@ -1,4 +1,4 @@
-module Pages.Stories.KatexDemo exposing (Model, Msg, page)
+module Pages.Stories.KatexDemo exposing (Model, Msg(..), page)
 
 import Effect exposing (Effect)
 import Element as E exposing (..)
