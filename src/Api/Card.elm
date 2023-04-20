@@ -1,4 +1,4 @@
-module Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, PlainTextCard, PromptFrequency(..), StudySessionSummary, processGrade)
+module Api.Card exposing (CardEnvelope, CardId, FlashCard(..), Grade(..), MarkdownCard, PromptFrequency(..), StudySessionSummary, processGrade)
 
 import Api.User exposing (UserId)
 import Time
@@ -10,8 +10,7 @@ type alias CardId =
 
 
 type FlashCard
-    = PlainText PlainTextCard
-    | Markdown MarkdownCard
+    = Markdown MarkdownCard
 
 
 type alias CardEnvelope =
@@ -25,16 +24,8 @@ type alias CardEnvelope =
     }
 
 
-type alias PlainTextCard =
-    { question : String
-    , answer : String
-    }
-
-
 type alias MarkdownCard =
     { question : String
-
-    --, renderedQuestion : String
     , answer : String
     , tag : Maybe String
     }
