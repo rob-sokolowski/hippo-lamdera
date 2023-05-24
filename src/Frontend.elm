@@ -61,9 +61,6 @@ init url key =
 
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
-
-        _ =
-            Debug.log "init" page
     in
     ( { url = url
       , key = key
