@@ -1,4 +1,4 @@
-module Pages.Login exposing (Model, Msg(..), page)
+module Pages.Login exposing (Model, Msg(..), page, rotationLoop, spinner)
 
 import Api.Data exposing (Data(..))
 import Api.User exposing (User)

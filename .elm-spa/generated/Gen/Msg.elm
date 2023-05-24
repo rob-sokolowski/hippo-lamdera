@@ -9,6 +9,7 @@ import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
 import Gen.Params.Stories.KatexDemo
+import Gen.Params.Stories.VellumTesting
 import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
@@ -18,6 +19,7 @@ import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
 import Pages.Stories.KatexDemo
+import Pages.Stories.VellumTesting
 
 
 type Msg
@@ -30,4 +32,5 @@ type Msg
     | Study Pages.Study.Msg
     | Login__Provider___Callback Pages.Login.Provider_.Callback.Msg
     | Stories__KatexDemo Pages.Stories.KatexDemo.Msg
+    | Stories__VellumTesting Pages.Stories.VellumTesting.Msg
 

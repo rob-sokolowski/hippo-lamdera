@@ -13,6 +13,7 @@ import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
 import Gen.Params.Stories.KatexDemo
+import Gen.Params.Stories.VellumTesting
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -27,6 +28,7 @@ type Route
     | Study
     | Login__Provider___Callback { provider : String }
     | Stories__KatexDemo
+    | Stories__VellumTesting
 
 
 fromUrl : Url -> Route
@@ -44,6 +46,7 @@ routes =
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Study Gen.Params.Study.parser
     , Parser.map Stories__KatexDemo Gen.Params.Stories.KatexDemo.parser
+    , Parser.map Stories__VellumTesting Gen.Params.Stories.VellumTesting.parser
     , Parser.map Login__Provider___Callback Gen.Params.Login.Provider_.Callback.parser
     ]
 
@@ -82,4 +85,7 @@ toHref route =
     
         Stories__KatexDemo ->
             joinAsHref [ "stories", "katex-demo" ]
+    
+        Stories__VellumTesting ->
+            joinAsHref [ "stories", "vellum-testing" ]
 
