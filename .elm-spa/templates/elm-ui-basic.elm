@@ -71,7 +71,7 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Stories.KatexDemo"
+    { title = "{{module}}"
     , body =
         [ el
             [ width fill

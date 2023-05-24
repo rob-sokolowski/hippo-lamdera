@@ -45,3 +45,13 @@ githubOAuthClientSecret =
         _ ->
             -- safe to commit publicly, this is only for local dev
             "739e6500c9d48c85aced98a9da4412c19f64e993"
+
+
+openAiApiKey =
+    case Env.mode of
+        Env.Production ->
+            -- this secret is saved in Lamdera admin dashboard
+            Env.openAiApiKey
+
+        _ ->
+            "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"

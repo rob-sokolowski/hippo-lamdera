@@ -24,6 +24,11 @@ githubOAuthClientSecret =
     ""
 
 
+openAiApiKey =
+    -- true value saved in Lamdera admin panel
+    ""
+
+
 
 --isDev : Bool
 --isDev =

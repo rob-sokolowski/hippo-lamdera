@@ -12,6 +12,7 @@ import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
 import Gen.Params.Stories.KatexDemo
+import Gen.Params.Stories.VellumTesting
 import Gen.Model as Model
 import Gen.Msg as Msg
 import Gen.Route as Route exposing (Route)
@@ -25,6 +26,7 @@ import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
 import Pages.Stories.KatexDemo
+import Pages.Stories.VellumTesting
 import Request exposing (Request)
 import Shared
 import Task
@@ -69,6 +71,9 @@ init route =
     
         Route.Stories__KatexDemo ->
             pages.stories__katexDemo.init ()
+    
+        Route.Stories__VellumTesting ->
+            pages.stories__vellumTesting.init ()
 
 
 update : Msg -> Model -> Shared.Model -> Url -> Key -> ( Model, Effect Msg )
@@ -100,6 +105,9 @@ update msg_ model_ =
     
         ( Msg.Stories__KatexDemo msg, Model.Stories__KatexDemo params model ) ->
             pages.stories__katexDemo.update params msg model
+    
+        ( Msg.Stories__VellumTesting msg, Model.Stories__VellumTesting params model ) ->
+            pages.stories__vellumTesting.update params msg model
 
         _ ->
             \_ _ _ -> ( model_, Effect.none )
@@ -137,6 +145,9 @@ view model_ =
     
         Model.Stories__KatexDemo params model ->
             pages.stories__katexDemo.view params model
+    
+        Model.Stories__VellumTesting params model ->
+            pages.stories__vellumTesting.view params model
 
 
 subscriptions : Model -> Shared.Model -> Url -> Key -> Sub Msg
@@ -171,6 +182,9 @@ subscriptions model_ =
     
         Model.Stories__KatexDemo params model ->
             pages.stories__katexDemo.subscriptions params model
+    
+        Model.Stories__VellumTesting params model ->
+            pages.stories__vellumTesting.subscriptions params model
 
 
 
@@ -187,6 +201,7 @@ pages :
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
     , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
     , stories__katexDemo : Bundle Gen.Params.Stories.KatexDemo.Params Pages.Stories.KatexDemo.Model Pages.Stories.KatexDemo.Msg
+    , stories__vellumTesting : Bundle Gen.Params.Stories.VellumTesting.Params Pages.Stories.VellumTesting.Model Pages.Stories.VellumTesting.Msg
     }
 pages =
     { admin = bundle Pages.Admin.page Model.Admin Msg.Admin
@@ -198,6 +213,7 @@ pages =
     , study = bundle Pages.Study.page Model.Study Msg.Study
     , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
     , stories__katexDemo = bundle Pages.Stories.KatexDemo.page Model.Stories__KatexDemo Msg.Stories__KatexDemo
+    , stories__vellumTesting = bundle Pages.Stories.VellumTesting.page Model.Stories__VellumTesting Msg.Stories__VellumTesting
     }
 
 

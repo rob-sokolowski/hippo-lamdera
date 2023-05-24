@@ -25,6 +25,18 @@ type alias Model =
     FrontendModel
 
 
+app :
+    { init :
+        Lamdera.Url
+        -> Key
+        -> ( Model, Cmd Msg )
+    , view : Model -> Browser.Document Msg
+    , update : Msg -> Model -> ( Model, Cmd Msg )
+    , updateFromBackend : ToFrontend -> Model -> ( Model, Cmd Msg )
+    , subscriptions : Model -> Sub Msg
+    , onUrlRequest : Browser.UrlRequest -> Msg
+    , onUrlChange : Url -> Msg
+    }
 app =
     Lamdera.frontend
         { init = init
@@ -55,7 +67,7 @@ init url key =
       , shared = shared
       , page = page
       , authFlow = Auth.Common.Idle
-      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+      , authRedirectBaseUrl = url
       }
     , Cmd.batch
         [ Cmd.map Shared sharedCmd

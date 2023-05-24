@@ -41,9 +41,6 @@ page shared _ =
 
 type alias Model =
     { cardDataFetch : Data (List CardEnvelope)
-
-    -- TODO: Prompt state needs to be a variant type once other flashcard variants are implemented!
-    --       I'm not sure where that should live, so punting on that decision atm.
     , promptStatus : PromptStatus
     , gradeSubmit : Data CardId
     , sessionSummary : Data StudySessionSummary
