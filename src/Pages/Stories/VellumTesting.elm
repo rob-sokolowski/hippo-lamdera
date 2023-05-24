@@ -15,7 +15,7 @@ import Palette
 import Request
 import Shared
 import Utils exposing (animatedEl)
-import VellumClient exposing (RemoteData(..), VellumInputValues, VellumResponse)
+import VellumClient exposing (RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards)
 import View exposing (View)
 
 
@@ -76,7 +76,17 @@ update msg model =
             ( model, Effect.none )
 
         UserPressedVellumAssist ->
-            ( { model | response = Loading }, Effect.none )
+            let
+                vals : VellumInputValues
+                vals =
+                    { nCards = model.nCards
+                    , title = model.title
+                    , author = model.author
+                    }
+            in
+            ( { model | response = Loading }
+            , Effect.fromCmd (fetchSummaryFlashCards vals Got_VellumResponse)
+            )
 
         UpdatedFormField field val ->
             case field of
