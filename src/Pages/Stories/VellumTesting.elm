@@ -1,5 +1,6 @@
-module Pages.Stories.VellumTesting exposing (Model, Msg, page)
+module Pages.Stories.VellumTesting exposing (Model, Msg(..), page)
 
+import Bridge exposing (ToBackend(..), sendToBackend)
 import Effect exposing (Effect)
 import Element as E exposing (..)
 import Element.Background as Background
@@ -73,7 +74,12 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         Got_VellumResponse result ->
-            ( model, Effect.none )
+            case result of
+                Ok vellumResponse ->
+                    ( { model | response = Success vellumResponse }, Effect.none )
+
+                Err error ->
+                    ( { model | response = Failure error }, Effect.none )
 
         UserPressedVellumAssist ->
             let
@@ -85,7 +91,7 @@ update msg model =
                     }
             in
             ( { model | response = Loading }
-            , Effect.fromCmd (fetchSummaryFlashCards vals Got_VellumResponse)
+            , Effect.fromCmd (sendToBackend <| Proxy_VellumApi vals)
             )
 
         UpdatedFormField field val ->

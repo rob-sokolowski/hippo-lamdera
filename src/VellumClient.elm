@@ -1,5 +1,6 @@
 module VellumClient exposing (RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards)
 
+import Config
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
@@ -8,27 +9,8 @@ import Json.Encode as JE
 type RemoteData err a
     = NotAsked
     | Loading
-    | Success VellumResponse
-    | Failure Http.Error
-
-
-type alias VellumInputValues =
-    { nCards : Int
-    , title : String
-    , author : String
-    }
-
-
-type alias VellumRequest =
-    { requests : List InnerRequest
-    , deploymentId : Maybe String
-    , deploymentName : String
-    }
-
-
-
---type alias VellumResponse =
---    String
+    | Success a
+    | Failure err
 
 
 url : String
@@ -36,35 +18,15 @@ url =
     "https://predict.vellum.ai/v1/generate"
 
 
-type alias InnerRequest =
-    { inputValues : VellumInputValues
-    , externalIds : Maybe String
-    }
-
-
 type alias VellumResponse =
     { results : List VellumResponseResultsObject
     }
 
 
-type alias VellumResponseResultsObject =
-    { data : VellumResponseResultsObjectData
-    , error : ()
-    }
-
-
-type alias VellumResponseResultsObjectData =
-    { completions : List VellumResponseResultsObjectDataCompletionsObject
-    }
-
-
-type alias VellumResponseResultsObjectDataCompletionsObject =
-    { externalId : ()
-    , finishReason : String
-    , id : String
-    , logprobs : ()
-    , modelVersionId : String
-    , text : String
+type alias VellumInputValues =
+    { nCards : Int
+    , title : String
+    , author : String
     }
 
 
@@ -131,7 +93,7 @@ fetchSummaryFlashCards input onResponse =
         { method = "POST"
         , headers =
             [ Http.header "Content-Type" "application/json"
-            , Http.header "X-API-KEY" "O5tlM7ED.bjGbaFnS5TjAambQE15pGDWO9quEI04k"
+            , Http.header "X-API-KEY" Config.vellumApiKey
             ]
         , url = url
         , body = Http.jsonBody encodedVellumRequest
@@ -139,3 +101,45 @@ fetchSummaryFlashCards input onResponse =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+-- begin region: private
+
+
+type alias VellumResponseResultsObject =
+    { data : VellumResponseResultsObjectData
+    , error : ()
+    }
+
+
+type alias VellumResponseResultsObjectData =
+    { completions : List VellumResponseResultsObjectDataCompletionsObject
+    }
+
+
+type alias VellumResponseResultsObjectDataCompletionsObject =
+    { externalId : ()
+    , finishReason : String
+    , id : String
+    , logprobs : ()
+    , modelVersionId : String
+    , text : String
+    }
+
+
+type alias InnerRequest =
+    { inputValues : VellumInputValues
+    , externalIds : Maybe String
+    }
+
+
+type alias VellumRequest =
+    { requests : List InnerRequest
+    , deploymentId : Maybe String
+    , deploymentName : String
+    }
+
+
+
+-- end region: private
