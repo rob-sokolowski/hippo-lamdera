@@ -1,4 +1,4 @@
-module VellumClient exposing (RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards)
+module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards, pingServer)
 
 import Config
 import Http
@@ -13,9 +13,14 @@ type RemoteData err a
     | Failure err
 
 
-url : String
-url =
-    "https://predict.vellum.ai/v1/generate"
+
+--
+--host =
+--    "https://cors-proxy-irqkge22rq-uk.a.run.app"
+
+
+host =
+    "https://cors-proxy-irqkge22rq-uk.a.run.app"
 
 
 type alias VellumResponse =
@@ -28,6 +33,30 @@ type alias VellumInputValues =
     , title : String
     , author : String
     }
+
+
+type alias PingResponse =
+    { message : String
+    }
+
+
+pingServer : Float -> (Result Http.Error PingResponse -> msg) -> Cmd msg
+pingServer timeoutMs onResponse =
+    let
+        pingResponseDecoder : JD.Decoder PingResponse
+        pingResponseDecoder =
+            JD.map PingResponse
+                (JD.field "message" JD.string)
+    in
+    Http.request
+        { method = "GET"
+        , headers = []
+        , url = host ++ "/ping"
+        , body = Http.emptyBody
+        , expect = Http.expectJson onResponse pingResponseDecoder
+        , timeout = Just timeoutMs
+        , tracker = Nothing
+        }
 
 
 fetchSummaryFlashCards : VellumInputValues -> (Result Http.Error VellumResponse -> msg) -> Cmd msg
@@ -93,12 +122,11 @@ fetchSummaryFlashCards input onResponse =
         { method = "POST"
         , headers =
             [ Http.header "Content-Type" "application/json"
-            , Http.header "X-API-KEY" Config.vellumApiKey
             ]
-        , url = url
+        , url = host ++ "/vellum-ai"
         , body = Http.jsonBody encodedVellumRequest
         , expect = Http.expectJson onResponse vellumResponseDecoder
-        , timeout = Nothing
+        , timeout = 60 * 1000 |> Just
         , tracker = Nothing
         }
 

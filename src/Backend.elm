@@ -71,11 +71,6 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
-        Got_VellumApiResponse clientId result ->
-            ( model
-            , sendToFrontend clientId (PageMsg (Gen.Msg.Stories__VellumTesting (Pages.Stories.VellumTesting.Got_VellumResponse result)))
-            )
-
         Noop_BackendMsg ->
             ( model, Cmd.none )
 
@@ -104,9 +99,6 @@ updateFromFrontend sessionId clientId msg model =
             sendToFrontend clientId msg_
     in
     case msg of
-        Proxy_VellumApi vellumVals ->
-            ( model, fetchSummaryFlashCards vellumVals (Got_VellumApiResponse clientId) )
-
         AuthToBackend authToBackend ->
             Auth.Flow.updateFromFrontend (AuthImplementation.backendConfig model) clientId sessionId authToBackend model
 

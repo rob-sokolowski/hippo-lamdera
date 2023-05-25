@@ -59,7 +59,6 @@ type BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
-    | Got_VellumApiResponse ClientId (Result Http.Error VellumResponse)
     | Noop_BackendMsg
 
 
