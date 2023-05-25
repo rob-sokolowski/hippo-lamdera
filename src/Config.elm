@@ -45,14 +45,3 @@ githubOAuthClientSecret =
         _ ->
             -- safe to commit publicly, this is only for local dev
             "739e6500c9d48c85aced98a9da4412c19f64e993"
-
-
-vellumApiKey =
-    case Env.mode of
-        Env.Production ->
-            -- this secret is saved in Lamdera admin dashboard
-            Env.vellumApiKey
-
-        _ ->
-            -- TODO: Local proxy? And I'll need to rotate this since it's committed publicly
-            "O5tlM7ED.bjGbaFnS5TjAambQE15pGDWO9quEI04k"

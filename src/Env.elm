@@ -22,14 +22,3 @@ githubOAuthClientId =
 githubOAuthClientSecret =
     -- true value saved in Lamdera admin panel
     ""
-
-
-vellumApiKey =
-    -- true value saved in Lamdera admin panel
-    ""
-
-
-
---isDev : Bool
---isDev =
---    Env.mode == Env.Development
