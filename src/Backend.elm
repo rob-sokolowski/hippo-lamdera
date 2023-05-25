@@ -14,6 +14,7 @@ import Lamdera exposing (..)
 import Pages.Admin
 import Pages.Cards
 import Pages.Catalog
+import Pages.Stories.VellumTesting
 import Pages.Study
 import Random exposing (Seed)
 import Random.List
@@ -21,7 +22,9 @@ import Task exposing (Task)
 import Time
 import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
+import Utils exposing (do)
 import Utils.Task as Utils exposing (send)
+import VellumClient exposing (fetchSummaryFlashCards)
 
 
 type alias Model =
@@ -68,6 +71,11 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
+        Got_VellumApiResponse clientId result ->
+            ( model
+            , sendToFrontend clientId (PageMsg (Gen.Msg.Stories__VellumTesting (Pages.Stories.VellumTesting.Got_VellumResponse result)))
+            )
+
         Noop_BackendMsg ->
             ( model, Cmd.none )
 
@@ -96,6 +104,9 @@ updateFromFrontend sessionId clientId msg model =
             sendToFrontend clientId msg_
     in
     case msg of
+        Proxy_VellumApi vellumVals ->
+            ( model, fetchSummaryFlashCards vellumVals (Got_VellumApiResponse clientId) )
+
         AuthToBackend authToBackend ->
             Auth.Flow.updateFromFrontend (AuthImplementation.backendConfig model) clientId sessionId authToBackend model
 

@@ -24,7 +24,7 @@ githubOAuthClientSecret =
     ""
 
 
-openAiApiKey =
+vellumApiKey =
     -- true value saved in Lamdera admin panel
     ""
 

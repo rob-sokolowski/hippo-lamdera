@@ -7,7 +7,9 @@ import Bridge
 import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
+import Evergreen.V51.VellumClient exposing (VellumResponse)
 import Gen.Pages as Pages
+import Http
 import Lamdera exposing (ClientId, SessionId)
 import Random exposing (Seed)
 import Shared
@@ -57,6 +59,7 @@ type BackendMsg
     | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | Tick Time.Posix
+    | Got_VellumApiResponse ClientId (Result Http.Error VellumResponse)
     | Noop_BackendMsg
 
 

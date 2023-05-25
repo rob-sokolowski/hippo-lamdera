@@ -47,11 +47,12 @@ githubOAuthClientSecret =
             "739e6500c9d48c85aced98a9da4412c19f64e993"
 
 
-openAiApiKey =
+vellumApiKey =
     case Env.mode of
         Env.Production ->
             -- this secret is saved in Lamdera admin dashboard
-            Env.openAiApiKey
+            Env.vellumApiKey
 
         _ ->
-            "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"
+            -- TODO: Local proxy? And I'll need to rotate this since it's committed publicly
+            "O5tlM7ED.bjGbaFnS5TjAambQE15pGDWO9quEI04k"
