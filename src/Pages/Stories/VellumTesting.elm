@@ -16,7 +16,7 @@ import Palette
 import Request
 import Shared
 import Utils exposing (animatedEl)
-import VellumClient exposing (RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards)
+import VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards, pingServer)
 import View exposing (View)
 
 
@@ -39,6 +39,7 @@ type alias Model =
     , title : String
     , author : String
     , response : RemoteData Http.Error VellumResponse
+    , pingResponse : RemoteData Http.Error PingResponse
     }
 
 
@@ -48,6 +49,7 @@ init shared =
       , title = ""
       , author = ""
       , response = NotAsked
+      , pingResponse = NotAsked
       }
     , Effect.none
     )
@@ -67,12 +69,25 @@ type Msg
     = UpdatedFormField FormField String
     | UpdatedSlider Float
     | UserPressedVellumAssist
+    | UserPressedPing
+    | Got_PingResponse (Result Http.Error PingResponse)
     | Got_VellumResponse (Result Http.Error VellumResponse)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        UserPressedPing ->
+            ( { model | pingResponse = Loading }, Effect.fromCmd <| pingServer 10000 Got_PingResponse )
+
+        Got_PingResponse result ->
+            case result of
+                Ok pingResponse ->
+                    ( { model | pingResponse = Success pingResponse }, Effect.none )
+
+                Err error ->
+                    ( { model | pingResponse = Failure error }, Effect.none )
+
         Got_VellumResponse result ->
             case result of
                 Ok vellumResponse ->
@@ -91,7 +106,8 @@ update msg model =
                     }
             in
             ( { model | response = Loading }
-            , Effect.fromCmd (sendToBackend <| Proxy_VellumApi vals)
+            , Effect.fromCmd (fetchSummaryFlashCards vals Got_VellumResponse)
+              --, Effect.fromCmd (sendToBackend <| Proxy_VellumApi vals)
             )
 
         UpdatedFormField field val ->
@@ -217,6 +233,19 @@ viewElements model =
             , label = text "Vellum Assist (beta)"
             }
         , viewResponsePanel model.response
+        , Input.button
+            [ width shrink
+            , paddingXY 10 0
+            , height (px 30)
+            , Background.color Palette.lightGrey
+            , Border.rounded 5
+            , Border.color Palette.darkCharcoal
+            , Border.width 1
+            , Font.size 12
+            ]
+            { onPress = Just UserPressedPing
+            , label = text "Ping proxy"
+            }
         ]
 
 
