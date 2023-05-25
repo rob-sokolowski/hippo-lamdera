@@ -51,7 +51,7 @@ vellumApiKey =
     case Env.mode of
         Env.Production ->
             -- this secret is saved in Lamdera admin dashboard
-            Env.openAiApiKey
+            Env.vellumApiKey
 
         _ ->
             -- TODO: Local proxy? And I'll need to rotate this since it's committed publicly
