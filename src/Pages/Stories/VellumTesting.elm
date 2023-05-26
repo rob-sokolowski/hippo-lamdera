@@ -16,7 +16,7 @@ import Palette
 import Request
 import Shared
 import Utils exposing (animatedEl)
-import VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer)
+import VellumClient exposing (CandidateCard, PingResponse, RemoteData(..), VellumInputValues, VellumResponse, VellumResponseParsingError, extractFlashcardText, fetchSummaryFlashCards, pingServer, runParser)
 import View exposing (View)
 
 
@@ -40,6 +40,7 @@ type alias Model =
     , author : String
     , response : RemoteData Http.Error VellumResponse
     , vellumText : Maybe String
+    , vellumParsedCards : Maybe (Result VellumResponseParsingError (List CandidateCard))
     , pingResponse : RemoteData Http.Error PingResponse
     }
 
@@ -51,6 +52,7 @@ init shared =
       , author = ""
       , response = NotAsked
       , vellumText = Nothing
+      , vellumParsedCards = Nothing
       , pingResponse = NotAsked
       }
     , Effect.none
@@ -93,7 +95,17 @@ update msg model =
         Got_VellumResponse result ->
             case result of
                 Ok vellumResponse ->
-                    ( { model | response = Success vellumResponse }, Effect.none )
+                    let
+                        candidateCards : Result VellumResponseParsingError (List CandidateCard)
+                        candidateCards =
+                            runParser (String.join "" <| extractFlashcardText vellumResponse)
+                    in
+                    ( { model
+                        | response = Success vellumResponse
+                        , vellumParsedCards = Just candidateCards
+                      }
+                    , Effect.none
+                    )
 
                 Err error ->
                     ( { model | response = Failure error }, Effect.none )
@@ -221,34 +233,66 @@ viewElements model =
             , placeholder = Nothing
             , label = Input.labelAbove [ Font.size 14 ] <| text "Author:"
             }
-        , Input.button
-            [ width shrink
-            , paddingXY 10 0
-            , height (px 30)
-            , Background.color Palette.lightGrey
-            , Border.rounded 5
-            , Border.color Palette.darkCharcoal
-            , Border.width 1
-            , Font.size 12
+        , row [ width fill, spacing 10 ]
+            [ Input.button
+                [ width shrink
+                , paddingXY 10 0
+                , height (px 30)
+                , Background.color Palette.lightGrey
+                , Border.rounded 5
+                , Border.color Palette.darkCharcoal
+                , Border.width 1
+                , Font.size 12
+                ]
+                { onPress = Just UserPressedVellumAssist
+                , label = text "Vellum Assist (beta)"
+                }
+            , Input.button
+                [ width shrink
+                , paddingXY 10 0
+                , height (px 30)
+                , Background.color Palette.lightGrey
+                , Border.rounded 5
+                , Border.color Palette.darkCharcoal
+                , Border.width 1
+                , Font.size 12
+                ]
+                { onPress = Just UserPressedPing
+                , label = text "Ping proxy"
+                }
             ]
-            { onPress = Just UserPressedVellumAssist
-            , label = text "Vellum Assist (beta)"
-            }
         , viewResponsePanel model model.response
-        , Input.button
-            [ width shrink
-            , paddingXY 10 0
-            , height (px 30)
-            , Background.color Palette.lightGrey
-            , Border.rounded 5
-            , Border.color Palette.darkCharcoal
-            , Border.width 1
-            , Font.size 12
-            ]
-            { onPress = Just UserPressedPing
-            , label = text "Ping proxy"
-            }
+        , viewCandidateCards model.vellumParsedCards
         ]
+
+
+viewCandidateCards : Maybe (Result VellumResponseParsingError (List CandidateCard)) -> Element Msg
+viewCandidateCards cards =
+    let
+        viewCard : CandidateCard -> Element Msg
+        viewCard card_ =
+            column [ spacing 2, Border.width 1, Border.color Palette.black, padding 5, Border.rounded 5 ]
+                [ paragraph [] [ text "Question:" ]
+                , paragraph [] [ text card_.question ]
+                , paragraph [ moveRight 10 ] [ text "   ---" ]
+                , paragraph [] [ text "Answer:" ]
+                , paragraph [] [ text card_.answer ]
+                ]
+    in
+    case cards of
+        Just result ->
+            case result of
+                Ok cards_ ->
+                    column [ spacing 10 ]
+                        (paragraph [ Font.bold ] [ text "Candidate cards:" ]
+                            :: List.map (\card_ -> viewCard card_) cards_
+                        )
+
+                Err error ->
+                    text <| "Vellum response received, but parsing failed: " ++ error
+
+        Nothing ->
+            text "No cards yet, ask Vellum to make 'em"
 
 
 viewResponsePanel : Model -> RemoteData Http.Error VellumResponse -> Element Msg
