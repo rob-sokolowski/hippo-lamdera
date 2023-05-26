@@ -211,8 +211,8 @@ runParser text =
         Ok cards_ ->
             Ok cards_
 
-        Err err ->
-            Err <| Debug.toString err
+        Err _ ->
+            Err "Could not parse Vellum response"
 
 
 
