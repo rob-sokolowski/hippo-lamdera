@@ -1,9 +1,9 @@
-module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer)
+module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer, runParser)
 
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
-import Parser exposing ((|.), (|=), Parser, chompWhile, getChompedString, succeed, symbol)
+import Parser as P exposing ((|.), (|=))
 
 
 type RemoteData err a
@@ -143,59 +143,8 @@ fetchSummaryFlashCards input onResponse =
 
 -- end region: client - public
 -- begin region: parser
-
-
-questionStartTag : Parser ()
-questionStartTag =
-    succeed ()
-        |. symbol "<question>"
-
-
-questionEndTag : Parser ()
-questionEndTag =
-    succeed ()
-        |. symbol "</question>"
-
-
-bodyText : Parser String
-bodyText =
-    getChompedString (chompWhile (\char -> char /= '<'))
-
-
-answerStartTag : Parser ()
-
-
-answerstartTag =
-    succeed ()
-        |. symbol "<answer>"
-
-
-answerEndTag : Parser ()
-answerEndTag =
-    succeed ()
-        |. symbol "</answer>"
-
-
-candidateCardParser : Parser CandidateCard
-candidateCardParser =
-    succeed CandidateCard
-        |. questionStartTag
-        |= bodyText
-        |. questionEndTag
-        |. answerstartTag
-        |= bodyText
-        |. answerEndTag
-
-
-type alias CandidateCard =
-    { question : String
-    , answer : String
-    }
-
-
-
 -- end region: parser
--- begin region: private
+-- begin region: api private
 
 
 type alias VellumResponseResultsObject =
@@ -233,4 +182,95 @@ type alias VellumRequest =
 
 
 
--- end region: private
+-- end region: api private
+
+
+type alias CandidateCard =
+    { question : String
+    , answer : String
+    }
+
+
+type alias VellumResponseParsingError =
+    String
+
+
+runParser : String -> Result VellumResponseParsingError (List CandidateCard)
+runParser text =
+    case P.run cards text of
+        Ok cards_ ->
+            Ok cards_
+
+        Err err ->
+            Err <| Debug.toString err
+
+
+
+-- begin region: parser private
+
+
+questionStartTag : P.Parser ()
+questionStartTag =
+    P.succeed ()
+        |. P.symbol "<question>"
+
+
+questionEndTag : P.Parser ()
+questionEndTag =
+    P.succeed ()
+        |. P.symbol "</question>"
+
+
+bodyText : P.Parser String
+bodyText =
+    P.getChompedString (P.chompWhile (\char -> char /= '<'))
+
+
+answerStartTag : P.Parser ()
+answerStartTag =
+    P.succeed ()
+        |. P.symbol "<answer>"
+
+
+answerEndTag : P.Parser ()
+answerEndTag =
+    P.succeed ()
+        |. P.symbol "</answer>"
+
+
+card : P.Parser CandidateCard
+card =
+    P.succeed CandidateCard
+        |. P.spaces
+        |. questionStartTag
+        |. P.spaces
+        |= bodyText
+        |. P.spaces
+        |. questionEndTag
+        |. P.spaces
+        |. answerStartTag
+        |. P.spaces
+        |= bodyText
+        |. P.spaces
+        |. answerEndTag
+        |. P.spaces
+
+
+cards : P.Parser (List CandidateCard)
+cards =
+    P.loop [] cardsHelp
+
+
+cardsHelp : List CandidateCard -> P.Parser (P.Step (List CandidateCard) (List CandidateCard))
+cardsHelp revCards =
+    P.oneOf
+        [ P.succeed (\card_ -> P.Loop (card_ :: revCards))
+            |= card
+            |. P.spaces
+        , P.succeed ()
+            |> P.map (\_ -> P.Done (List.reverse revCards))
+        ]
+
+
+
+-- end region: parser private
