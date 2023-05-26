@@ -1,9 +1,20 @@
-module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards, pingServer)
+module VellumClient exposing
+    ( CandidateCard
+    , PingResponse
+    , RemoteData(..)
+    , VellumInputValues
+    , VellumResponse
+    , VellumResponseParsingError
+    , extractFlashcardText
+    , fetchSummaryFlashCards
+    , pingServer
+    , runParser
+    )
 
-import Config
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Parser as P exposing ((|.), (|=))
 
 
 type RemoteData err a
@@ -14,13 +25,15 @@ type RemoteData err a
 
 
 
---
---host =
---    "https://cors-proxy-irqkge22rq-uk.a.run.app"
+-- begin region: client - public
 
 
+host : String
 host =
-    "https://cors-proxy-irqkge22rq-uk.a.run.app"
+    -- This is a CORS proxy that allows us to make requests to the Vellum API from the browser
+    -- This is necessary since an API key header is expected by vellum, and we don't want to expose that key to the client
+    -- That header is injected by the proxy server
+    "https://cors-proxy.robsoko.tech"
 
 
 type alias VellumResponse =
@@ -38,6 +51,13 @@ type alias VellumInputValues =
 type alias PingResponse =
     { message : String
     }
+
+
+extractFlashcardText : VellumResponse -> List String
+extractFlashcardText response =
+    List.concatMap
+        (\result -> List.map (\c -> c.text) result.data.completions)
+        response.results
 
 
 pingServer : Float -> (Result Http.Error PingResponse -> msg) -> Cmd msg
@@ -132,7 +152,8 @@ fetchSummaryFlashCards input onResponse =
 
 
 
--- begin region: private
+-- end region: client - public
+-- begin region: api private
 
 
 type alias VellumResponseResultsObject =
@@ -170,4 +191,97 @@ type alias VellumRequest =
 
 
 
--- end region: private
+-- end region: api private
+-- begin region: parser public
+
+
+type alias CandidateCard =
+    { question : String
+    , answer : String
+    }
+
+
+type alias VellumResponseParsingError =
+    String
+
+
+runParser : String -> Result VellumResponseParsingError (List CandidateCard)
+runParser text =
+    case P.run cards text of
+        Ok cards_ ->
+            Ok cards_
+
+        Err _ ->
+            Err "Could not parse Vellum response"
+
+
+
+-- end region: parser public
+-- begin region: parser private
+
+
+questionStartTag : P.Parser ()
+questionStartTag =
+    P.succeed ()
+        |. P.symbol "<question>"
+
+
+questionEndTag : P.Parser ()
+questionEndTag =
+    P.succeed ()
+        |. P.symbol "</question>"
+
+
+bodyText : P.Parser String
+bodyText =
+    P.getChompedString (P.chompWhile (\char -> char /= '<'))
+
+
+answerStartTag : P.Parser ()
+answerStartTag =
+    P.succeed ()
+        |. P.symbol "<answer>"
+
+
+answerEndTag : P.Parser ()
+answerEndTag =
+    P.succeed ()
+        |. P.symbol "</answer>"
+
+
+card : P.Parser CandidateCard
+card =
+    P.succeed CandidateCard
+        |. P.spaces
+        |. questionStartTag
+        |. P.spaces
+        |= bodyText
+        |. P.spaces
+        |. questionEndTag
+        |. P.spaces
+        |. answerStartTag
+        |. P.spaces
+        |= bodyText
+        |. P.spaces
+        |. answerEndTag
+        |. P.spaces
+
+
+cards : P.Parser (List CandidateCard)
+cards =
+    P.loop [] cardsHelp
+
+
+cardsHelp : List CandidateCard -> P.Parser (P.Step (List CandidateCard) (List CandidateCard))
+cardsHelp revCards =
+    P.oneOf
+        [ P.succeed (\card_ -> P.Loop (card_ :: revCards))
+            |= card
+            |. P.spaces
+        , P.succeed ()
+            |> P.map (\_ -> P.Done (List.reverse revCards))
+        ]
+
+
+
+-- end region: parser private
