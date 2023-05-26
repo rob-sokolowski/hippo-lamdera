@@ -16,7 +16,7 @@ import Palette
 import Request
 import Shared
 import Utils exposing (animatedEl)
-import VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards, pingServer)
+import VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer)
 import View exposing (View)
 
 
@@ -39,6 +39,7 @@ type alias Model =
     , title : String
     , author : String
     , response : RemoteData Http.Error VellumResponse
+    , vellumText : Maybe String
     , pingResponse : RemoteData Http.Error PingResponse
     }
 
@@ -49,6 +50,7 @@ init shared =
       , title = ""
       , author = ""
       , response = NotAsked
+      , vellumText = Nothing
       , pingResponse = NotAsked
       }
     , Effect.none
@@ -232,7 +234,7 @@ viewElements model =
             { onPress = Just UserPressedVellumAssist
             , label = text "Vellum Assist (beta)"
             }
-        , viewResponsePanel model.response
+        , viewResponsePanel model model.response
         , Input.button
             [ width shrink
             , paddingXY 10 0
@@ -249,8 +251,8 @@ viewElements model =
         ]
 
 
-viewResponsePanel : RemoteData Http.Error VellumResponse -> Element Msg
-viewResponsePanel response =
+viewResponsePanel : Model -> RemoteData Http.Error VellumResponse -> Element Msg
+viewResponsePanel model response =
     let
         el_ =
             case response of
@@ -264,7 +266,10 @@ viewResponsePanel response =
                         ]
 
                 Success vellumResponse ->
-                    text "TODO: Success case"
+                    column []
+                        (paragraph [ Font.bold ] [ text "Vellum response:" ]
+                            :: List.map (\vt -> paragraph [] [ text vt ]) (extractFlashcardText vellumResponse)
+                        )
 
                 Failure error ->
                     case error of

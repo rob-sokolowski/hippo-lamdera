@@ -1,9 +1,9 @@
-module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, fetchSummaryFlashCards, pingServer)
+module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer)
 
-import Config
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Parser exposing ((|.), (|=), Parser, chompWhile, getChompedString, succeed, symbol)
 
 
 type RemoteData err a
@@ -14,13 +14,15 @@ type RemoteData err a
 
 
 
---
---host =
---    "https://cors-proxy-irqkge22rq-uk.a.run.app"
+-- begin region: client - public
 
 
+host : String
 host =
-    "https://cors-proxy-irqkge22rq-uk.a.run.app"
+    -- This is a CORS proxy that allows us to make requests to the Vellum API from the browser
+    -- This is necessary since an API key header is expected by vellum, and we don't want to expose that key to the client
+    -- That header is injected by the proxy server
+    "https://cors-proxy.robsoko.tech"
 
 
 type alias VellumResponse =
@@ -38,6 +40,13 @@ type alias VellumInputValues =
 type alias PingResponse =
     { message : String
     }
+
+
+extractFlashcardText : VellumResponse -> List String
+extractFlashcardText response =
+    List.concatMap
+        (\result -> List.map (\c -> c.text) result.data.completions)
+        response.results
 
 
 pingServer : Float -> (Result Http.Error PingResponse -> msg) -> Cmd msg
@@ -132,6 +141,60 @@ fetchSummaryFlashCards input onResponse =
 
 
 
+-- end region: client - public
+-- begin region: parser
+
+
+questionStartTag : Parser ()
+questionStartTag =
+    succeed ()
+        |. symbol "<question>"
+
+
+questionEndTag : Parser ()
+questionEndTag =
+    succeed ()
+        |. symbol "</question>"
+
+
+bodyText : Parser String
+bodyText =
+    getChompedString (chompWhile (\char -> char /= '<'))
+
+
+answerStartTag : Parser ()
+
+
+answerstartTag =
+    succeed ()
+        |. symbol "<answer>"
+
+
+answerEndTag : Parser ()
+answerEndTag =
+    succeed ()
+        |. symbol "</answer>"
+
+
+candidateCardParser : Parser CandidateCard
+candidateCardParser =
+    succeed CandidateCard
+        |. questionStartTag
+        |= bodyText
+        |. questionEndTag
+        |. answerstartTag
+        |= bodyText
+        |. answerEndTag
+
+
+type alias CandidateCard =
+    { question : String
+    , answer : String
+    }
+
+
+
+-- end region: parser
 -- begin region: private
 
 
