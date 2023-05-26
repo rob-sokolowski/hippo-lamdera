@@ -1,4 +1,15 @@
-module VellumClient exposing (PingResponse, RemoteData(..), VellumInputValues, VellumResponse, extractFlashcardText, fetchSummaryFlashCards, pingServer, runParser)
+module VellumClient exposing
+    ( CandidateCard
+    , PingResponse
+    , RemoteData(..)
+    , VellumInputValues
+    , VellumResponse
+    , VellumResponseParsingError
+    , extractFlashcardText
+    , fetchSummaryFlashCards
+    , pingServer
+    , runParser
+    )
 
 import Http
 import Json.Decode as JD
@@ -142,8 +153,6 @@ fetchSummaryFlashCards input onResponse =
 
 
 -- end region: client - public
--- begin region: parser
--- end region: parser
 -- begin region: api private
 
 
@@ -183,6 +192,7 @@ type alias VellumRequest =
 
 
 -- end region: api private
+-- begin region: parser public
 
 
 type alias CandidateCard =
@@ -206,6 +216,7 @@ runParser text =
 
 
 
+-- end region: parser public
 -- begin region: parser private
 
 
