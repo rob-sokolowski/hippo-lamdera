@@ -7,6 +7,7 @@ import Page
 import Palette
 import Request exposing (Request)
 import Shared
+import Utils.Task exposing (send)
 import View exposing (View)
 
 
@@ -26,7 +27,22 @@ page shared _ =
 
 type alias Model =
     { tab : Tab
+    , fancyResult : Maybe (FancyResult FancyError FancyData)
     }
+
+
+type alias FancyError =
+    String
+
+
+type alias FancyData =
+    String
+
+
+type FancyResult err data
+    = FancyOk data
+    | FancierOk data
+    | FancyErr err
 
 
 type Tab
@@ -38,10 +54,10 @@ init shared =
     let
         model : Model
         model =
-            Model Global
+            Model Global Nothing
     in
     ( model
-    , Cmd.none
+    , send Do_FancyThings
     )
 
 
@@ -51,6 +67,9 @@ init shared =
 
 type Msg
     = Noop
+    | Do_FancyThings
+    | Do_FancierThings
+    | Do_Fail
 
 
 type alias Tag =
@@ -60,6 +79,15 @@ type alias Tag =
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
 update shared msg model =
     case msg of
+        Do_Fail ->
+            ( { model | fancyResult = Just <| FancyErr "Failed" }, Cmd.none )
+
+        Do_FancierThings ->
+            ( { model | fancyResult = Just <| FancierOk "Fancier pants" }, send Do_Fail )
+
+        Do_FancyThings ->
+            ( { model | fancyResult = Just <| FancyOk "Fancy pants" }, send Do_FancierThings )
+
         Noop ->
             ( model, Cmd.none )
 
@@ -93,6 +121,7 @@ elements model =
         , spacing 10
         , centerY
         , centerX
+        , moveUp 50
         ]
         [ el
             [ Font.size 36
@@ -111,7 +140,4 @@ elements model =
             , centerX
             ]
             (E.paragraph [] [ E.text "Simple MarkDown flashcards with spaced-repetition study sessions" ])
-        , E.text " " -- HACK: "push up" centerY
-        , E.text " " -- HACK: "push up" centerY
-        , E.text " " -- HACK: "push up" centerY
         ]
