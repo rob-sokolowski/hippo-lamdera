@@ -63,6 +63,7 @@ init =
       , nextCardId = 1000 -- setting to a high number incase I've deleted some. A one-time evergreen related thing
       , pendingAuths = Dict.empty
       , seed = Random.initialSeed 0
+      , newField = Nothing
       }
     , Cmd.none
     )
