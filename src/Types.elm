@@ -47,6 +47,7 @@ type alias BackendModel =
     , seed : Seed
     , nextCardId : Int
     , pendingAuths : Dict SessionId Auth.Common.PendingAuth
+    , newField : Maybe Int
     }
 
 
