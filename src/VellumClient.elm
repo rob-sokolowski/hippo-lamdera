@@ -33,7 +33,7 @@ host =
     -- This is a CORS proxy that allows us to make requests to the Vellum API from the browser
     -- This is necessary since an API key header is expected by vellum, and we don't want to expose that key to the client
     -- That header is injected by the proxy server
-    "https://api.robsoko.tech"
+    "https://api.robsoko.com"
 
 
 type alias VellumResponse =
