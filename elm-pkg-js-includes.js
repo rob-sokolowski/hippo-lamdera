@@ -3,6 +3,7 @@
 // In future this will be more structured + restricted once the design is done
 
 const katexJs = require('./elm-pkg-js/katex')
+const audioJs = require('./elm-pkg-js/audio)
 
 exports.init = async function init(app) {
     // @WARNING: this only runs for Lamdera production deploys!
