@@ -40,6 +40,7 @@
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
             "mdgriffith/elm-ui": "1.1.8",
+            "mgold/elm-nonempty-list": "4.2.0",
             "rtfeldman/console-print": "1.0.1",
             "ryannhg/elm-spa": "6.0.0",
             "terezka/charts": "20.0.1",
