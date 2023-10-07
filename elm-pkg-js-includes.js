@@ -2,11 +2,13 @@
 // For now, its presense will mean Lamdera detects the extra JS and packages
 // In future this will be more structured + restricted once the design is done
 
-const katexJs = require('./elm-pkg-js/katex')
+const katexJs = require('./elm-pkg-js/katex');
+const audioJs = require('./elm-pkg-js/audio');
 
 exports.init = async function init(app) {
     // @WARNING: this only runs for Lamdera production deploys!
     // This file will not run in Local development, an equivalent to this is
     // automatically generated in Local Development for every file in elm-pkg-js/
     katexJs.init(app);
+    audioJs.init(app);
 }
