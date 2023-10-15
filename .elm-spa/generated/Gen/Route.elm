@@ -12,6 +12,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
+import Gen.Params.Stories.ElmAudio
 import Gen.Params.Stories.KatexDemo
 import Gen.Params.Stories.VellumTesting
 import Url exposing (Url)
@@ -27,6 +28,7 @@ type Route
     | NotFound
     | Study
     | Login__Provider___Callback { provider : String }
+    | Stories__ElmAudio
     | Stories__KatexDemo
     | Stories__VellumTesting
 
@@ -45,6 +47,7 @@ routes =
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
     , Parser.map Study Gen.Params.Study.parser
+    , Parser.map Stories__ElmAudio Gen.Params.Stories.ElmAudio.parser
     , Parser.map Stories__KatexDemo Gen.Params.Stories.KatexDemo.parser
     , Parser.map Stories__VellumTesting Gen.Params.Stories.VellumTesting.parser
     , Parser.map Login__Provider___Callback Gen.Params.Login.Provider_.Callback.parser
@@ -82,6 +85,9 @@ toHref route =
     
         Login__Provider___Callback params ->
             joinAsHref [ "login", params.provider, "callback" ]
+    
+        Stories__ElmAudio ->
+            joinAsHref [ "stories", "elm-audio" ]
     
         Stories__KatexDemo ->
             joinAsHref [ "stories", "katex-demo" ]

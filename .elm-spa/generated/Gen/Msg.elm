@@ -8,6 +8,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
+import Gen.Params.Stories.ElmAudio
 import Gen.Params.Stories.KatexDemo
 import Gen.Params.Stories.VellumTesting
 import Pages.Admin
@@ -18,6 +19,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
+import Pages.Stories.ElmAudio
 import Pages.Stories.KatexDemo
 import Pages.Stories.VellumTesting
 
@@ -31,6 +33,7 @@ type Msg
     | NotFound Pages.NotFound.Msg
     | Study Pages.Study.Msg
     | Login__Provider___Callback Pages.Login.Provider_.Callback.Msg
+    | Stories__ElmAudio Pages.Stories.ElmAudio.Msg
     | Stories__KatexDemo Pages.Stories.KatexDemo.Msg
     | Stories__VellumTesting Pages.Stories.VellumTesting.Msg
 

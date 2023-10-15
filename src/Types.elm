@@ -2,14 +2,13 @@ module Types exposing (..)
 
 import Api.Card exposing (CardEnvelope, CardId, FlashCard)
 import Api.User exposing (User, UserFull, UserId)
+import Audio
 import Auth.Common
 import Bridge
 import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
-import Evergreen.V51.VellumClient exposing (VellumResponse)
 import Gen.Pages as Pages
-import Http
 import Lamdera exposing (ClientId, SessionId)
 import Random exposing (Seed)
 import Shared
@@ -18,6 +17,30 @@ import Url exposing (Url)
 
 
 type alias FrontendModel =
+    Audio.Model FrontendMsg_ FrontendModel_
+
+
+type FrontendModel_
+    = LoadingAssets FrontendModel_Loading
+    | LoadSuccess FrontendModel_Loaded
+    | LoadFailure String
+
+
+
+-- TODO:
+
+
+type alias FrontendModel_Loading =
+    { url : Url
+    , key : Key
+    , shared : Shared.Model
+    , page : Pages.Model
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
+    }
+
+
+type alias FrontendModel_Loaded =
     { url : Url
     , key : Key
     , shared : Shared.Model
@@ -31,7 +54,11 @@ type alias Session =
     { userId : Int, expires : Time.Posix }
 
 
-type FrontendMsg
+type alias FrontendMsg =
+    Audio.Msg FrontendMsg_
+
+
+type FrontendMsg_
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | Shared Shared.Msg

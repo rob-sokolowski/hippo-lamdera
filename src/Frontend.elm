@@ -1,5 +1,6 @@
 module Frontend exposing (..)
 
+import Audio exposing (Audio, AudioCmd)
 import Auth.Common
 import AuthImplementation
 import Browser
@@ -13,10 +14,11 @@ import Gen.Pages as Pages
 import Gen.Route as Route
 import Lamdera
 import Palette
+import PortDefs exposing (audioPortFromJS, audioPortToJS)
 import Request
 import Shared
 import Task
-import Types exposing (FrontendModel, FrontendMsg(..), ToFrontend(..))
+import Types exposing (FrontendModel, FrontendModel_(..), FrontendModel_Loaded, FrontendMsg_(..), ToFrontend(..))
 import Url exposing (Url)
 import View
 
@@ -25,35 +27,40 @@ type alias Model =
     FrontendModel
 
 
-app :
-    { init :
-        Lamdera.Url
-        -> Key
-        -> ( Model, Cmd Msg )
-    , view : Model -> Browser.Document Msg
-    , update : Msg -> Model -> ( Model, Cmd Msg )
-    , updateFromBackend : ToFrontend -> Model -> ( Model, Cmd Msg )
-    , subscriptions : Model -> Sub Msg
-    , onUrlRequest : Browser.UrlRequest -> Msg
-    , onUrlChange : Url -> Msg
-    }
 app =
-    Lamdera.frontend
+    Audio.lamderaFrontendWithAudio
         { init = init
         , onUrlRequest = ClickedLink
         , onUrlChange = ChangedUrl
-        , update = update
-        , updateFromBackend = updateFromBackend
+        , update = \_ msg model -> update msg model |> (\( a, b ) -> ( a, b, Audio.cmdNone ))
+        , updateFromBackend = \_ msg model -> updateFromBackend msg model |> (\( a, b ) -> ( a, b, Audio.cmdNone ))
         , subscriptions = subscriptions
         , view = view
+        , audio = audio
+        , audioPort = { toJS = audioPortToJS, fromJS = audioPortFromJS }
         }
+
+
+audio : Audio.AudioData -> FrontendModel_ -> Audio
+audio audioData model =
+    case model of
+        LoadingAssets _ ->
+            Audio.silence
+
+        LoadSuccess frontendLoaded ->
+            -- TODO: Load audio group
+            Audio.silence
+
+        --gameAudio audioData frontendLoaded
+        LoadFailure err ->
+            Audio.silence
 
 
 
 -- INIT
 
 
-init : Url -> Key -> ( Model, Cmd Msg )
+init : Url -> Key -> ( FrontendModel_, Cmd FrontendMsg_, AudioCmd FrontendMsg_ )
 init url key =
     let
         ( shared, sharedCmd ) =
@@ -62,17 +69,19 @@ init url key =
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
     in
-    ( { url = url
-      , key = key
-      , shared = shared
-      , page = page
-      , authFlow = Auth.Common.Idle
-      , authRedirectBaseUrl = url
-      }
+    ( LoadingAssets
+        { url = url
+        , key = key
+        , shared = shared
+        , page = page
+        , authFlow = Auth.Common.Idle
+        , authRedirectBaseUrl = url
+        }
     , Cmd.batch
         [ Cmd.map Shared sharedCmd
         , Effect.toCmd ( Shared, Page ) effect
         ]
+    , Audio.cmdNone
     )
 
 
@@ -85,7 +94,7 @@ scrollPageToTop =
 
 
 type alias Msg =
-    FrontendMsg
+    FrontendMsg_
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,7 +157,7 @@ update msg model =
             ( model, Cmd.none )
 
 
-updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
+updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg_ )
 updateFromBackend msg model =
     case msg of
         AuthToFrontend authToFrontendMsg ->
@@ -168,15 +177,15 @@ updateFromBackend msg model =
 -- VIEW
 
 
-view : Model -> Browser.Document Msg
-view model =
+view : Audio.AudioData -> FrontendModel_ -> Browser.Document Msg
+view _ model =
     { title = "Hippo"
     , body =
         [ layout [] (elements model) ]
     }
 
 
-elements : Model -> Element Msg
+elements : FrontendModel_ -> Element Msg
 elements model =
     let
         pageElements =
