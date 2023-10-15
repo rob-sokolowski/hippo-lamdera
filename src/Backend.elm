@@ -21,7 +21,7 @@ import Random.List
 import Task exposing (Task)
 import Time
 import Time.Extra as Time
-import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
+import Types exposing (BackendModel, BackendMsg(..), FrontendMsg_(..), ToFrontend(..))
 import Utils exposing (do)
 import Utils.Task as Utils exposing (send)
 import VellumClient exposing (fetchSummaryFlashCards)

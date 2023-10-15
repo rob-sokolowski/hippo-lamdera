@@ -1,29 +1,13 @@
 port module PortDefs exposing
-    ( HtmlId
-    , loadVegaSequence
-    , markLoadVegaSequenceFinished
-    , returnVegaLiteRender
-    , vegaLiteElmToJs
+    ( audioPortFromJS
+    , audioPortToJS
     )
 
-import VegaLite
+import Json.Decode as JD
+import Json.Encode as JE
 
 
-port loadVegaSequence : () -> Cmd msg
+port audioPortToJS : JE.Value -> Cmd msg
 
 
-port markLoadVegaSequenceFinished : (Int -> msg) -> Sub msg
-
-
-type alias HtmlId =
-    String
-
-
-type alias NamedSpecs =
-    List ( HtmlId, VegaLite.Spec, Bool )
-
-
-port vegaLiteElmToJs : NamedSpecs -> Cmd msg
-
-
-port returnVegaLiteRender : (Int -> msg) -> Sub msg
+port audioPortFromJS : (JD.Value -> msg) -> Sub msg

@@ -11,6 +11,7 @@ import Gen.Params.Login
 import Gen.Params.NotFound
 import Gen.Params.Study
 import Gen.Params.Login.Provider_.Callback
+import Gen.Params.Stories.ElmAudio
 import Gen.Params.Stories.KatexDemo
 import Gen.Params.Stories.VellumTesting
 import Gen.Model as Model
@@ -25,6 +26,7 @@ import Pages.Login
 import Pages.NotFound
 import Pages.Study
 import Pages.Login.Provider_.Callback
+import Pages.Stories.ElmAudio
 import Pages.Stories.KatexDemo
 import Pages.Stories.VellumTesting
 import Request exposing (Request)
@@ -69,6 +71,9 @@ init route =
         Route.Login__Provider___Callback params ->
             pages.login__provider___callback.init params
     
+        Route.Stories__ElmAudio ->
+            pages.stories__elmAudio.init ()
+    
         Route.Stories__KatexDemo ->
             pages.stories__katexDemo.init ()
     
@@ -102,6 +107,9 @@ update msg_ model_ =
     
         ( Msg.Login__Provider___Callback msg, Model.Login__Provider___Callback params model ) ->
             pages.login__provider___callback.update params msg model
+    
+        ( Msg.Stories__ElmAudio msg, Model.Stories__ElmAudio params model ) ->
+            pages.stories__elmAudio.update params msg model
     
         ( Msg.Stories__KatexDemo msg, Model.Stories__KatexDemo params model ) ->
             pages.stories__katexDemo.update params msg model
@@ -143,6 +151,9 @@ view model_ =
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.view params model
     
+        Model.Stories__ElmAudio params model ->
+            pages.stories__elmAudio.view params model
+    
         Model.Stories__KatexDemo params model ->
             pages.stories__katexDemo.view params model
     
@@ -180,6 +191,9 @@ subscriptions model_ =
         Model.Login__Provider___Callback params model ->
             pages.login__provider___callback.subscriptions params model
     
+        Model.Stories__ElmAudio params model ->
+            pages.stories__elmAudio.subscriptions params model
+    
         Model.Stories__KatexDemo params model ->
             pages.stories__katexDemo.subscriptions params model
     
@@ -200,6 +214,7 @@ pages :
     , notFound : Bundle Gen.Params.NotFound.Params Pages.NotFound.Model Pages.NotFound.Msg
     , study : Bundle Gen.Params.Study.Params Pages.Study.Model Pages.Study.Msg
     , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
+    , stories__elmAudio : Bundle Gen.Params.Stories.ElmAudio.Params Pages.Stories.ElmAudio.Model Pages.Stories.ElmAudio.Msg
     , stories__katexDemo : Bundle Gen.Params.Stories.KatexDemo.Params Pages.Stories.KatexDemo.Model Pages.Stories.KatexDemo.Msg
     , stories__vellumTesting : Bundle Gen.Params.Stories.VellumTesting.Params Pages.Stories.VellumTesting.Model Pages.Stories.VellumTesting.Msg
     }
@@ -212,6 +227,7 @@ pages =
     , notFound = bundle Pages.NotFound.page Model.NotFound Msg.NotFound
     , study = bundle Pages.Study.page Model.Study Msg.Study
     , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
+    , stories__elmAudio = bundle Pages.Stories.ElmAudio.page Model.Stories__ElmAudio Msg.Stories__ElmAudio
     , stories__katexDemo = bundle Pages.Stories.KatexDemo.page Model.Stories__KatexDemo Msg.Stories__KatexDemo
     , stories__vellumTesting = bundle Pages.Stories.VellumTesting.page Model.Stories__VellumTesting Msg.Stories__VellumTesting
     }

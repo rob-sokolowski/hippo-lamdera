@@ -17,10 +17,10 @@ import Pages.Login
 import Pages.Login.Provider_.Callback
 import Task
 import Time
-import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
+import Types exposing (BackendModel, BackendMsg(..), FrontendModel_Loaded, FrontendMsg_(..), ToFrontend(..))
 
 
-config : Auth.Common.Config FrontendMsg ToBackend BackendMsg ToFrontend FrontendModel BackendModel
+config : Auth.Common.Config FrontendMsg_ ToBackend BackendMsg ToFrontend FrontendModel_Loaded BackendModel
 config =
     { toBackend = AuthToBackend
     , toFrontend = AuthToFrontend
@@ -49,6 +49,10 @@ backendConfig model =
     }
 
 
+updateFromBackend :
+    Auth.Common.ToFrontend
+    -> FrontendModel_Loaded
+    -> ( FrontendModel_Loaded, Cmd msg )
 updateFromBackend authToFrontendMsg model =
     case authToFrontendMsg of
         Auth.Common.AuthInitiateSignin url ->

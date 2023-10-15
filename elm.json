@@ -12,6 +12,7 @@
         "direct": {
             "Chadtech/elm-bool-extra": "2.4.2",
             "Garados007/elm-svg-parser": "1.1.0",
+            "MartinSStewart/elm-audio": "4.0.4",
             "NoRedInk/elm-json-decode-pipeline": "1.0.1",
             "TSFoster/elm-sha1": "2.1.1",
             "andrewMacmurray/elm-simple-animation": "2.3.0",
