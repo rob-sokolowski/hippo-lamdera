@@ -49,6 +49,10 @@ backendConfig model =
     }
 
 
+updateFromBackend :
+    Auth.Common.ToFrontend
+    -> FrontendModel_Loaded
+    -> ( FrontendModel_Loaded, Cmd msg )
 updateFromBackend authToFrontendMsg model =
     case authToFrontendMsg of
         Auth.Common.AuthInitiateSignin url ->
