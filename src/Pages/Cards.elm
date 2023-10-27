@@ -49,6 +49,7 @@ type alias Model =
     , cardSubmitStatus : Data CardId
     , user : User
     , count : Int
+    , dummy : Maybe Int
     }
 
 
@@ -79,6 +80,7 @@ init user =
       , cardSubmitStatus = NotAsked
       , user = user
       , count = 0
+      , dummy = Nothing
       }
     , Effect.none
     )
